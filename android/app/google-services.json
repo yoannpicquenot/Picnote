@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1055647633275",
+    "project_id": "picnote-b8c02",
+    "storage_bucket": "picnote-b8c02.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1055647633275:android:dadcf4c0ef7f18957fb7de",
+        "android_client_info": {
+          "package_name": "com.example.picnote"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1055647633275-31d8qb0l5i9avslc37hovf7tf5mktk20.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.picnote",
+            "certificate_hash": "845376caffe2e70991e3a5d4577eff17439955ba"
+          }
+        },
+        {
+          "client_id": "1055647633275-o9cf4k3731hma4pm5o44bfajmvqj1d2d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRGHv47PkX0Y7P4YY_fobpbiMUzJwFrOg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1055647633275-o9cf4k3731hma4pm5o44bfajmvqj1d2d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

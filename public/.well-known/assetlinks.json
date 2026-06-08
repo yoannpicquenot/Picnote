@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.example.picnote",
+    "sha256_cert_fingerprints": [
+      "6A:ED:6E:18:44:C8:73:03:E6:CD:A5:F5:5D:92:D7:B3:52:4E:1B:B1:1B:17:26:7E:E9:63:EF:6F:0D:70:36:25"
+    ]
+  }
+}]

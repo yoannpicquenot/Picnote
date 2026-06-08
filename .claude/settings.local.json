@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse -Depth 3)",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\Yoann\\\\development\\\\picnote\\\\assets\\\\fonts\")",
+      "PowerShell(Copy-Item \"C:\\\\Users\\\\Yoann\\\\Downloads\\\\Chillax_Complete\\\\Chillax_Complete\\\\Fonts\\\\TTF\\\\Chillax-Variable.ttf\" \"C:\\\\Users\\\\Yoann\\\\development\\\\picnote\\\\assets\\\\fonts\\\\Chillax-Variable.ttf\")",
+      "WebFetch(domain:firebase.google.com)",
+      "PowerShell($env:JAVA_HOME = \\(Get-Command flutter | Split-Path\\) + \"\\\\..\\\\..\\\\..\\\\bin\\\\cache\\\\artifacts\\\\engine\\\\windows-x64\\\\flutter_tester.exe\" ; flutter doctor --android-licenses 2>&1 | Select-String \"java\" ; ls \"$env:LOCALAPPDATA\\\\Programs\\\\Android\\\\Android Studio\\\\jbr\" -ErrorAction SilentlyContinue | Select-Object -First 1)",
+      "PowerShell(ls \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\" -ErrorAction SilentlyContinue; ls \"$env:LOCALAPPDATA\\\\Programs\\\\Android\\\\Android Studio\\\\jbr\" -ErrorAction SilentlyContinue)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\Yoann\\\\development\\\\picnote\\\\android\"; .\\\\gradlew signingReport)"
+    ]
+  }
+}

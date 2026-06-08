@@ -1,0 +1,51 @@
+name: picnote
+description: Shared notes & tasks for two — real-time, beautiful.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  provider: ^6.1.2
+
+  # SVG rendering
+  flutter_svg: ^2.0.10+1
+
+  # Auth helpers
+  shared_preferences: ^2.3.2
+  app_links: ^6.3.2
+  url_launcher: ^6.3.0
+
+  # Real-time backend
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.15.5
+  firebase_auth: ^4.17.4
+
+  # Rich text editor (for memos)
+  # flutter_quill: ^9.4.4
+
+  # Google Sign-In
+  google_sign_in: ^6.2.1
+
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/cute-face.svg
+
+  fonts:
+    - family: Chillax
+      fonts:
+        - asset: assets/fonts/Chillax-Variable.ttf
