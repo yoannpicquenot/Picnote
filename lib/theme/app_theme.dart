@@ -32,7 +32,7 @@ class AppTheme {
         onSurface: AppColors.brownDark,
       ),
       textTheme: _buildTextTheme(AppColors.brownDark),
-      fontFamily: 'Chillax',
+      fontFamily: 'GeneralSans',
     );
   }
 
@@ -49,19 +49,21 @@ class AppTheme {
         onSurface: AppColors.beigeCard,
       ),
       textTheme: _buildTextTheme(AppColors.beigeCard),
-      fontFamily: 'Chillax',
+      fontFamily: 'GeneralSans',
     );
   }
 
   static TextTheme _buildTextTheme(Color color) {
     return TextTheme(
       displayLarge: TextStyle(
+        fontFamily: 'Chillax',
         fontSize: 32,
         fontWeight: FontWeight.w900,
         color: color,
         letterSpacing: 1.2,
       ),
       headlineMedium: TextStyle(
+        fontFamily: 'Chillax',
         fontSize: 24,
         fontWeight: FontWeight.w700,
         color: color,

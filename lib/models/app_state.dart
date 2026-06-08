@@ -12,6 +12,8 @@ class Task {
   TaskSection section;
   String lastModifiedBy;
   DateTime lastModifiedAt;
+  double sortOrder;
+  String? bodyJson; // JSON-encoded AppFlowy document
 
   Task({
     required this.id,
@@ -20,17 +22,23 @@ class Task {
     required this.section,
     required this.lastModifiedBy,
     required this.lastModifiedAt,
+    required this.sortOrder,
+    this.bodyJson,
   });
 
   factory Task.fromDoc(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
+    final lastMod = (d['lastModifiedAt'] as Timestamp?)?.toDate() ?? DateTime.now();
     return Task(
       id: doc.id,
       title: d['title'] ?? '',
       completed: d['completed'] ?? false,
       section: d['section'] == 'today' ? TaskSection.today : TaskSection.tomorrow,
       lastModifiedBy: d['lastModifiedBy'] ?? '',
-      lastModifiedAt: (d['lastModifiedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastModifiedAt: lastMod,
+      sortOrder: (d['sortOrder'] as num?)?.toDouble() ??
+          lastMod.millisecondsSinceEpoch.toDouble(),
+      bodyJson: d['bodyJson'] as String?,
     );
   }
 
@@ -114,10 +122,10 @@ class AppState extends ChangeNotifier {
         .collection('pairs')
         .doc(_pairId)
         .collection('tasks')
-        .orderBy('lastModifiedAt', descending: true)
         .snapshots()
         .listen((snap) {
-      tasks = snap.docs.map(Task.fromDoc).toList();
+      tasks = snap.docs.map(Task.fromDoc).toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
       notifyListeners();
     });
   }
@@ -154,6 +162,10 @@ class AppState extends ChangeNotifier {
 
   Future<void> addTask(String title, TaskSection section) async {
     if (_pairId == null) return;
+    final sectionTasks = tasks.where((t) => t.section == section).toList();
+    final maxOrder = sectionTasks.isEmpty
+        ? DateTime.now().millisecondsSinceEpoch.toDouble()
+        : sectionTasks.map((t) => t.sortOrder).reduce((a, b) => a > b ? a : b) + 1000;
     await _db
         .collection('pairs').doc(_pairId)
         .collection('tasks')
@@ -163,7 +175,57 @@ class AppState extends ChangeNotifier {
       'section': section.name,
       'lastModifiedBy': currentUser,
       'lastModifiedAt': FieldValue.serverTimestamp(),
+      'sortOrder': maxOrder,
     });
+  }
+
+  Future<void> reorderTask(
+    String taskId,
+    TaskSection newSection,
+    double newSortOrder,
+  ) async {
+    if (_pairId == null) return;
+    final idx = tasks.indexWhere((t) => t.id == taskId);
+    if (idx != -1) {
+      tasks[idx].section = newSection;
+      tasks[idx].sortOrder = newSortOrder;
+      tasks.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      notifyListeners();
+    }
+    await _db
+        .collection('pairs').doc(_pairId)
+        .collection('tasks').doc(taskId)
+        .update({
+      'section': newSection.name,
+      'sortOrder': newSortOrder,
+    });
+  }
+
+  Future<void> updateTask(
+    String id, {
+    String? title,
+    TaskSection? section,
+    String? bodyJson,
+  }) async {
+    if (_pairId == null) return;
+    final idx = tasks.indexWhere((t) => t.id == id);
+    if (idx != -1) {
+      if (title != null) tasks[idx].title = title;
+      if (section != null) tasks[idx].section = section;
+      if (bodyJson != null) tasks[idx].bodyJson = bodyJson;
+      notifyListeners();
+    }
+    final updates = <String, dynamic>{
+      'lastModifiedBy': currentUser,
+      'lastModifiedAt': FieldValue.serverTimestamp(),
+    };
+    if (title != null) updates['title'] = title;
+    if (section != null) updates['section'] = section.name;
+    if (bodyJson != null) updates['bodyJson'] = bodyJson;
+    await _db
+        .collection('pairs').doc(_pairId)
+        .collection('tasks').doc(id)
+        .update(updates);
   }
 
   Future<void> deleteTask(String id) async {

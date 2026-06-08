@@ -26,8 +26,14 @@ dependencies:
   cloud_firestore: ^4.15.5
   firebase_auth: ^4.17.4
 
-  # Rich text editor (for memos)
-  # flutter_quill: ^9.4.4
+  # Rich text editor
+  appflowy_editor: ^4.0.0
+
+  # Icon set
+  iconify_flutter: ^0.0.7
+
+  # Native share sheet
+  share_plus: 10.0.0
 
   # Google Sign-In
   google_sign_in: ^6.2.1
@@ -49,3 +55,6 @@ flutter:
     - family: Chillax
       fonts:
         - asset: assets/fonts/Chillax-Variable.ttf
+    - family: GeneralSans
+      fonts:
+        - asset: assets/fonts/GeneralSans-Variable.ttf

@@ -19,21 +19,24 @@ class AuthService {
       idToken: googleAuth.idToken,
     );
     final userCred = await _auth.signInWithCredential(credential);
-    await ensureUserDoc(userCred.user!);
+    await ensureUserDoc(userCred.user!, fallbackEmail: googleUser.email);
     return userCred;
   }
 
-  static Future<void> ensureUserDoc(User user) async {
+  static Future<void> ensureUserDoc(User user, {String? fallbackEmail}) async {
     try {
+      final email = user.email ?? fallbackEmail;
       final ref = _db.collection('users').doc(user.uid);
       final snap = await ref.get().timeout(const Duration(seconds: 10));
       if (!snap.exists) {
         await ref.set({
-          'email': user.email,
-          'displayName': user.displayName ?? user.email,
+          'email': email,
+          'displayName': user.displayName ?? email,
           'partnerId': null,
           'createdAt': FieldValue.serverTimestamp(),
         });
+      } else if (email != null && snap.data()?['email'] == null) {
+        await ref.update({'email': email});
       }
     } catch (_) {}
   }
