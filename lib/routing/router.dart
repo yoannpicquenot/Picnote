@@ -24,6 +24,7 @@ import '../ui/settings/view_models/settings_viewmodel.dart';
 import '../ui/settings/widgets/settings_screen.dart';
 import '../ui/shell/view_models/shell_viewmodel.dart';
 import '../ui/shell/widgets/app_shell.dart';
+import '../ui/shell/widgets/tab_pager.dart';
 import '../ui/splash/widgets/splash_screen.dart';
 import '../ui/core/themes/colors.dart';
 import 'routes.dart';
@@ -101,24 +102,7 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
           routes: [
             GoRoute(
               path: Routes.home,
-              pageBuilder: (context, state) => _page(
-                context,
-                state,
-                _Motion.tabLeft,
-                _Owned(
-                  create: () => HomeViewModel(
-                    listRepository: context.read(),
-                    authRepository: authRepository,
-                    householdRepository: householdRepository,
-                    noteRepository: context.read(),
-                    activityRepository: context.read(),
-                  ),
-                  builder: (vm) => HomeScreen(
-                    viewModel: vm,
-                    onCreateList: () => startNewList(context, context.read<ShellViewModel>()),
-                  ),
-                ),
-              ),
+              pageBuilder: (context, state) => _tabs(context, state, 0, authRepository, householdRepository),
             ),
             GoRoute(
               path: Routes.lists,
@@ -165,21 +149,7 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
             ),
             GoRoute(
               path: Routes.notes,
-              pageBuilder: (context, state) => _page(
-                context,
-                state,
-                _Motion.tabRight,
-                _Owned(
-                  create: () => NotesViewModel(
-                    noteRepository: context.read(),
-                    householdRepository: householdRepository,
-                    listRepository: context.read(),
-                    authRepository: authRepository,
-                    activityRepository: context.read(),
-                  ),
-                  builder: (vm) => NotesScreen(viewModel: vm),
-                ),
-              ),
+              pageBuilder: (context, state) => _tabs(context, state, 1, authRepository, householdRepository),
               routes: [
                 GoRoute(
                   path: ':id',
@@ -250,6 +220,48 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
       ],
     );
 
+/// Lists (home) and Notes, one page for both routes: going from one to the
+/// other moves the pager instead of opening a new page.
+Page<void> _tabs(
+  BuildContext context,
+  GoRouterState state,
+  int index,
+  AuthRepository authRepository,
+  HouseholdRepository householdRepository,
+) => _page(
+  context,
+  state,
+  _Motion.tab,
+  key: const ValueKey('tabs'),
+  TabPager(
+    index: index,
+    onSettled: (i) => context.go(i == 0 ? Routes.home : Routes.notes),
+    pages: [
+      _Owned(
+        create: () => HomeViewModel(
+          listRepository: context.read(),
+          authRepository: authRepository,
+          householdRepository: householdRepository,
+          noteRepository: context.read(),
+          activityRepository: context.read(),
+        ),
+        builder: (vm) =>
+            HomeScreen(viewModel: vm, onCreateList: () => startNewList(context, context.read<ShellViewModel>())),
+      ),
+      _Owned(
+        create: () => NotesViewModel(
+          noteRepository: context.read(),
+          householdRepository: householdRepository,
+          listRepository: context.read(),
+          authRepository: authRepository,
+          activityRepository: context.read(),
+        ),
+        builder: (vm) => NotesScreen(viewModel: vm),
+      ),
+    ],
+  ),
+);
+
 SettingsViewModel _settings(BuildContext context, AuthRepository auth, HouseholdRepository household) =>
     SettingsViewModel(
       authRepository: auth,
@@ -264,13 +276,9 @@ enum _Motion {
   /// Soft fade: splash, sign-in, onboarding, the app.
   fade(Duration(milliseconds: 300)),
 
-  /// Settings: a quick fade with a slight zoom.
+  /// Settings, and Lists or Notes coming back: a quick fade with a slight
+  /// zoom.
   tab(Duration(milliseconds: 220)),
-
-  /// Lists and Notes, side by side: Lists comes in from the left, Notes
-  /// from the right, pushing the other one out.
-  tabLeft(Duration(milliseconds: 320)),
-  tabRight(Duration(milliseconds: 320)),
 
   /// One level deeper (all lists, account…): slides in from the right.
   deeper(Duration(milliseconds: 300)),
@@ -285,10 +293,10 @@ enum _Motion {
 
 /// The page for [child], on the app background so the page below doesn't
 /// show through. No animation when the phone asks for less motion.
-Page<void> _page(BuildContext context, GoRouterState state, _Motion motion, Widget child) {
+Page<void> _page(BuildContext context, GoRouterState state, _Motion motion, Widget child, {LocalKey? key}) {
   final time = MediaQuery.disableAnimationsOf(context) ? Duration.zero : motion.duration;
   return CustomTransitionPage<void>(
-    key: state.pageKey,
+    key: key ?? state.pageKey,
     transitionDuration: time,
     reverseTransitionDuration: time,
     child: ColoredBox(color: PnColors.cream, child: child),
@@ -299,14 +307,6 @@ Page<void> _page(BuildContext context, GoRouterState state, _Motion motion, Widg
         _Motion.tab => FadeTransition(
           opacity: eased,
           child: ScaleTransition(scale: Tween(begin: 0.985, end: 1.0).animate(eased), child: child),
-        ),
-        _Motion.tabLeft || _Motion.tabRight => SlideTransition(
-          // The same curve both ways, so that the two pages move together.
-          position: Tween(
-            begin: Offset(motion == _Motion.tabLeft ? -1 : 1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic)),
-          child: child,
         ),
         _Motion.deeper => FadeTransition(
           opacity: eased,

@@ -553,6 +553,20 @@ void main() {
 
   testWidgets('a swipe sideways goes from Lists to Notes and back', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
+    // Mid-swipe, both pages follow the finger, side by side.
+    final drag = await tester.startGesture(tester.getCenter(find.text('PICNOTE.')));
+    await drag.moveBy(const Offset(-40, 0));
+    await drag.moveBy(const Offset(-100, 0));
+    await tester.pump();
+    expect(find.text('PICNOTE.'), findsNWidgets(2), reason: 'each page has its header');
+    expect(find.text('Notes.'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Notes.')).dx, lessThan(390));
+    // Let go before halfway: back to Lists.
+    await drag.up();
+    await settle(tester);
+    expect(router.state.uri.path, Routes.home);
+    expect(find.text('Notes.'), findsNothing);
+
     await tester.fling(find.text('PICNOTE.'), const Offset(-300, 0), 1000);
     await settle(tester);
     expect(router.state.uri.path, Routes.notes);

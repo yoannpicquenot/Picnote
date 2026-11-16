@@ -130,18 +130,6 @@ class _AppShellState extends State<AppShell> {
     return _location.startsWith(Routes.notes) ? 1 : 0;
   }
 
-  /// On the Lists or Notes tab itself, not deeper.
-  bool get _onTabs => _location == Routes.home || _location == Routes.notes;
-
-  void _swipe(DragEndDetails details) {
-    final v = details.primaryVelocity ?? 0;
-    if (v.abs() < 300) return;
-    _setAdd(false);
-    // Towards the left: the tab on the right.
-    if (v < 0 && _location == Routes.home) context.go(Routes.notes);
-    if (v > 0 && _location == Routes.notes) context.go(Routes.home);
-  }
-
   void _setAdd(bool open) {
     if (open != _addOpen) setState(() => _addOpen = open);
   }
@@ -161,9 +149,12 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  /// The page's own vertical scroll, not a carousel or a field inside it.
+  /// The page's own vertical scroll (inside the Lists / Notes pager, one
+  /// level down), not a field inside it. A swipe between the two tabs
+  /// closes the "+" menu.
   bool _onScroll(ScrollNotification n) {
-    if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
+    if (n.depth == 0 && n.metrics.axis == Axis.horizontal && n is ScrollStartNotification) _setAdd(false);
+    if (n.depth <= 1 && n.metrics.axis == Axis.vertical) {
       final scrolled = n.metrics.pixels > 4;
       if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
     }
@@ -198,14 +189,7 @@ class _AppShellState extends State<AppShell> {
                 Positioned.fill(
                   child: NotificationListener<ScrollNotification>(
                     onNotification: _onScroll,
-                    child: BottomBarVisibility(
-                      visible: !hidden,
-                      child: GestureDetector(
-                        // A swipe sideways goes from Lists to Notes and back.
-                        onHorizontalDragEnd: _onTabs ? _swipe : null,
-                        child: widget.child,
-                      ),
-                    ),
+                    child: BottomBarVisibility(visible: !hidden, child: widget.child),
                   ),
                 ),
                 // Content scrolled up fades out under the status bar.
