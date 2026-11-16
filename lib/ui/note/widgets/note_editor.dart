@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+// ignore: implementation_imports, not exported, and the only way to keep undo to this user's own changes.
+import 'package:flutter_quill/src/document/history.dart';
 
 import '../../../domain/models/household.dart';
 import '../../../domain/models/note.dart';
@@ -40,7 +42,7 @@ class NoteEditor extends StatefulWidget {
 
 class NoteEditorState extends State<NoteEditor> {
   late final controller = _NoteController(
-    document: Document.fromDelta(blocksToDelta(widget.blocks)),
+    document: _NoteDocument.fromDelta(blocksToDelta(widget.blocks)),
     selection: const TextSelection.collapsed(offset: 0),
     newId: () => vm.newBlockId(),
     onPaste: () => _paste(),
@@ -120,6 +122,7 @@ class NoteEditorState extends State<NoteEditor> {
     // Only shown: Quill would otherwise open the keyboard, as if this user
     // had made the change. (Its ignoreFocusOnTextChange also skips redrawing.)
     controller.skipRequestKeyboard = true;
+    _composingRemote = true;
     controller.compose(
       change,
       sel.copyWith(
@@ -128,8 +131,13 @@ class NoteEditorState extends State<NoteEditor> {
       ),
       ChangeSource.remote,
     );
+    _composingRemote = false;
     controller.skipRequestKeyboard = false;
   }
+
+  /// While someone else's change goes in: the page stays where this user
+  /// scrolled it, rather than following their caret.
+  bool _composingRemote = false;
 
   final _quill = GlobalKey<QuillEditorState>();
   final _stack = GlobalKey();
@@ -258,9 +266,10 @@ class NoteEditorState extends State<NoteEditor> {
   void _selectionChanged() {
     _updateBars();
     _caretMoved();
+    final follow = !_composingRemote;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _placeOverlays();
-      _keepCaretVisible();
+      if (follow) _keepCaretVisible();
     });
   }
 
@@ -643,6 +652,18 @@ class NoteEditorState extends State<NoteEditor> {
     }
     return null;
   }
+}
+
+/// Undo and redo only take back this user's own changes: the housemate's
+/// (ChangeSource.remote) are not recorded, just shift what is recorded so
+/// that it still applies where it should.
+class _NoteDocument extends Document {
+  _NoteDocument.fromDelta(super.delta) : super.fromDelta();
+
+  final _history = History(userOnly: true);
+
+  @override
+  History get history => _history;
 }
 
 /// Copies the selection as Markdown, for other apps; [_NoteController]'s

@@ -622,6 +622,102 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
   });
 
+  testWidgets('scrolled up to watch the housemate type, the page does not jump back to this user’s caret', (
+    tester,
+  ) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final live = tester.element(find.byType(Scaffold).first).read<LiveRepository>() as LiveRepositoryLocal;
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+    // A long note, this user's caret at its end.
+    final end = editor.controller.document.length - 1;
+    final lines = List.filled(60, 'Ligne').join('\n');
+    editor.controller.replaceText(end, 0, '\n$lines', TextSelection.collapsed(offset: end + 1 + lines.length));
+    await settle(tester);
+    final page = Scrollable.of(tester.element(find.byType(NoteEditor))).position;
+    expect(page.pixels, greaterThan(0), reason: 'followed the caret down');
+
+    page.jumpTo(0);
+    await tester.pump();
+    final saved = tester.element(find.byType(NoteEditor)).read<NoteRepository>().notes.firstWhere((n) => n.id == 'mo');
+    for (final letter in ['A', 'AB', 'ABC']) {
+      live.receiveNote(
+        'mo',
+        LiveNote(
+          userId: HouseholdRepositoryLocal.partner.id,
+          title: saved.title,
+          blocks: [
+            saved.blocks.first.copyWith(text: '$letter${saved.blocks.first.text}'),
+            ...saved.blocks.skip(1),
+          ],
+          cursor: letter.length,
+        ),
+      );
+      await settle(tester);
+    }
+    expect(editor.controller.document.toPlainText(), startsWith('ABC'));
+    expect(page.pixels, 0);
+    expect(editor.controller.selection.baseOffset, end + 1 + lines.length + 3, reason: 'still at its end');
+    await tester.pump(const Duration(seconds: 4));
+  });
+
+  testWidgets('undo takes back only this user’s own changes, not the housemate’s', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final live = tester.element(find.byType(Scaffold).first).read<LiveRepository>() as LiveRepositoryLocal;
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    final notes = tester.element(find.byType(NoteEditor)).read<NoteRepository>();
+    Note saved() => notes.notes.firstWhere((n) => n.id == 'mo');
+    final first = saved().blocks.first.text;
+    // They type "M" in front of the first line, on top of what they had
+    // received of this user's changes.
+    void fromHousemate() {
+      final blocks = saved().blocks;
+      live.receiveNote(
+        'mo',
+        LiveNote(
+          userId: HouseholdRepositoryLocal.partner.id,
+          title: saved().title,
+          blocks: [
+            blocks.first.copyWith(text: 'M${blocks.first.text}'),
+            ...blocks.skip(1),
+          ],
+          cursor: 1,
+        ),
+      );
+    }
+
+    // Only the housemate typed: nothing to undo here.
+    fromHousemate();
+    await settle(tester);
+    expect(editor.controller.document.toPlainText(), startsWith('M$first'));
+    expect(editor.canUndo, isFalse);
+
+    // This user types at the end, then the housemate types again.
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+    final end = editor.controller.document.length - 1;
+    editor.controller.replaceText(end, 0, 'Y', TextSelection.collapsed(offset: end + 1));
+    await tester.pump(const Duration(seconds: 1));
+    fromHousemate();
+    await settle(tester);
+    expect(editor.controller.document.toPlainText().trimRight(), endsWith('Y'));
+    expect(editor.controller.document.toPlainText(), startsWith('MM$first'));
+
+    // Undo takes back the "Y", and leaves what the housemate typed.
+    editor.undo();
+    await settle(tester);
+    final text = editor.controller.document.toPlainText();
+    expect(text, startsWith('MM$first'));
+    expect(text.trimRight().endsWith('Y'), isFalse);
+    expect(editor.canUndo, isFalse);
+    await tester.pump(const Duration(seconds: 4));
+  });
+
   testWidgets('a checkbox in a note checks its line', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     router.go(Routes.note('mo'));
