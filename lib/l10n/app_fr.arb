@@ -806,5 +806,76 @@
         "type": "String"
       }
     }
+  },
+  "tableTitle": "Tableau.",
+  "tableRemoveColumn": "Retirer la colonne",
+  "tableRemoveRow": "Retirer la ligne",
+  "tableHeaderHint": "Titre",
+  "tableAddRow": "+ Ligne",
+  "tableAddColumn": "+ Colonne",
+  "blockTable": "Tableau",
+  "blockTableDesc": "Lignes et colonnes",
+  "blockHeadingLevel": "Titre {level}",
+  "@blockHeadingLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "formatHeading": "Titre",
+  "headingColor": "Couleur du titre",
+  "headingColorName": "{color, select, terra{Terracotta} sage{Vert} mustard{Moutarde} rose{Rouge} cocoa{Marron} grey{Gris} other{Noir}}",
+  "@headingColorName": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "formatUndo": "Annuler",
+  "formatRedo": "Rétablir",
+  "createdBy": "Créée par {name}",
+  "@createdBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "createdByYou": "Créée par toi",
+  "askAuthor": "Pour la passer en perso ou la supprimer, demande à {name}.",
+  "@askAuthor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pinToHome": "Épingler sur l’accueil",
+  "unpinFromHome": "Retirer de l’accueil",
+  "pinnedToHome": "Liste épinglée sur l’accueil",
+  "unpinnedFromHome": "Liste retirée de l’accueil",
+  "partnerEditedList": "{who} a modifié la liste « {name} »",
+  "@partnerEditedList": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "partnerEditedNote": "{who} a modifié la note « {name} »",
+  "@partnerEditedNote": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -67,5 +67,29 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(told.map((c) => (c.name, c.id, c.isNote)), [('Trip to Bergen', 'n1', true)]);
     });
+
+    test('a change to a list, by them: once per burst', () async {
+      // Shared long ago: no news on arrival.
+      await arrive(TaskList(id: 'l7', name: 'Courses', ownerId: 'yoann', createdAt: DateTime(2026)));
+      await lists.addTask('l7', 'Mien', byId: 'me');
+      await lists.addTask('l7', 'Lait', byId: 'yoann');
+      await lists.addTask('l7', 'Pain', byId: 'yoann');
+      await Future<void>.delayed(Duration.zero);
+      expect(told.map((c) => (c.author.name, c.name, c.isNote, c.edited)), [('Yoann', 'Courses', false, true)]);
+    });
+
+    test('a change to a note, by them only', () async {
+      final at = DateTime.now().subtract(const Duration(hours: 1));
+      Note old(String by, DateTime editedAt) =>
+          Note(id: 'n9', authorId: 'yoann', editedById: by, editedAt: editedAt, title: 'Voyage', isShared: true);
+      await notes.restoreNote(DeletedNote(note: old('yoann', at), index: 0));
+      await notes.updateNote(old('me', at.add(const Duration(minutes: 1))));
+      await Future<void>.delayed(Duration.zero);
+      expect(told, isEmpty);
+
+      await notes.updateNote(old('yoann', DateTime.now()));
+      await Future<void>.delayed(Duration.zero);
+      expect(told.map((c) => (c.name, c.isNote, c.edited)), [('Voyage', true, true)]);
+    });
   });
 }

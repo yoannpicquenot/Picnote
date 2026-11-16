@@ -1,7 +1,11 @@
 import 'reminder.dart';
 
 /// Kinds of block, picked by typing "/" in an empty line.
-enum NoteBlockType { text, heading, bullet, todo, link }
+enum NoteBlockType { text, heading, bullet, todo, link, table }
+
+/// What a heading can be colored in: terracotta by default, the list
+/// colors, grey, black.
+enum HeadingColor { terra, sage, mustard, rose, cocoa, grey, ink }
 
 /// Inline formatting, from the toolbar above the keyboard.
 enum InlineStyle { bold, italic, underline }
@@ -30,7 +34,12 @@ class NoteBlock {
     this.text = '',
     this.done = false,
     this.styles = const [],
+    this.level = 1,
+    this.color = HeadingColor.terra,
+    this.cells = const [],
   });
+
+  static const maxLevel = 4;
 
   final String id;
   final NoteBlockType type;
@@ -38,12 +47,32 @@ class NoteBlock {
   final bool done;
   final List<StyleRange> styles;
 
-  NoteBlock copyWith({NoteBlockType? type, String? text, bool? done, List<StyleRange>? styles}) => NoteBlock(
+  /// A heading's size, 1 (largest) to [maxLevel].
+  final int level;
+
+  /// A heading's color.
+  final HeadingColor color;
+
+  /// A table's rows, each a list of cells (all rows the same length).
+  final List<List<String>> cells;
+
+  NoteBlock copyWith({
+    NoteBlockType? type,
+    String? text,
+    bool? done,
+    List<StyleRange>? styles,
+    int? level,
+    HeadingColor? color,
+    List<List<String>>? cells,
+  }) => NoteBlock(
     id: id,
     type: type ?? this.type,
     text: text ?? this.text,
     done: done ?? this.done,
     styles: styles ?? this.styles,
+    level: level ?? this.level,
+    color: color ?? this.color,
+    cells: cells ?? this.cells,
   );
 }
 

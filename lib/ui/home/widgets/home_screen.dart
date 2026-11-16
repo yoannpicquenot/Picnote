@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
               clipBehavior: Clip.none,
               children: [
                 Positioned(
-                  right: day ? -70 : -56,
+                  right: day ? -70 : -12,
                   top: day ? 18 : 34,
                   child: Watermark(winking: _wink),
                 ),

@@ -1207,4 +1207,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String isTyping(String name) {
     return '$name is typing…';
   }
+
+  @override
+  String get tableTitle => 'Table.';
+
+  @override
+  String get tableRemoveColumn => 'Remove column';
+
+  @override
+  String get tableRemoveRow => 'Remove row';
+
+  @override
+  String get tableHeaderHint => 'Header';
+
+  @override
+  String get tableAddRow => '+ Row';
+
+  @override
+  String get tableAddColumn => '+ Column';
+
+  @override
+  String get blockTable => 'Table';
+
+  @override
+  String get blockTableDesc => 'Rows and columns';
+
+  @override
+  String blockHeadingLevel(int level) {
+    return 'Heading $level';
+  }
+
+  @override
+  String get formatHeading => 'Heading';
+
+  @override
+  String get headingColor => 'Heading color';
+
+  @override
+  String headingColorName(String color) {
+    String _temp0 = intl.Intl.selectLogic(color, {
+      'terra': 'Terracotta',
+      'sage': 'Green',
+      'mustard': 'Mustard',
+      'rose': 'Red',
+      'cocoa': 'Brown',
+      'grey': 'Grey',
+      'other': 'Black',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get formatUndo => 'Undo';
+
+  @override
+  String get formatRedo => 'Redo';
+
+  @override
+  String createdBy(String name) {
+    return 'Created by $name';
+  }
+
+  @override
+  String get createdByYou => 'Created by you';
+
+  @override
+  String askAuthor(String name) {
+    return 'To make it personal or delete it, ask $name.';
+  }
+
+  @override
+  String get pinToHome => 'Pin to home';
+
+  @override
+  String get unpinFromHome => 'Remove from home';
+
+  @override
+  String get pinnedToHome => 'List pinned to home';
+
+  @override
+  String get unpinnedFromHome => 'List removed from home';
+
+  @override
+  String partnerEditedList(String who, String name) {
+    return '$who edited the list “$name”';
+  }
+
+  @override
+  String partnerEditedNote(String who, String name) {
+    return '$who edited the note “$name”';
+  }
 }

@@ -41,14 +41,10 @@ void main() {
     });
   });
 
-  test('a new list is pinned while home has room', () async {
-    final lists = FakeListRepository(lists: manyLists(3, pinned: 3));
-
-    final fourth = await lists.createList(const TaskList(id: '', name: 'Quatre'));
-    final fifth = await lists.createList(const TaskList(id: '', name: 'Cinq'));
-
-    expect(lists.lists.firstWhere((l) => l.name == 'Quatre').pinned, isTrue);
-    expect(lists.lists.firstWhere((l) => l.name == 'Cinq').pinned, isFalse);
-    expect([fourth, fifth], everyElement(isNotNull));
+  test('a new list is not pinned: that is done from its menu', () async {
+    final lists = FakeListRepository(lists: manyLists(1, pinned: 1));
+    final created = await lists.createList(const TaskList(id: '', name: 'Deux'));
+    expect(lists.lists.firstWhere((l) => l.name == 'Deux').pinned, isFalse);
+    expect(created, isNotNull);
   });
 }

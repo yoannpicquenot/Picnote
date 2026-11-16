@@ -67,7 +67,7 @@ class _WatermarkState extends State<Watermark> with SingleTickerProviderStateMix
             duration: const Duration(milliseconds: 600),
             switchInCurve: Curves.easeOutBack,
             transitionBuilder: (c, a) => ScaleTransition(scale: a, child: c),
-            child: Face(mood, key: ValueKey(mood), height: day ? 170 : 140),
+            child: Face(mood, key: ValueKey(mood), height: day ? 170 : 120),
           ),
         ),
       ),

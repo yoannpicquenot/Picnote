@@ -287,26 +287,12 @@ class _NoteSheetState extends State<NoteSheet> {
       title: l10n.newNoteTitle,
       footer: PnButton(label: l10n.createNote, onPressed: _submit),
       children: [
-        Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(16)),
-              child: const PnIcon(PnIcons.document, color: PnColors.terraDark, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: PnTextField(
-                controller: _title,
-                hint: l10n.titleOptional,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                onSubmitted: (_) => _submit(),
-              ),
-            ),
-          ],
+        PnTextField(
+          controller: _title,
+          hint: l10n.titleOptional,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (_) => _submit(),
         ),
         if (widget.partnerName != null)
           VisibilityPicker(

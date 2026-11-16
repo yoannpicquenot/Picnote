@@ -157,11 +157,15 @@ class _CodeBoxesState extends State<CodeBoxes> {
     super.dispose();
   }
 
+  /// The code in [raw]. Pasted over what was there, or with words around
+  /// it ("Ton code : 123456"), a run of exactly 6 characters wins.
   String _clean(String raw) {
-    final chars = widget.alphanumeric
-        ? raw.toUpperCase().split('').where(CodeBoxes.inviteAlphabet.contains)
-        : raw.split('').where((c) => c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57);
-    return chars.take(6).join();
+    final text = widget.alphanumeric ? raw.toUpperCase() : raw;
+    final char = widget.alphanumeric ? '[${CodeBoxes.inviteAlphabet}]' : '[0-9]';
+    final chars = RegExp(char).allMatches(text).map((m) => m[0]!).toList();
+    if (chars.length <= 6) return chars.join();
+    final exact = RegExp('(?<!$char)$char{6}(?!$char)').firstMatch(text);
+    return exact?[0] ?? chars.take(6).join();
   }
 
   @override
@@ -193,13 +197,23 @@ class _CodeBoxesState extends State<CodeBoxes> {
                 autofocus: widget.autofocus,
                 readOnly: busy || locked,
                 showCursor: false,
-                enableInteractiveSelection: false,
+                // A long press offers Paste, for a code copied from the e-mail.
+                enableInteractiveSelection: true,
+                contextMenuBuilder: (context, state) => AdaptiveTextSelectionToolbar.buttonItems(
+                  anchors: state.contextMenuAnchors,
+                  buttonItems: state.contextMenuButtonItems
+                      .where((b) => b.type == ContextMenuButtonType.paste)
+                      .toList(),
+                ),
                 keyboardType: widget.alphanumeric ? TextInputType.visiblePassword : TextInputType.number,
                 textCapitalization: widget.alphanumeric ? TextCapitalization.characters : TextCapitalization.none,
                 autofillHints: widget.alphanumeric ? null : const [AutofillHints.oneTimeCode],
                 decoration: InputDecoration(border: InputBorder.none, labelText: widget.label),
                 onChanged: (raw) {
-                  final v = _clean(raw);
+                  // A whole code pasted after a started one replaces it.
+                  final added = raw.startsWith(widget.value) ? raw.substring(widget.value.length) : '';
+                  final pasted = _clean(added);
+                  final v = pasted.length == 6 ? pasted : _clean(raw);
                   if (v != raw) {
                     _controller.value = TextEditingValue(
                       text: v,

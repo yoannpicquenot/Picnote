@@ -1213,4 +1213,94 @@ class AppLocalizationsFr extends AppLocalizations {
   String isTyping(String name) {
     return '$name écrit…';
   }
+
+  @override
+  String get tableTitle => 'Tableau.';
+
+  @override
+  String get tableRemoveColumn => 'Retirer la colonne';
+
+  @override
+  String get tableRemoveRow => 'Retirer la ligne';
+
+  @override
+  String get tableHeaderHint => 'Titre';
+
+  @override
+  String get tableAddRow => '+ Ligne';
+
+  @override
+  String get tableAddColumn => '+ Colonne';
+
+  @override
+  String get blockTable => 'Tableau';
+
+  @override
+  String get blockTableDesc => 'Lignes et colonnes';
+
+  @override
+  String blockHeadingLevel(int level) {
+    return 'Titre $level';
+  }
+
+  @override
+  String get formatHeading => 'Titre';
+
+  @override
+  String get headingColor => 'Couleur du titre';
+
+  @override
+  String headingColorName(String color) {
+    String _temp0 = intl.Intl.selectLogic(color, {
+      'terra': 'Terracotta',
+      'sage': 'Vert',
+      'mustard': 'Moutarde',
+      'rose': 'Rouge',
+      'cocoa': 'Marron',
+      'grey': 'Gris',
+      'other': 'Noir',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get formatUndo => 'Annuler';
+
+  @override
+  String get formatRedo => 'Rétablir';
+
+  @override
+  String createdBy(String name) {
+    return 'Créée par $name';
+  }
+
+  @override
+  String get createdByYou => 'Créée par toi';
+
+  @override
+  String askAuthor(String name) {
+    return 'Pour la passer en perso ou la supprimer, demande à $name.';
+  }
+
+  @override
+  String get pinToHome => 'Épingler sur l’accueil';
+
+  @override
+  String get unpinFromHome => 'Retirer de l’accueil';
+
+  @override
+  String get pinnedToHome => 'Liste épinglée sur l’accueil';
+
+  @override
+  String get unpinnedFromHome => 'Liste retirée de l’accueil';
+
+  @override
+  String partnerEditedList(String who, String name) {
+    return '$who a modifié la liste « $name »';
+  }
+
+  @override
+  String partnerEditedNote(String who, String name) {
+    return '$who a modifié la note « $name »';
+  }
 }

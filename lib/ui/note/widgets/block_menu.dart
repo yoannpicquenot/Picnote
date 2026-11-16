@@ -5,6 +5,9 @@ import '../../../l10n/app_localizations.dart';
 import '../../core/themes/colors.dart';
 import '../../core/ui/pn_icon.dart';
 
+/// A "/" menu pick: the kind of line, and a heading's level.
+typedef BlockPick = void Function(NoteBlockType type, {int level});
+
 /// The "/" menu, above the keyboard: the kinds of line whose name contains
 /// what was typed after the "/". Links need no block: an address typed or
 /// pasted becomes a link on its own.
@@ -12,7 +15,7 @@ class BlockMenu extends StatelessWidget {
   const BlockMenu({super.key, required this.query, required this.onPick});
 
   final String query;
-  final ValueChanged<NoteBlockType> onPick;
+  final BlockPick onPick;
 
   @override
   Widget build(BuildContext context) {
@@ -23,52 +26,55 @@ class BlockMenu extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
         padding: const EdgeInsets.all(6),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.4),
         decoration: BoxDecoration(
           color: PnColors.snow,
           borderRadius: BorderRadius.circular(18),
           boxShadow: const [BoxShadow(color: Color(0x2E583727), blurRadius: 40, offset: Offset(0, 8))],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final k in kinds)
-              InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => onPick(k.type),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(10)),
-                        child: k.icon,
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            k.label,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: PnColors.ink),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(k.description, style: const TextStyle(fontSize: 12, color: PnColors.muted)),
-                        ],
-                      ),
-                    ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final k in kinds)
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => onPick(k.type, level: k.level),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(10)),
+                          child: k.icon,
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              k.label,
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: PnColors.ink),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(k.description, style: const TextStyle(fontSize: 12, color: PnColors.muted)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            if (kinds.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                child: Text(l10n.noBlockNamed(query), style: const TextStyle(fontSize: 13, color: PnColors.muted)),
-              ),
-          ],
+              if (kinds.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Text(l10n.noBlockNamed(query), style: const TextStyle(fontSize: 13, color: PnColors.muted)),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -76,12 +82,13 @@ class BlockMenu extends StatelessWidget {
 }
 
 class _BlockKind {
-  const _BlockKind(this.type, this.label, this.description, this.icon);
+  const _BlockKind(this.type, this.label, this.description, this.icon, {this.level = 1});
 
   final NoteBlockType type;
   final String label;
   final String description;
   final Widget icon;
+  final int level;
 
   static List<_BlockKind> all(AppLocalizations l10n) {
     const c = PnColors.terraDark;
@@ -92,12 +99,19 @@ class _BlockKind {
         l10n.blockTextDesc,
         const PnIcon(PnIcons.text, size: 18, color: c),
       ),
-      _BlockKind(
-        NoteBlockType.heading,
-        l10n.blockHeading,
-        l10n.blockHeadingDesc,
-        const PnIcon(PnIcons.heading, size: 18, color: c),
-      ),
+      for (var level = 1; level <= NoteBlock.maxLevel; level++)
+        _BlockKind(
+          NoteBlockType.heading,
+          l10n.blockHeadingLevel(level),
+          l10n.blockHeadingDesc,
+          level == 1
+              ? const PnIcon(PnIcons.heading, size: 18, color: c)
+              : Text(
+                  'H$level',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: c),
+                ),
+          level: level,
+        ),
       _BlockKind(
         NoteBlockType.bullet,
         l10n.blockBullet,
@@ -109,6 +123,12 @@ class _BlockKind {
         l10n.blockCheckbox,
         l10n.blockCheckboxDesc,
         const PnIcon(PnIcons.checkbox, color: c, size: 18),
+      ),
+      _BlockKind(
+        NoteBlockType.table,
+        l10n.blockTable,
+        l10n.blockTableDesc,
+        const Icon(Icons.table_chart_outlined, color: c, size: 18),
       ),
     ];
   }

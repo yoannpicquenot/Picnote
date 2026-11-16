@@ -176,6 +176,8 @@ class _ListScreenState extends State<ListScreen> {
         members: vm.members,
         shared: list.isShared,
         theme: ListTheme.of(list.color),
+        creatorId: list.ownerId,
+        pinned: list.pinned,
       ),
     );
     if (!mounted) return;
@@ -184,10 +186,28 @@ class _ListScreenState extends State<ListScreen> {
         await _askShare(vm.list ?? list);
       case ItemMenuAction.invite:
         await showInviteSheet(context);
+      case ItemMenuAction.togglePin:
+        await _togglePin(vm.list ?? list);
       case ItemMenuAction.delete:
         await _deleteList();
       case null:
         break;
+    }
+  }
+
+  /// Home full: all lists, in edit mode, to make room; done there, back
+  /// here.
+  Future<void> _togglePin(TaskList list) async {
+    final l10n = AppLocalizations.of(context);
+    if (list.pinned) {
+      await vm.setPinned(false);
+      if (mounted) showToast(context, l10n.unpinnedFromHome);
+    } else if (vm.homeFull) {
+      showToast(context, l10n.homeFull);
+      await context.push(Routes.editLists(returnTo: list.id));
+    } else {
+      await vm.setPinned(true);
+      if (mounted) showToast(context, l10n.pinnedToHome);
     }
   }
 

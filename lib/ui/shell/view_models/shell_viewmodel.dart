@@ -11,13 +11,13 @@ import '../../../domain/models/household.dart';
 import '../../../domain/models/task_list.dart';
 import '../../../utils/result.dart';
 
-/// A list or a note the housemate just created.
-typedef Creation = ({Member author, String name, String id, bool isNote});
+/// A list or a note the housemate just created, or [edited].
+typedef Creation = ({Member author, String name, String id, bool isNote, bool edited});
 
 /// The bottom bar's "+" creates a list or a note. Also notices when a
 /// pinned list gets done, to offer unpinning it, clears yesterday's
-/// checked tasks at midnight, and tells when the housemate creates a list
-/// or a note.
+/// checked tasks at midnight, and tells when the housemate creates or
+/// changes a list or a note.
 class ShellViewModel extends ChangeNotifier {
   ShellViewModel({
     required this._authRepository,
@@ -89,6 +89,7 @@ class ShellViewModel extends ChangeNotifier {
   Stream<Creation> get partnerCreated => _created.stream;
 
   void _checkNew() {
+    _checkEdits();
     // Older ones were there before: a first load, not news.
     final recent = DateTime.now().subtract(const Duration(minutes: 5));
     for (final list in _listRepository.lists) {
@@ -113,10 +114,50 @@ class ShellViewModel extends ChangeNotifier {
     _blank.removeWhere((id) => !notes.any((n) => n.id == id));
   }
 
-  void _tell(String? authorId, String name, String id, {required bool isNote}) {
+  void _tell(String? authorId, String name, String id, {required bool isNote, bool edited = false}) {
     if (authorId == null || authorId == _meId) return;
     final author = _householdRepository.household?.member(authorId);
-    if (author != null) _created.add((author: author, name: name, id: id, isNote: isNote));
+    if (author == null) return;
+    // One word per burst of changes: typing a note saves it again and again.
+    final now = DateTime.now();
+    final told = _toldAt[id];
+    if (edited && told != null && now.difference(told) < quietAfterTelling) return;
+    _toldAt[id] = now;
+    _created.add((author: author, name: name, id: id, isNote: isNote, edited: edited));
+  }
+
+  /// After telling about a list or a note, its next changes go untold for
+  /// this long.
+  static const quietAfterTelling = Duration(minutes: 2);
+  final Map<String, DateTime> _toldAt = {};
+
+  /// When each note was last edited, as last seen.
+  final Map<String, DateTime> _noteEdits = {};
+
+  /// Each task's title and check, as last seen, and the lists seen so far:
+  /// a task in a list seen before is new, the others come with their list.
+  final Map<String, (String, bool)> _tasks = {};
+  final Set<String> _listsSeen = {};
+
+  void _checkEdits() {
+    for (final note in _noteRepository.notes) {
+      final was = _noteEdits[note.id];
+      _noteEdits[note.id] = note.editedAt;
+      if (was == null || !note.editedAt.isAfter(was) || note.isBlank) continue;
+      // A blank note just given its title is a creation, told as such.
+      if (_blank.contains(note.id)) continue;
+      _tell(note.editedById, note.title, note.id, isNote: true, edited: true);
+    }
+    final lists = {for (final l in _listRepository.lists) l.id: l};
+    for (final task in _listRepository.tasks) {
+      final was = _tasks[task.id];
+      final now = (task.title, task.done);
+      _tasks[task.id] = now;
+      final changed = was == null ? _listsSeen.contains(task.listId) : was != now;
+      final list = lists[task.listId];
+      if (changed && list != null) _tell(task.byId, list.name, list.id, isNote: false, edited: true);
+    }
+    _listsSeen.addAll(lists.keys);
   }
 
   Future<void> unpin(TaskList list) async {

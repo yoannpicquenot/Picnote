@@ -183,7 +183,8 @@ class StrikeTitle extends StatelessWidget {
       children: [
         AnimatedDefaultTextStyle(
           duration: const Duration(milliseconds: 220),
-          style: PnText.body.copyWith(color: done ? PnColors.muted : color),
+          // Replaces the inherited style, font family included.
+          style: PnText.body.copyWith(fontFamily: PnFonts.body, color: done ? PnColors.muted : color),
           child: Text(text),
         ),
         Positioned.fill(

@@ -2083,6 +2083,144 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{name} écrit…'**
   String isTyping(String name);
+
+  /// No description provided for @tableTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tableau.'**
+  String get tableTitle;
+
+  /// No description provided for @tableRemoveColumn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer la colonne'**
+  String get tableRemoveColumn;
+
+  /// No description provided for @tableRemoveRow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer la ligne'**
+  String get tableRemoveRow;
+
+  /// No description provided for @tableHeaderHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre'**
+  String get tableHeaderHint;
+
+  /// No description provided for @tableAddRow.
+  ///
+  /// In fr, this message translates to:
+  /// **'+ Ligne'**
+  String get tableAddRow;
+
+  /// No description provided for @tableAddColumn.
+  ///
+  /// In fr, this message translates to:
+  /// **'+ Colonne'**
+  String get tableAddColumn;
+
+  /// No description provided for @blockTable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tableau'**
+  String get blockTable;
+
+  /// No description provided for @blockTableDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lignes et colonnes'**
+  String get blockTableDesc;
+
+  /// No description provided for @blockHeadingLevel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre {level}'**
+  String blockHeadingLevel(int level);
+
+  /// No description provided for @formatHeading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre'**
+  String get formatHeading;
+
+  /// No description provided for @headingColor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Couleur du titre'**
+  String get headingColor;
+
+  /// No description provided for @headingColorName.
+  ///
+  /// In fr, this message translates to:
+  /// **'{color, select, terra{Terracotta} sage{Vert} mustard{Moutarde} rose{Rouge} cocoa{Marron} grey{Gris} other{Noir}}'**
+  String headingColorName(String color);
+
+  /// No description provided for @formatUndo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler'**
+  String get formatUndo;
+
+  /// No description provided for @formatRedo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rétablir'**
+  String get formatRedo;
+
+  /// No description provided for @createdBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créée par {name}'**
+  String createdBy(String name);
+
+  /// No description provided for @createdByYou.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créée par toi'**
+  String get createdByYou;
+
+  /// No description provided for @askAuthor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour la passer en perso ou la supprimer, demande à {name}.'**
+  String askAuthor(String name);
+
+  /// No description provided for @pinToHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épingler sur l’accueil'**
+  String get pinToHome;
+
+  /// No description provided for @unpinFromHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer de l’accueil'**
+  String get unpinFromHome;
+
+  /// No description provided for @pinnedToHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liste épinglée sur l’accueil'**
+  String get pinnedToHome;
+
+  /// No description provided for @unpinnedFromHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liste retirée de l’accueil'**
+  String get unpinnedFromHome;
+
+  /// No description provided for @partnerEditedList.
+  ///
+  /// In fr, this message translates to:
+  /// **'{who} a modifié la liste « {name} »'**
+  String partnerEditedList(String who, String name);
+
+  /// No description provided for @partnerEditedNote.
+  ///
+  /// In fr, this message translates to:
+  /// **'{who} a modifié la note « {name} »'**
+  String partnerEditedNote(String who, String name);
 }
 
 class _AppLocalizationsDelegate

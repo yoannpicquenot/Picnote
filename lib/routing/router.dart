@@ -104,7 +104,7 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
               pageBuilder: (context, state) => _page(
                 context,
                 state,
-                _Motion.tab,
+                _Motion.tabLeft,
                 _Owned(
                   create: () => HomeViewModel(
                     listRepository: context.read(),
@@ -127,9 +127,12 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
                 state,
                 _Motion.deeper,
                 _Owned(
-                  create: () =>
-                      AllListsViewModel(listRepository: context.read(), householdRepository: householdRepository),
-                  builder: (vm) => AllListsScreen(viewModel: vm),
+                  create: () => AllListsViewModel(
+                    listRepository: context.read(),
+                    householdRepository: householdRepository,
+                    editing: state.uri.queryParameters['edit'] == '1',
+                  ),
+                  builder: (vm) => AllListsScreen(viewModel: vm, returnTo: state.uri.queryParameters['back']),
                 ),
               ),
             ),
@@ -165,7 +168,7 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
               pageBuilder: (context, state) => _page(
                 context,
                 state,
-                _Motion.tab,
+                _Motion.tabRight,
                 _Owned(
                   create: () => NotesViewModel(
                     noteRepository: context.read(),
@@ -261,8 +264,13 @@ enum _Motion {
   /// Soft fade: splash, sign-in, onboarding, the app.
   fade(Duration(milliseconds: 300)),
 
-  /// Lists, Notes, Settings: a quick fade with a slight zoom.
+  /// Settings: a quick fade with a slight zoom.
   tab(Duration(milliseconds: 220)),
+
+  /// Lists and Notes, side by side: Lists comes in from the left, Notes
+  /// from the right, pushing the other one out.
+  tabLeft(Duration(milliseconds: 320)),
+  tabRight(Duration(milliseconds: 320)),
 
   /// One level deeper (all lists, account…): slides in from the right.
   deeper(Duration(milliseconds: 300)),
@@ -291,6 +299,14 @@ Page<void> _page(BuildContext context, GoRouterState state, _Motion motion, Widg
         _Motion.tab => FadeTransition(
           opacity: eased,
           child: ScaleTransition(scale: Tween(begin: 0.985, end: 1.0).animate(eased), child: child),
+        ),
+        _Motion.tabLeft || _Motion.tabRight => SlideTransition(
+          // The same curve both ways, so that the two pages move together.
+          position: Tween(
+            begin: Offset(motion == _Motion.tabLeft ? -1 : 1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic)),
+          child: child,
         ),
         _Motion.deeper => FadeTransition(
           opacity: eased,

@@ -124,6 +124,7 @@ class _NoteScreenState extends State<NoteScreen> {
         members: vm.members,
         shared: note.isShared,
         theme: ListTheme.app,
+        creatorId: note.authorId,
         canShare: vm.canUnshareOrDelete,
         canDelete: vm.canUnshareOrDelete,
       ),
@@ -136,7 +137,8 @@ class _NoteScreenState extends State<NoteScreen> {
         await showInviteSheet(context);
       case ItemMenuAction.delete:
         await _delete();
-      case null:
+      // Notes have no pin.
+      case ItemMenuAction.togglePin || null:
         break;
     }
   }
@@ -286,11 +288,7 @@ class _NoteScreenState extends State<NoteScreen> {
                       return BlockMenu(query: query, onPick: editor.pickBlock);
                     }
                     if (!bars.format) return const SizedBox.shrink();
-                    return FormatBar(
-                      selection: editor.controller,
-                      isActive: editor.isActive,
-                      onToggle: editor.toggleStyle,
-                    );
+                    return FormatBar(editor: editor);
                   },
                 ),
               ),

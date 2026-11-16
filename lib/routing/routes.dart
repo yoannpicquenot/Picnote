@@ -11,5 +11,8 @@ abstract final class Routes {
 
   static String list(String id) => '/lists/$id';
 
+  /// All lists in edit mode; [returnTo] is the list to go back to once done.
+  static String editLists({required String returnTo}) => '$lists?edit=1&back=$returnTo';
+
   static String note(String id) => '/notes/$id';
 }

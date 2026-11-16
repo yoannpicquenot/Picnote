@@ -15,6 +15,9 @@ import 'package:picnote/routing/routes.dart';
 import 'package:picnote/ui/core/ui/buttons.dart';
 import 'package:picnote/ui/core/ui/controls.dart';
 import 'package:picnote/ui/core/ui/list_sheet.dart';
+import 'package:picnote/ui/core/ui/selection_handles.dart';
+import 'package:picnote/ui/all_lists/widgets/all_lists_screen.dart';
+import 'package:picnote/ui/list/widgets/list_screen.dart';
 import 'package:picnote/ui/core/ui/sheet.dart';
 import 'package:picnote/ui/core/ui/task_row.dart';
 import 'package:picnote/ui/note/widgets/format_bar.dart';
@@ -386,7 +389,7 @@ void main() {
     await settle(tester);
     expect(find.byType(FormatBar), findsOneWidget);
 
-    await tester.tap(find.text('B'));
+    await tester.tap(find.byIcon(Icons.format_bold_rounded));
     await settle(tester);
     List<NoteBlock> saved() =>
         tester.element(find.byType(NoteEditor)).read<NoteRepository>().notes.firstWhere((n) => n.id == 'mo').blocks;
@@ -397,7 +400,7 @@ void main() {
     expect(saved().map((b) => b.type), [NoteBlockType.text, NoteBlockType.todo, NoteBlockType.todo]);
 
     // A second tap takes it off.
-    await tester.tap(find.text('B'));
+    await tester.tap(find.byIcon(Icons.format_bold_rounded));
     await settle(tester);
     expect(saved().every((b) => b.styles.isEmpty), isTrue);
 
@@ -406,10 +409,10 @@ void main() {
     editor.controller.updateSelection(const TextSelection.collapsed(offset: 3), ChangeSource.local);
     await settle(tester);
     expect(find.byType(FormatBar), findsOneWidget);
-    await tester.tap(find.text('B'));
+    await tester.tap(find.byIcon(Icons.format_bold_rounded));
     await settle(tester);
     editor.controller.replaceText(3, 0, 'gras', const TextSelection.collapsed(offset: 7));
-    await tester.tap(find.text('B'));
+    await tester.tap(find.byIcon(Icons.format_bold_rounded));
     await settle(tester);
     editor.controller.replaceText(7, 0, 'fin', const TextSelection.collapsed(offset: 10));
     await settle(tester);
@@ -457,6 +460,34 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
   });
 
+  testWidgets('typing in a note too, the housemate’s typing comes in once this user pauses', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final live = tester.element(find.byType(Scaffold).first).read<LiveRepository>() as LiveRepositoryLocal;
+    final yoann = HouseholdRepositoryLocal.partner;
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+    editor.controller.replaceText(0, 0, 'A', const TextSelection.collapsed(offset: 1));
+    final mine = editor.controller.document.toPlainText();
+
+    live.receiveNote(
+      'mo',
+      LiveNote(
+        userId: yoann.id,
+        title: 'Papiers moto',
+        blocks: const [NoteBlock(id: 'x', text: 'Carte grise')],
+        cursor: 5,
+      ),
+    );
+    await tester.pump();
+    expect(editor.controller.document.toPlainText(), mine, reason: 'not while this user types');
+    await tester.pump(const Duration(seconds: 1));
+    expect(editor.controller.document.toPlainText(), 'Carte grise\n');
+    await tester.pump(const Duration(seconds: 4));
+  });
+
   testWidgets('"/" on a new line opens the block menu, which turns the line into a heading', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     router.go(Routes.note('mo'));
@@ -473,7 +504,7 @@ void main() {
     expect(find.byType(BlockMenu), findsOneWidget);
     expect(find.text('Liste à puces'), findsNothing, reason: 'filtered by what follows the "/"');
 
-    await tester.tap(find.text('Titre'));
+    await tester.tap(find.text('Titre 2'));
     await settle(tester);
     expect(find.byType(BlockMenu), findsNothing);
     final blocks = tester
@@ -483,7 +514,112 @@ void main() {
         .firstWhere((n) => n.id == 'mo')
         .blocks;
     expect(blocks.last.type, NoteBlockType.heading);
+    expect(blocks.last.level, 2);
     expect(blocks.last.text, isEmpty);
+  });
+
+  testWidgets('"- " at the start of a line makes it a bullet', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+
+    final end = editor.controller.document.length - 1;
+    editor.controller.replaceText(end, 0, '\n', TextSelection.collapsed(offset: end + 1));
+    editor.pickBlock(NoteBlockType.text);
+    editor.controller.replaceText(end + 1, 0, '- ', TextSelection.collapsed(offset: end + 3));
+    await settle(tester);
+    editor.controller.replaceText(end + 1, 0, 'Pain', TextSelection.collapsed(offset: end + 5));
+    await settle(tester);
+    final blocks = tester
+        .element(find.byType(NoteEditor))
+        .read<NoteRepository>()
+        .notes
+        .firstWhere((n) => n.id == 'mo')
+        .blocks;
+    expect((blocks.last.type, blocks.last.text), (NoteBlockType.bullet, 'Pain'));
+  });
+
+  testWidgets('Android back on the notes tab goes home instead of leaving', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.notes);
+    await settle(tester);
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(router.state.uri.path, Routes.home);
+  });
+
+  testWidgets('a swipe sideways goes from Lists to Notes and back', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    await tester.fling(find.text('PICNOTE.'), const Offset(-300, 0), 1000);
+    await settle(tester);
+    expect(router.state.uri.path, Routes.notes);
+    await tester.fling(find.text('PICNOTE.'), const Offset(300, 0), 1000);
+    await settle(tester);
+    expect(router.state.uri.path, Routes.home);
+  });
+
+  testWidgets('home full: pinning a list goes to all lists to make room, then back to the list', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.list('b'));
+    await settle(tester);
+    await tester.tap(labeled('Options de la liste'));
+    await settle(tester);
+    await tester.tap(find.text('Épingler sur l’accueil'));
+    await settle(tester);
+    expect(find.byType(AllListsScreen), findsOneWidget);
+    expect(find.text('OK'), findsOneWidget, reason: 'in edit mode');
+
+    await tester.tap(find.text('OK'));
+    await settle(tester);
+    expect(find.byType(AllListsScreen), findsNothing);
+    expect(find.byType(ListScreen), findsOneWidget);
+  });
+
+  testWidgets('Android back on home stays there', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    expect(await tester.binding.handlePopRoute(), isTrue, reason: 'handled: the app stays open');
+    await settle(tester);
+    expect(router.state.uri.path, Routes.home);
+  });
+
+  testWidgets('the caret has a handle to slide it along', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tapAt(tester.getTopLeft(find.byType(QuillEditor)) + const Offset(10, 10));
+    await settle(tester);
+    expect(find.byType(CaretHandle), findsOneWidget);
+    final before = editor.controller.selection.baseOffset;
+
+    await tester.drag(find.byType(CaretHandle), const Offset(120, 0));
+    await settle(tester);
+    expect(editor.controller.selection.isCollapsed, isTrue);
+    expect(editor.controller.selection.baseOffset, greaterThan(before));
+  });
+
+  testWidgets('the housemate typing does not open the keyboard here', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final live = tester.element(find.byType(Scaffold).first).read<LiveRepository>() as LiveRepositoryLocal;
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    live.receiveNote(
+      'mo',
+      LiveNote(
+        userId: HouseholdRepositoryLocal.partner.id,
+        title: 'Papiers moto',
+        blocks: const [NoteBlock(id: 'x', text: 'Carte grise')],
+        cursor: 5,
+      ),
+    );
+    await settle(tester);
+    expect(find.textContaining('Carte grise', findRichText: true), findsOneWidget);
+    expect(tester.testTextInput.isVisible, isFalse);
+    expect(FocusManager.instance.primaryFocus?.context?.findAncestorWidgetOfExactType<QuillEditor>(), isNull);
+    await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets('a checkbox in a note checks its line', (tester) async {

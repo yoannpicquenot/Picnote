@@ -17,9 +17,21 @@ import '../../core/ui/toast.dart';
 import '../view_models/all_lists_viewmodel.dart';
 
 class AllListsScreen extends StatelessWidget {
-  const AllListsScreen({super.key, required this.viewModel});
+  const AllListsScreen({super.key, required this.viewModel, this.returnTo});
 
   final AllListsViewModel viewModel;
+
+  /// Opened from a list to make room on home: "OK" goes back to it.
+  final String? returnTo;
+
+  void _toggleEditing(BuildContext context) {
+    final back = returnTo;
+    if (viewModel.editing && back != null) {
+      context.canPop() ? context.pop() : context.go(Routes.list(back));
+      return;
+    }
+    viewModel.toggleEditing();
+  }
 
   Future<void> _delete(BuildContext context, TaskList list) async {
     final l10n = AppLocalizations.of(context);
@@ -66,7 +78,7 @@ class AllListsScreen extends StatelessWidget {
                     ),
                     const Spacer(),
                     Pressable(
-                      onTap: vm.toggleEditing,
+                      onTap: () => _toggleEditing(context),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 160),
                         height: 36,

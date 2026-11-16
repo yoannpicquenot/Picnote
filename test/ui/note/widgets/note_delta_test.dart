@@ -15,6 +15,16 @@ void main() {
     NoteBlock(id: 'b5', type: NoteBlockType.todo, text: 'Adaptateur'),
     NoteBlock(id: 'b6', type: NoteBlockType.link, text: 'airbnb.com/rooms/1'),
     NoteBlock(id: 'b7'),
+    NoteBlock(id: 'b8', type: NoteBlockType.heading, text: 'Budget', level: 3, color: HeadingColor.sage),
+    NoteBlock(
+      id: 'b9',
+      type: NoteBlockType.table,
+      cells: [
+        ['Quoi', 'Prix'],
+        ['Train', '120 €'],
+      ],
+    ),
+    NoteBlock(id: 'b10', text: 'Fin'),
   ];
 
   test('every kind of block survives a trip through the editor', () {
@@ -34,6 +44,17 @@ void main() {
     final back = deltaToBlocks(doc.toDelta(), blocks.take(2).toList(), newId);
     expect(back.map((b) => b.id), ['b1', 'b2', startsWith('new')]);
     expect(back.last.text, 'Encore');
+  });
+
+  test('a heading keeps its level and color, a table its cells', () {
+    final back = deltaToBlocks(Document.fromDelta(blocksToDelta(blocks)).toDelta(), blocks, newId);
+    final heading = back.firstWhere((b) => b.id == 'b8');
+    expect((heading.level, heading.color), (3, HeadingColor.sage));
+    expect(back.firstWhere((b) => b.id == 'b9').cells, [
+      ['Quoi', 'Prix'],
+      ['Train', '120 €'],
+    ]);
+    expect(back.last.text, 'Fin');
   });
 
   test('an empty note is one empty line', () {

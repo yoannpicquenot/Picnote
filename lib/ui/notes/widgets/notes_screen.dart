@@ -58,7 +58,7 @@ class _NotesScreenState extends State<NotesScreen> {
               clipBehavior: Clip.none,
               children: [
                 Positioned(
-                  right: day ? -70 : -56,
+                  right: day ? -70 : -12,
                   top: day ? 18 : 34,
                   child: Watermark(winking: _wink),
                 ),

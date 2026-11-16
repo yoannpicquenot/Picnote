@@ -95,18 +95,26 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  /// The housemate created a list or a note: say so, with a way to open it.
+  /// The housemate created or changed a list or a note: say so, with a way
+  /// to open it, unless it is open already.
   void _tellCreated(Creation created) {
     if (!mounted) return;
+    final route = created.isNote ? Routes.note(created.id) : Routes.list(created.id);
+    if (created.edited && _location == route) return;
     final l10n = AppLocalizations.of(context);
     final name = created.name.trim().isEmpty ? l10n.untitled : created.name;
     final who = created.author.name;
     showToast(
       context,
-      created.isNote ? l10n.partnerCreatedNote(who, name) : l10n.partnerCreatedList(who, name),
+      switch ((created.isNote, created.edited)) {
+        (true, false) => l10n.partnerCreatedNote(who, name),
+        (false, false) => l10n.partnerCreatedList(who, name),
+        (true, true) => l10n.partnerEditedNote(who, name),
+        (false, true) => l10n.partnerEditedList(who, name),
+      },
       from: created.author,
       action: l10n.see,
-      onUndo: () => context.go(created.isNote ? Routes.note(created.id) : Routes.list(created.id)),
+      onUndo: () => context.go(route),
       aboveBar: !_barHidden,
     );
   }
@@ -120,6 +128,18 @@ class _AppShellState extends State<AppShell> {
   int get _tab {
     if (_location.startsWith(Routes.settings)) return -1;
     return _location.startsWith(Routes.notes) ? 1 : 0;
+  }
+
+  /// On the Lists or Notes tab itself, not deeper.
+  bool get _onTabs => _location == Routes.home || _location == Routes.notes;
+
+  void _swipe(DragEndDetails details) {
+    final v = details.primaryVelocity ?? 0;
+    if (v.abs() < 300) return;
+    _setAdd(false);
+    // Towards the left: the tab on the right.
+    if (v < 0 && _location == Routes.home) context.go(Routes.notes);
+    if (v > 0 && _location == Routes.notes) context.go(Routes.home);
   }
 
   void _setAdd(bool open) {
@@ -160,10 +180,16 @@ class _AppShellState extends State<AppShell> {
         final hidden = _inItem || sheets > 0 || MediaQuery.viewInsetsOf(context).bottom > 0;
         _barHidden = hidden;
         return PopScope(
-          // Android back closes the "+" menu first.
-          canPop: !_addOpen,
+          // Android back closes the "+" menu first, then goes back to home,
+          // and stops there: it never leaves the app.
+          canPop: false,
           onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) _setAdd(false);
+            if (didPop) return;
+            if (_addOpen) {
+              _setAdd(false);
+            } else if (_location != Routes.home) {
+              context.go(Routes.home);
+            }
           },
           child: Scaffold(
             resizeToAvoidBottomInset: true,
@@ -172,7 +198,14 @@ class _AppShellState extends State<AppShell> {
                 Positioned.fill(
                   child: NotificationListener<ScrollNotification>(
                     onNotification: _onScroll,
-                    child: BottomBarVisibility(visible: !hidden, child: widget.child),
+                    child: BottomBarVisibility(
+                      visible: !hidden,
+                      child: GestureDetector(
+                        // A swipe sideways goes from Lists to Notes and back.
+                        onHorizontalDragEnd: _onTabs ? _swipe : null,
+                        child: widget.child,
+                      ),
+                    ),
                   ),
                 ),
                 // Content scrolled up fades out under the status bar.

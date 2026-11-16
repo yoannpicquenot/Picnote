@@ -123,6 +123,11 @@ List<NoteBlock> blocksFromJson(List json) => [
         for (final s in (b['styles'] as List? ?? const []).cast<List>())
           if (InlineStyle.values.asNameMap()[s[2]] case final style?) StyleRange(s[0] as int, s[1] as int, style),
       ],
+      level: b['level'] as int? ?? 1,
+      color: HeadingColor.values.asNameMap()[b['color']] ?? HeadingColor.terra,
+      cells: [
+        for (final row in (b['cells'] as List? ?? const []).cast<List>()) [for (final c in row) c as String? ?? ''],
+      ],
     ),
 ];
 
@@ -138,6 +143,10 @@ List<Row> blocksToJson(List<NoteBlock> blocks) => [
         'styles': [
           for (final s in b.styles) [s.start, s.end, s.style.name],
         ],
+      // Only what differs from the defaults.
+      if (b.type == NoteBlockType.heading && b.level != 1) 'level': b.level,
+      if (b.type == NoteBlockType.heading && b.color != HeadingColor.terra) 'color': b.color.name,
+      if (b.type == NoteBlockType.table) 'cells': b.cells,
     },
 ];
 

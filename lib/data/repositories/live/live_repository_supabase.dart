@@ -41,7 +41,10 @@ class LiveRepositorySupabase extends LiveRepository {
     channel
       ..onBroadcast(event: 'note', callback: _onNote)
       ..onBroadcast(event: 'draft', callback: _onDraft)
-      ..subscribe();
+      // A private channel the policies refuse fails here, and only here.
+      ..subscribe((status, error) {
+        if (status != RealtimeSubscribeStatus.subscribed) debugPrint('Live channel: $status $error');
+      });
     _channel = channel;
   }
 

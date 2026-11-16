@@ -127,6 +127,14 @@ class ListViewModel extends ChangeNotifier {
     return _listRepository.reorderOpenTasks(listId, ids);
   }
 
+  /// Home shows [maxPinnedLists] lists at most.
+  bool get homeFull => _listRepository.lists.where((l) => l.pinned).length >= maxPinnedLists;
+
+  Future<void> setPinned(bool pinned) async {
+    final l = list;
+    if (l != null) await _listRepository.updateList(l.copyWith(pinned: pinned));
+  }
+
   Future<void> toggleShared() async {
     final l = list;
     if (l != null) await _listRepository.updateList(l.copyWith(isShared: !l.isShared));

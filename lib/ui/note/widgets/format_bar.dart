@@ -3,61 +3,163 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/note.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../core/themes/colors.dart';
+import 'note_delta.dart';
+import 'note_editor.dart';
 
-/// Bold, italic, underline: sits on top of the keyboard while text is
-/// selected in a note, like Notion's.
-class FormatBar extends StatelessWidget {
-  const FormatBar({super.key, required this.selection, required this.isActive, required this.onToggle});
+/// Bold, italic, underline, headings (and their color), undo, redo: sits
+/// on top of the keyboard while a note is typed in, like Notion's. "H"
+/// and the color dot open their choices in place of the buttons.
+class FormatBar extends StatefulWidget {
+  const FormatBar({super.key, required this.editor});
 
   static const height = 52.0;
 
-  /// Notifies as the selection moves, so the buttons follow it.
-  final Listenable selection;
-  final bool Function(InlineStyle) isActive;
-  final ValueChanged<InlineStyle> onToggle;
+  final NoteEditorState editor;
+
+  @override
+  State<FormatBar> createState() => _FormatBarState();
+}
+
+enum _Panel { buttons, headings, colors }
+
+class _FormatBarState extends State<FormatBar> {
+  _Panel _panel = _Panel.buttons;
+
+  NoteEditorState get editor => widget.editor;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    const base = TextStyle(fontSize: 20, height: 1, color: PnColors.ink);
     // Part of the editor: tapping it neither unfocuses nor deselects.
     return TextFieldTapRegion(
       child: ListenableBuilder(
-        listenable: selection,
+        listenable: editor.controller,
         builder: (context, _) => Container(
-          height: height,
+          height: FormatBar.height,
           decoration: const BoxDecoration(
             color: PnColors.snow,
             border: Border(top: BorderSide(color: PnColors.line)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              _button(InlineStyle.bold, l10n.formatBold, base.copyWith(fontWeight: FontWeight.w700), 'B'),
-              _button(InlineStyle.italic, l10n.formatItalic, base.copyWith(fontStyle: FontStyle.italic), 'I'),
-              _button(
-                InlineStyle.underline,
-                l10n.formatUnderline,
-                base.copyWith(decoration: TextDecoration.underline),
-                'U',
-              ),
-            ],
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: switch (_panel) {
+                _Panel.buttons => _buttons(l10n),
+                _Panel.headings => _headings(l10n),
+                _Panel.colors => _colors(l10n),
+              },
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _button(InlineStyle style, String label, TextStyle textStyle, String glyph) {
-    final on = isActive(style);
+  void _show(_Panel panel) => setState(() => _panel = panel);
+
+  List<Widget> _buttons(AppLocalizations l10n) {
+    const base = TextStyle(fontSize: 20, height: 1, color: PnColors.ink);
+    final level = editor.headingLevel;
+    return [
+      _style(InlineStyle.bold, l10n.formatBold, const Icon(Icons.format_bold_rounded, size: 24)),
+      _style(InlineStyle.italic, l10n.formatItalic, const Icon(Icons.format_italic_rounded, size: 24)),
+      _style(InlineStyle.underline, l10n.formatUnderline, const Icon(Icons.format_underlined_rounded, size: 24)),
+      _button(
+        label: l10n.formatHeading,
+        on: level != null,
+        onTap: () => _show(_Panel.headings),
+        child: Text(level == null ? 'H' : 'H$level', style: base.copyWith(fontWeight: FontWeight.w700)),
+      ),
+      if (level != null)
+        _button(
+          label: l10n.headingColor,
+          onTap: () => _show(_Panel.colors),
+          child: _Dot(headingColor(editor.headingColorNow)),
+        ),
+      const _Divider(),
+      _button(
+        label: l10n.formatUndo,
+        onTap: editor.canUndo ? editor.undo : null,
+        child: const Icon(Icons.undo_rounded, size: 22),
+      ),
+      _button(
+        label: l10n.formatRedo,
+        onTap: editor.canRedo ? editor.redo : null,
+        child: const Icon(Icons.redo_rounded, size: 22),
+      ),
+    ];
+  }
+
+  List<Widget> _headings(AppLocalizations l10n) {
+    final level = editor.headingLevel;
+    void pick(int? l) {
+      editor.setHeading(l);
+      _show(_Panel.buttons);
+    }
+
+    return [
+      _back(l10n),
+      _button(
+        label: l10n.blockText,
+        on: level == null,
+        onTap: () => pick(null),
+        child: const Text('T', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+      ),
+      for (var l = 1; l <= NoteBlock.maxLevel; l++)
+        _button(
+          label: l10n.blockHeadingLevel(l),
+          on: level == l,
+          onTap: () => pick(l),
+          child: Text(
+            'H$l',
+            style: TextStyle(fontSize: 20 - l * 1.5, fontWeight: FontWeight.w700),
+          ),
+        ),
+    ];
+  }
+
+  List<Widget> _colors(AppLocalizations l10n) {
+    final now = editor.headingColorNow;
+    return [
+      _back(l10n),
+      for (final c in HeadingColor.values)
+        _button(
+          label: l10n.headingColorName(c.name),
+          on: c == now,
+          onTap: () {
+            editor.setHeadingColor(c);
+            _show(_Panel.buttons);
+          },
+          child: _Dot(headingColor(c)),
+        ),
+    ];
+  }
+
+  Widget _back(AppLocalizations l10n) => _button(
+    label: l10n.back,
+    onTap: () => _show(_Panel.buttons),
+    child: const Icon(Icons.chevron_left_rounded, size: 24),
+  );
+
+  Widget _style(InlineStyle style, String label, Widget glyph) =>
+      _button(label: label, on: editor.isActive(style), onTap: () => editor.toggleStyle(style), child: glyph);
+
+  Widget _button({required String label, required Widget child, VoidCallback? onTap, bool on = false}) {
+    final color = onTap == null
+        ? PnColors.grey500
+        : on
+        ? PnColors.terraDark
+        : PnColors.ink;
     return Semantics(
       button: true,
       toggled: on,
+      enabled: onTap != null,
       label: label,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => onToggle(style),
+        onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           width: 44,
@@ -68,9 +170,36 @@ class FormatBar extends StatelessWidget {
             color: on ? PnColors.peach : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Text(glyph, style: textStyle.copyWith(color: on ? PnColors.terraDark : PnColors.ink)),
+          child: IconTheme.merge(
+            data: IconThemeData(color: color),
+            child: DefaultTextStyle.merge(
+              style: TextStyle(fontSize: 20, height: 1, color: color),
+              child: child,
+            ),
+          ),
         ),
       ),
     );
   }
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot(this.color);
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 20,
+    height: 20,
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  );
+}
+
+class _Divider extends StatelessWidget {
+  const _Divider();
+
+  @override
+  Widget build(BuildContext context) =>
+      Container(width: 1, height: 24, margin: const EdgeInsets.only(left: 4, right: 8), color: PnColors.line);
 }

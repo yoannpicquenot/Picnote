@@ -10,6 +10,7 @@ import 'config/supabase.dart';
 import 'l10n/app_localizations.dart';
 import 'routing/router.dart';
 import 'ui/core/themes/theme.dart';
+import 'ui/core/ui/keep_typing.dart';
 import 'ui/splash/widgets/splash_screen.dart';
 
 /// Runs against Supabase:
@@ -92,6 +93,7 @@ class PicnoteApp extends StatefulWidget {
 class _PicnoteAppState extends State<PicnoteApp> {
   late final GoRouter _router = router(widget.repositories.auth, widget.repositories.household, splash: widget.splash);
   StreamSubscription<String>? _opened;
+  final _keepTyping = KeepTyping();
 
   @override
   void initState() {
@@ -107,6 +109,7 @@ class _PicnoteAppState extends State<PicnoteApp> {
   @override
   void dispose() {
     _opened?.cancel();
+    _keepTyping.dispose();
     _router.dispose();
     super.dispose();
   }

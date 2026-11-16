@@ -9,7 +9,7 @@ import '../../../utils/result.dart';
 /// Every list, pinned ones (shown on home) first. "Edit" reveals pin and
 /// delete buttons.
 class AllListsViewModel extends ChangeNotifier {
-  AllListsViewModel({required this._listRepository, required this._householdRepository}) {
+  AllListsViewModel({required this._listRepository, required this._householdRepository, this.editing = false}) {
     _listRepository.addListener(notifyListeners);
     _householdRepository.addListener(notifyListeners);
   }
@@ -17,7 +17,7 @@ class AllListsViewModel extends ChangeNotifier {
   final ListRepository _listRepository;
   final HouseholdRepository _householdRepository;
 
-  bool editing = false;
+  bool editing;
 
   List<TaskList> get lists => _listRepository.lists;
 

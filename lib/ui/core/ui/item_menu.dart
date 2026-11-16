@@ -13,7 +13,7 @@ import 'pn_icon.dart';
 import 'sheet.dart';
 
 /// What was picked in an [ItemMenuSheet].
-enum ItemMenuAction { toggleShared, invite, delete }
+enum ItemMenuAction { toggleShared, invite, togglePin, delete }
 
 /// "⋯" menu of an open list or note: its 3 latest changes, who sees it
 /// (or "Invite someone" while alone) and "Delete". Pops the
@@ -29,6 +29,8 @@ class ItemMenuSheet extends StatefulWidget {
     required this.members,
     required this.shared,
     required this.theme,
+    this.creatorId,
+    this.pinned,
     this.canShare = true,
     this.canDelete = true,
   });
@@ -40,6 +42,12 @@ class ItemMenuSheet extends StatefulWidget {
   final List<Member> members;
   final bool shared;
   final ListTheme theme;
+
+  /// Who created it, when known: shown while the household is two.
+  final String? creatorId;
+
+  /// Whether a list is on home; null for a note, which has no pin.
+  final bool? pinned;
 
   /// False on a shared note written by the other member.
   final bool canShare;
@@ -77,9 +85,23 @@ class _ItemMenuSheetState extends State<ItemMenuSheet> {
         ),
       ),
     );
+    final creator = widget.creatorId == null ? null : _member(widget.creatorId!);
     return PnSheet(
       title: widget.title,
       children: [
+        if (partner != null && creator != null)
+          Row(
+            children: [
+              Avatar.of(creator, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  creator.id == widget.meId ? l10n.createdByYou : l10n.createdBy(creator.name),
+                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.ink),
+                ),
+              ),
+            ],
+          ),
         FutureBuilder(
           future: widget.changes,
           builder: (context, snapshot) {
@@ -154,6 +176,21 @@ class _ItemMenuSheetState extends State<ItemMenuSheet> {
                     ),
                   ),
                 ),
+              ),
+            // Why the choice above is greyed out, and Delete missing.
+            if (partner != null && !widget.canShare && creator != null && creator.id != widget.meId)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(l10n.askAuthor(creator.name), style: PnText.meta),
+              ),
+            if (widget.pinned case final pinned?)
+              row(
+                icon: PnIcon(pinned ? PnIcons.pinOff : PnIcons.pin, color: PnColors.terraDark, size: 20),
+                text: Text(
+                  pinned ? l10n.unpinFromHome : l10n.pinToHome,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: PnColors.ink),
+                ),
+                onTap: () => Navigator.pop(context, ItemMenuAction.togglePin),
               ),
             if (widget.canDelete)
               row(

@@ -40,8 +40,8 @@ class ListRepositoryLocal extends ListRepository {
       color: draft.color,
       icon: draft.icon,
       isShared: draft.isShared,
-      // Pinned to home while there is room.
-      pinned: _lists.where((l) => l.pinned).length < maxPinnedLists,
+      // Not on home until pinned from its menu.
+      pinned: false,
       day: draft.day,
       reminder: draft.reminder,
     );
