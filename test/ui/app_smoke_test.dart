@@ -135,7 +135,11 @@ void main() {
     await tester.tap(labeled('Foyer et réglages'));
     await settle(tester);
     expect(find.text('Mel (toi)'), findsOneWidget);
-    expect(find.text('Tu as modifié « Courses », il y a 5 h'), findsOneWidget);
+    // The demo edit is 5 h old, so between midnight and 5 am it was yesterday.
+    final now = DateTime.now();
+    final fiveHoursAgo = now.subtract(const Duration(hours: 5));
+    final ago = fiveHoursAgo.day == now.day ? 'il y a 5 h' : 'hier';
+    expect(find.text('Tu as modifié « Courses », $ago'), findsOneWidget);
     expect(find.text('Yoann'), findsOneWidget);
 
     await tester.tap(find.text('Réglages'));
