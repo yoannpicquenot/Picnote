@@ -24,7 +24,8 @@ import '../ui/settings/view_models/settings_viewmodel.dart';
 import '../ui/settings/widgets/settings_screen.dart';
 import '../ui/shell/view_models/shell_viewmodel.dart';
 import '../ui/shell/widgets/app_shell.dart';
-import '../ui/shell/widgets/tab_pager.dart';
+import '../ui/shell/view_models/header_viewmodel.dart';
+import '../ui/shell/widgets/home_tabs.dart';
 import '../ui/splash/widgets/splash_screen.dart';
 import '../ui/core/themes/colors.dart';
 import 'routes.dart';
@@ -233,32 +234,35 @@ Page<void> _tabs(
   state,
   _Motion.tab,
   key: const ValueKey('tabs'),
-  TabPager(
-    index: index,
-    onSettled: (i) => context.go(i == 0 ? Routes.home : Routes.notes),
-    pages: [
-      _Owned(
-        create: () => HomeViewModel(
-          listRepository: context.read(),
-          authRepository: authRepository,
-          householdRepository: householdRepository,
-          noteRepository: context.read(),
-          activityRepository: context.read(),
+  _Owned(
+    create: () => HeaderViewModel(
+      activityRepository: context.read(),
+      authRepository: authRepository,
+      householdRepository: householdRepository,
+      listRepository: context.read(),
+      noteRepository: context.read(),
+    ),
+    builder: (header) => HomeTabs(
+      viewModel: header,
+      index: index,
+      onSettled: (i) => context.go(i == 0 ? Routes.home : Routes.notes),
+      pages: [
+        _Owned(
+          create: () => HomeViewModel(
+            listRepository: context.read(),
+            authRepository: authRepository,
+            householdRepository: householdRepository,
+            noteRepository: context.read(),
+          ),
+          builder: (vm) =>
+              HomeScreen(viewModel: vm, onCreateList: () => startNewList(context, context.read<ShellViewModel>())),
         ),
-        builder: (vm) =>
-            HomeScreen(viewModel: vm, onCreateList: () => startNewList(context, context.read<ShellViewModel>())),
-      ),
-      _Owned(
-        create: () => NotesViewModel(
-          noteRepository: context.read(),
-          householdRepository: householdRepository,
-          listRepository: context.read(),
-          authRepository: authRepository,
-          activityRepository: context.read(),
+        _Owned(
+          create: () => NotesViewModel(noteRepository: context.read(), householdRepository: householdRepository),
+          builder: (vm) => NotesScreen(viewModel: vm),
         ),
-        builder: (vm) => NotesScreen(viewModel: vm),
-      ),
-    ],
+      ],
+    ),
   ),
 );
 

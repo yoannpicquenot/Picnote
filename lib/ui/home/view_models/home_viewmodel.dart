@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../data/repositories/activity/activity_repository.dart';
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/household/household_repository.dart';
 import '../../../data/repositories/list/list_repository.dart';
@@ -12,7 +11,6 @@ import '../../../domain/models/task_list.dart';
 import '../../../utils/command.dart';
 import '../../../utils/dates.dart';
 import '../../../utils/result.dart';
-import '../../core/view_models/who_is_here.dart';
 
 class HomeViewModel extends ChangeNotifier {
   HomeViewModel({
@@ -20,18 +18,10 @@ class HomeViewModel extends ChangeNotifier {
     required this._authRepository,
     required this._householdRepository,
     required this._noteRepository,
-    required this._activityRepository,
-  }) : whoIsHere = WhoIsHere(
-         activityRepository: _activityRepository,
-         householdRepository: _householdRepository,
-         listRepository: _listRepository,
-         noteRepository: _noteRepository,
-         meId: _authRepository.user?.id ?? '',
-       ) {
+  }) {
     _listRepository.addListener(notifyListeners);
     _householdRepository.addListener(notifyListeners);
     _noteRepository.addListener(notifyListeners);
-    _activityRepository.addListener(notifyListeners);
     load = Command0(_load)..execute();
   }
 
@@ -39,10 +29,6 @@ class HomeViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;
   final HouseholdRepository _householdRepository;
   final NoteRepository _noteRepository;
-  final ActivityRepository _activityRepository;
-
-  /// The header's "who's here" panel.
-  final WhoIsHere whoIsHere;
 
   late final Command0<void> load;
 
@@ -112,7 +98,6 @@ class HomeViewModel extends ChangeNotifier {
     _listRepository.removeListener(notifyListeners);
     _householdRepository.removeListener(notifyListeners);
     _noteRepository.removeListener(notifyListeners);
-    _activityRepository.removeListener(notifyListeners);
     super.dispose();
   }
 }

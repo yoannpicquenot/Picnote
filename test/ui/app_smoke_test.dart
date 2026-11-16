@@ -562,7 +562,8 @@ void main() {
     await drag.moveBy(const Offset(-40, 0));
     await drag.moveBy(const Offset(-100, 0));
     await tester.pump();
-    expect(find.text('PICNOTE.'), findsNWidgets(2), reason: 'each page has its header');
+    expect(find.text('PICNOTE.'), findsOneWidget, reason: 'one header, shared by both pages');
+    expect(tester.getTopLeft(find.text('PICNOTE.')).dx, 20, reason: 'the header stays in place');
     expect(find.text('Notes.'), findsOneWidget);
     expect(tester.getTopLeft(find.text('Notes.')).dx, lessThan(390));
     // Let go before halfway: back to Lists.

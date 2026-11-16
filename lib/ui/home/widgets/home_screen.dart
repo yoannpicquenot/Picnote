@@ -17,7 +17,6 @@ import '../../core/ui/layout.dart';
 import '../../core/ui/pn_icon.dart';
 import '../../core/ui/task_row.dart';
 import '../../core/ui/toast.dart';
-import '../../invite/widgets/invite_sheet.dart';
 import '../view_models/home_viewmodel.dart';
 import 'list_card.dart';
 
@@ -34,21 +33,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _wink = false;
-  Timer? _winkTimer;
-
-  @override
-  void dispose() {
-    _winkTimer?.cancel();
-    super.dispose();
-  }
-
-  void _winkWatermark() {
-    _winkTimer?.cancel();
-    setState(() => _wink = true);
-    _winkTimer = Timer(const Duration(milliseconds: 1500), () => setState(() => _wink = false));
-  }
-
   Future<void> _delete(Task task) async {
     final l10n = AppLocalizations.of(context);
     final deleted = await widget.viewModel.delete(task);
@@ -89,25 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Stack(
       children: [
         SingleChildScrollView(
-          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 12, bottom: bottomBarClearance),
+          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + homeHeaderTop, bottom: bottomBarClearance),
           child: ContentWidth(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Positioned(
-                  right: day ? -70 : -12,
-                  top: day ? 18 : 34,
-                  child: Watermark(winking: _wink),
-                ),
                 Gap(
                   gap: 20,
                   children: [
-                    HomeHeader(
-                      whoIsHere: vm.whoIsHere,
-                      onWordmark: _winkWatermark,
-                      onInvite: () => showInviteSheet(context),
-                      onSettings: () => context.go(Routes.settings),
-                    ),
+                    const HomeHeaderGap(),
                     Gap(
                       gap: 8,
                       children: [

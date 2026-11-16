@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,7 +19,6 @@ import '../../core/ui/mascot.dart';
 import '../../core/ui/list_hero.dart';
 import '../../core/ui/pn_icon.dart';
 import '../../core/ui/rise_in.dart';
-import '../../invite/widgets/invite_sheet.dart';
 import '../view_models/notes_viewmodel.dart';
 
 class NotesScreen extends StatefulWidget {
@@ -34,47 +31,23 @@ class NotesScreen extends StatefulWidget {
 }
 
 class _NotesScreenState extends State<NotesScreen> {
-  bool _wink = false;
-  Timer? _timer;
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final day = isDaytime();
     return ListenableBuilder(
       listenable: widget.viewModel,
       builder: (context, _) {
         final vm = widget.viewModel;
         return SingleChildScrollView(
-          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 12, bottom: bottomBarClearance),
+          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + homeHeaderTop, bottom: bottomBarClearance),
           child: ContentWidth(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Positioned(
-                  right: day ? -70 : -12,
-                  top: day ? 18 : 34,
-                  child: Watermark(winking: _wink),
-                ),
                 Gap(
                   gap: 20,
                   children: [
-                    HomeHeader(
-                      whoIsHere: vm.whoIsHere,
-                      onInvite: () => showInviteSheet(context),
-                      onSettings: () => context.go(Routes.settings),
-                      onWordmark: () {
-                        _timer?.cancel();
-                        setState(() => _wink = true);
-                        _timer = Timer(const Duration(milliseconds: 1500), () => setState(() => _wink = false));
-                      },
-                    ),
+                    const HomeHeaderGap(),
                     if (vm.notes.isEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 72),

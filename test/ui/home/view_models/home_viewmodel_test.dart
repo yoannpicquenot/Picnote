@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:picnote/data/repositories/activity/activity_repository_local.dart';
 import 'package:picnote/data/repositories/note/note_repository_local.dart';
 import 'package:picnote/domain/models/task.dart';
 import 'package:picnote/domain/models/task_list.dart';
@@ -17,7 +16,6 @@ void main() {
     authRepository: FakeAuthRepository(),
     householdRepository: FakeHouseholdRepository(household: kDuo),
     noteRepository: NoteRepositoryLocal(),
-    activityRepository: ActivityRepositoryLocal(),
   );
 
   group('HomeViewModel', () {

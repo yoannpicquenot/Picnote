@@ -12,6 +12,30 @@ import 'mascot.dart';
 import 'pn_icon.dart';
 import 'popover.dart';
 
+/// Space between the status bar and the header on the home and notes tabs.
+const homeHeaderTop = 12.0;
+
+/// The height of the header that stays over the home and notes tabs, for
+/// [HomeHeaderGap].
+class HomeHeaderSpace extends InheritedWidget {
+  const HomeHeaderSpace({super.key, required this.height, required super.child});
+
+  final double height;
+
+  @override
+  bool updateShouldNotify(HomeHeaderSpace oldWidget) => height != oldWidget.height;
+}
+
+/// Room for the header, which is drawn over the page so that it stays in
+/// place while swiping between tabs.
+class HomeHeaderGap extends StatelessWidget {
+  const HomeHeaderGap({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      SizedBox(height: context.dependOnInheritedWidgetOfExactType<HomeHeaderSpace>()?.height ?? 0);
+}
+
 /// Daytime is 7:00–20:00: the watermark is awake and the greeting says "day".
 bool isDaytime([DateTime? now]) {
   final h = (now ?? DateTime.now()).hour;

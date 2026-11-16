@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:picnote/data/repositories/activity/activity_repository_local.dart';
 import 'package:picnote/data/repositories/note/note_repository_local.dart';
 import 'package:picnote/domain/models/household.dart';
 import 'package:picnote/l10n/app_localizations.dart';
@@ -34,7 +33,6 @@ void main() {
               authRepository: FakeAuthRepository(),
               householdRepository: FakeHouseholdRepository(household: household),
               noteRepository: NoteRepositoryLocal(),
-              activityRepository: ActivityRepositoryLocal(),
             ),
           ),
         ),
@@ -46,7 +44,6 @@ void main() {
   testWidgets('shows list cards with what is left', (tester) async {
     await pumpHome(tester);
 
-    expect(find.text('PICNOTE.'), findsOneWidget);
     expect(find.text('Salut Mel,'), findsOneWidget);
     expect(find.text('Courses.'), findsOneWidget);
     expect(find.text('3 restants'), findsOneWidget);
