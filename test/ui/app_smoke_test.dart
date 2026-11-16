@@ -1,0 +1,536 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:picnote/config/dependencies.dart';
+import 'package:picnote/config/local.dart';
+import 'package:picnote/data/repositories/household/household_repository_local.dart';
+import 'package:picnote/data/repositories/live/live_repository.dart';
+import 'package:picnote/data/repositories/note/note_repository.dart';
+import 'package:picnote/domain/models/live.dart';
+import 'package:picnote/domain/models/note.dart';
+import 'package:picnote/main.dart';
+import 'package:picnote/routing/routes.dart';
+import 'package:picnote/ui/core/ui/buttons.dart';
+import 'package:picnote/ui/core/ui/controls.dart';
+import 'package:picnote/ui/core/ui/list_sheet.dart';
+import 'package:picnote/ui/core/ui/sheet.dart';
+import 'package:picnote/ui/core/ui/task_row.dart';
+import 'package:picnote/ui/note/widgets/format_bar.dart';
+import 'package:picnote/ui/note/widgets/block_menu.dart';
+import 'package:picnote/ui/note/widgets/note_editor.dart';
+import 'package:provider/provider.dart';
+
+/// Renders every in-app screen with the design board's demo data, on a
+/// phone and on a tablet, to catch layout errors.
+void main() {
+  Future<void> settle(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+
+  Future<GoRouter> pumpApp(WidgetTester tester, Size size, {bool animations = false, double textScale = 1}) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.localesTestValue = const [Locale('fr')];
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearLocalesTestValue);
+    // A test may end with a sheet still open, which never closes.
+    openSheets.value = 0;
+    final repositories = demoRepositories();
+    await tester.pumpWidget(
+      MediaQuery(
+        data: MediaQueryData(size: size, disableAnimations: !animations, textScaler: TextScaler.linear(textScale)),
+        child: MultiProvider(
+          providers: providers(repositories),
+          child: PicnoteApp(repositories: repositories, splash: false),
+        ),
+      ),
+    );
+    await settle(tester);
+    return GoRouter.of(tester.element(find.byType(Scaffold).first));
+  }
+
+  Finder labeled(String label) => find
+      .byWidgetPredicate(
+        (w) => (w is Pressable && w.semanticLabel == label) || (w is Semantics && w.properties.label == label),
+      )
+      .first;
+
+  /// "+" then "New list" or "New note" in its menu.
+  Future<void> startNew(WidgetTester tester, String item) async {
+    await tester.tap(find.byTooltip('Ajouter'));
+    await settle(tester);
+    await tester.tap(find.text(item));
+    await settle(tester);
+  }
+
+  for (final (device, size, scale) in [
+    ('phone', const Size(390, 844), 1.0),
+    ('tablet', const Size(768, 1024), 1.0),
+    // Larger system text, as on many phones.
+    ('phone with large text', const Size(390, 844), 1.3),
+  ]) {
+    testWidgets('every screen renders on a $device', (tester) async {
+      final router = await pumpApp(tester, size, textScale: scale);
+      expect(find.text('Salut Mel,'), findsOneWidget);
+
+      for (final route in [
+        Routes.list('c'),
+        Routes.list('b'),
+        Routes.lists,
+        Routes.notes,
+        Routes.note('ca'),
+        Routes.note('mo'),
+        Routes.settings,
+        Routes.account,
+        Routes.notifications,
+        Routes.home,
+      ]) {
+        router.go(route);
+        await settle(tester);
+        final e = tester.takeException();
+        if (e != null) fail('$route: ${e is FlutterError ? e.toStringDeep() : e}');
+      }
+    });
+  }
+
+  testWidgets('a list shows its tasks and can be shared or made personal', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.list('c'));
+    await settle(tester);
+
+    expect(find.text('Courses.'), findsOneWidget);
+    expect(find.text('Tomates'), findsOneWidget);
+    // Set, so no "No deadline" pill.
+    expect(find.text('Non due'), findsNothing);
+
+    // The "⋯" menu shows the latest changes and who sees it; the current
+    // option does nothing, the other one asks for confirmation.
+    await tester.tap(labeled('Options de la liste'));
+    await settle(tester);
+    expect(find.text('Dernières modifs'), findsOneWidget);
+    expect(find.text('Yoann a ajouté « Café »'), findsOneWidget);
+    await tester.tap(find.text('Le foyer'));
+    await settle(tester);
+    expect(find.text('Dernières modifs'), findsOneWidget);
+
+    await tester.tap(find.text('Juste moi'));
+    await settle(tester);
+    expect(find.text('Passer en perso ?'), findsOneWidget);
+
+    await tester.tap(find.text('Passer en perso'));
+    await settle(tester);
+    expect(find.text('Liste passée en perso'), findsOneWidget);
+  });
+
+  testWidgets('the avatars open who is here, with each one’s latest change', (tester) async {
+    await pumpApp(tester, const Size(390, 844));
+
+    await tester.tap(labeled('Foyer et réglages'));
+    await settle(tester);
+    expect(find.text('Mel (toi)'), findsOneWidget);
+    expect(find.text('Tu as modifié « Courses », il y a 5 h'), findsOneWidget);
+    expect(find.text('Yoann'), findsOneWidget);
+
+    await tester.tap(find.text('Réglages'));
+    await settle(tester);
+    expect(find.text('Réglages.'), findsOneWidget);
+  });
+
+  testWidgets('all lists: pinned ones show on home, home holds 4', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.lists);
+    await settle(tester);
+    expect(find.text('Épinglées.'), findsOneWidget);
+    expect(find.text('4/4'), findsOneWidget);
+    expect(find.text('Autres listes.'), findsOneWidget);
+
+    await tester.tap(find.text('Modifier'));
+    await settle(tester);
+    expect(find.text('L’accueil est plein. Retire une liste pour en épingler une autre.'), findsOneWidget);
+
+    await tester.tap(labeled('Désépingler Courses'));
+    await settle(tester);
+    expect(find.text('3/4'), findsOneWidget);
+    await tester.tap(labeled('Épingler Livres'));
+    await settle(tester);
+    expect(find.text('4/4'), findsOneWidget);
+
+    router.go(Routes.home);
+    await settle(tester);
+    expect(find.text('Livres.'), findsOneWidget);
+    expect(find.text('Courses.'), findsNothing);
+  });
+
+  testWidgets('a pinned list just done offers to unpin it', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.list('d'));
+    await settle(tester);
+
+    for (final title in ['Acheter des fleurs', 'Mettre le vin au frais']) {
+      await tester.tap(
+        find.descendant(
+          of: find.ancestor(of: find.text(title), matching: find.byType(Row)).first,
+          matching: find.byType(PnCheck),
+        ),
+      );
+      await settle(tester);
+    }
+    expect(find.text('« Dîner » est terminée. La désépingler ?'), findsOneWidget);
+
+    await tester.tap(find.text('Désépingler'));
+    await settle(tester);
+    router.go(Routes.home);
+    await settle(tester);
+    expect(find.text('Dîner.'), findsNothing);
+  });
+
+  testWidgets('the "+" opens a menu, then the new list sheet', (tester) async {
+    await pumpApp(tester, const Size(390, 844));
+
+    await startNew(tester, 'Nouvelle liste');
+    expect(find.text('Nouvelle liste.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'Pharmacie');
+    await tester.pump();
+    await tester.tap(find.text('Créer la liste'));
+    await settle(tester);
+    expect(find.text('Pharmacie.'), findsOneWidget);
+    expect(find.text('Écris ton premier élément…'), findsOneWidget);
+  });
+
+  testWidgets('the icon and color picker opens inside the sheet', (tester) async {
+    await pumpApp(tester, const Size(390, 844));
+    await startNew(tester, 'Nouvelle liste');
+
+    final titleBefore = tester.getTopLeft(find.text('Nouvelle liste.'));
+    await tester.tap(
+      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Changer l’icône et la couleur'),
+    );
+    await settle(tester);
+
+    expect(find.text('Couleur'), findsOneWidget);
+    // All of it on screen: it opens above the tile when there is no room below.
+    final picker = tester.getRect(find.byType(IconColorPicker));
+    expect(picker.top, greaterThanOrEqualTo(0));
+    expect(picker.bottom, lessThanOrEqualTo(844));
+    // The keyboard closed so that it doesn't hide the bottom of the picker.
+    expect(tester.widgetList<EditableText>(find.byType(EditableText)).any((e) => e.focusNode.hasFocus), isFalse);
+    // The sheet grew to make room for it, under the name.
+    expect(tester.getTopLeft(find.text('Qui la voit')).dy, greaterThan(picker.bottom));
+    expect(tester.getTopLeft(find.text('Nouvelle liste.')).dy, lessThan(titleBefore.dy));
+    expect(tester.takeException(), isNull);
+
+    // Tapping outside closes it.
+    await tester.tap(find.text('Nouvelle liste.'));
+    await settle(tester);
+    expect(find.text('Couleur'), findsNothing);
+    expect(find.text('Nouvelle liste.'), findsOneWidget);
+  });
+
+  testWidgets('a list fades in over its card, and back', (tester) async {
+    await pumpApp(tester, const Size(390, 844), animations: true);
+    await tester.pump(const Duration(seconds: 1));
+    // Halfway through a fade, some page is see-through.
+    bool fading() => tester
+        .widgetList<FadeTransition>(find.byType(FadeTransition))
+        .any((f) => f.opacity.value > 0.05 && f.opacity.value < 0.95);
+
+    await tester.tap(find.text('Courses.'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    // (The mascot blinks forever, so no pumpAndSettle.)
+    expect(fading(), isTrue);
+    expect(find.byType(Hero), findsNothing);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Tomates'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    // Inside a list, the bottom bar is hidden.
+    final bar = find.ancestor(of: find.text('Listes'), matching: find.byType(IgnorePointer));
+    expect(tester.widget<IgnorePointer>(bar.first).ignoring, isTrue);
+
+    await tester.tap(find.text('Accueil'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(fading(), isTrue);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Salut Mel,'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a sheet being filled in cannot be swiped away', (tester) async {
+    await pumpApp(tester, const Size(390, 844));
+    await startNew(tester, 'Nouvelle liste');
+    await tester.enterText(find.byType(TextField).first, 'Pharmacie');
+
+    await tester.fling(find.text('Nouvelle liste.'), const Offset(0, 500), 2000);
+    await settle(tester);
+    expect(find.text('Nouvelle liste.'), findsOneWidget);
+    expect(find.text('Pharmacie'), findsOneWidget);
+  });
+
+  testWidgets('a note fades in, and every motion runs cleanly', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844), animations: true);
+    Future<void> wait() => tester.pump(const Duration(seconds: 1));
+    await wait();
+
+    router.go(Routes.notes);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(FadeTransition), findsWidgets);
+    await wait();
+
+    await tester.tap(find.text('Voyage au Canada.'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(find.byType(FadeTransition), findsWidgets);
+    expect(find.byType(Hero), findsNothing);
+    await wait();
+    expect(find.textContaining('Lieux à visiter', findRichText: true), findsOneWidget);
+
+    for (final route in [Routes.notes, Routes.settings, Routes.account, Routes.settings, Routes.lists, Routes.home]) {
+      router.go(route);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
+      await wait();
+      final e = tester.takeException();
+      if (e != null) fail('$route: $e');
+    }
+  });
+
+  testWidgets('a list is edited one setting at a time, its menu deletes with undo', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.list('m'));
+    await settle(tester);
+    // "Maison" has no deadline and no reminder.
+    expect(find.text('Non due'), findsOneWidget);
+    expect(find.text('Pas de rappel'), findsOneWidget);
+
+    // The name is renamed in place; an empty name falls back to "Liste".
+    await tester.tap(find.text('Maison.'));
+    await settle(tester);
+    await tester.enterText(find.byType(TextField).first, '  Appart  ');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await settle(tester);
+    expect(find.text('Appart.'), findsOneWidget);
+    await tester.tap(find.text('Appart.'));
+    await settle(tester);
+    await tester.enterText(find.byType(TextField).first, '   ');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await settle(tester);
+    expect(find.text('Liste.'), findsOneWidget);
+
+    // The deadline pill opens "Échéance."
+    await tester.tap(find.text('Non due'));
+    await settle(tester);
+    expect(find.text('Échéance.'), findsOneWidget);
+    await tester.tap(find.text('Enregistrer'));
+    await settle(tester);
+    expect(find.text('Non due'), findsNothing);
+
+    // The reminder pill opens the reminder sheet; the list is shared.
+    await tester.tap(find.text('Pas de rappel'));
+    await settle(tester);
+    expect(find.text('Toi et Yoann recevez une notification.'), findsOneWidget);
+    await tester.tap(find.text('Enregistrer'));
+    await settle(tester);
+    expect(find.text('Pas de rappel'), findsNothing);
+
+    // The icon tile opens the color + icon popover; a pick saves at once.
+    await tester.tap(
+      find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Changer l’icône et la couleur'),
+    );
+    await settle(tester);
+    expect(find.text('Couleur'), findsOneWidget);
+    await tester.tapAt(const Offset(200, 800));
+    await settle(tester);
+    expect(find.text('Couleur'), findsNothing);
+
+    await tester.tap(labeled('Options de la liste'));
+    await settle(tester);
+    await tester.tap(find.text('Supprimer la liste'));
+    await settle(tester);
+    expect(find.text('Liste supprimée'), findsOneWidget);
+    expect(find.text('Salut Mel,'), findsOneWidget);
+  });
+
+  testWidgets('tapping another task moves the editing to it', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.list('c'));
+    await settle(tester);
+
+    await tester.tap(find.text('Tomates'));
+    await settle(tester);
+    expect(find.byType(TextField), findsWidgets);
+    await tester.tap(find.text('Café'));
+    await settle(tester);
+
+    final focused = tester.widgetList<EditableText>(find.byType(EditableText)).where((e) => e.focusNode.hasFocus);
+    expect(focused.single.controller.text, 'Café');
+  });
+
+  testWidgets('a selection spans several lines of a note, and the bar bolds all of it', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    expect(find.byType(FormatBar), findsNothing);
+
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+    final end = editor.controller.document.length - 1;
+    editor.controller.updateSelection(TextSelection(baseOffset: 0, extentOffset: end), ChangeSource.local);
+    await settle(tester);
+    expect(find.byType(FormatBar), findsOneWidget);
+
+    await tester.tap(find.text('B'));
+    await settle(tester);
+    List<NoteBlock> saved() =>
+        tester.element(find.byType(NoteEditor)).read<NoteRepository>().notes.firstWhere((n) => n.id == 'mo').blocks;
+    // Every line, all of its text, and still the same kinds of line.
+    expect(saved().map((b) => b.styles), [
+      for (final b in saved()) [StyleRange(0, b.text.length, InlineStyle.bold)],
+    ]);
+    expect(saved().map((b) => b.type), [NoteBlockType.text, NoteBlockType.todo, NoteBlockType.todo]);
+
+    // A second tap takes it off.
+    await tester.tap(find.text('B'));
+    await settle(tester);
+    expect(saved().every((b) => b.styles.isEmpty), isTrue);
+
+    // With no selection, the bar stays: B turns bold on for what is typed
+    // next, and off again.
+    editor.controller.updateSelection(const TextSelection.collapsed(offset: 3), ChangeSource.local);
+    await settle(tester);
+    expect(find.byType(FormatBar), findsOneWidget);
+    await tester.tap(find.text('B'));
+    await settle(tester);
+    editor.controller.replaceText(3, 0, 'gras', const TextSelection.collapsed(offset: 7));
+    await tester.tap(find.text('B'));
+    await settle(tester);
+    editor.controller.replaceText(7, 0, 'fin', const TextSelection.collapsed(offset: 10));
+    await settle(tester);
+    expect(saved().first.styles, [const StyleRange(3, 7, InlineStyle.bold)]);
+
+    // Unfocused, no bar.
+    FocusManager.instance.primaryFocus?.unfocus();
+    await settle(tester);
+    expect(find.byType(FormatBar), findsNothing);
+  });
+
+  testWidgets('the housemate’s typing shows live: in a note with their cursor, and in a list', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final live = tester.element(find.byType(Scaffold).first).read<LiveRepository>() as LiveRepositoryLocal;
+    final yoann = HouseholdRepositoryLocal.partner;
+
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    live.receiveNote(
+      'mo',
+      LiveNote(
+        userId: yoann.id,
+        title: 'Papiers moto',
+        blocks: const [NoteBlock(id: 'x', text: 'Carte grise')],
+        cursor: 5,
+      ),
+    );
+    await settle(tester);
+    expect(find.textContaining('Carte grise', findRichText: true), findsOneWidget);
+    expect(find.text('Yoann écrit…'), findsOneWidget);
+    // The name above their cursor.
+    expect(find.text('Yoann'), findsOneWidget);
+
+    // They stopped: all gone after a few seconds.
+    await tester.pump(const Duration(seconds: 4));
+    await settle(tester);
+    expect(find.text('Yoann écrit…'), findsNothing);
+
+    router.go(Routes.list('d'));
+    await settle(tester);
+    live.receiveDraft('d', LiveDraft(userId: yoann.id, text: 'Glaçons'));
+    await settle(tester);
+    expect(find.byType(DraftTaskRow), findsOneWidget);
+    expect(find.text('Glaçons'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
+  });
+
+  testWidgets('"/" on a new line opens the block menu, which turns the line into a heading', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+
+    final end = editor.controller.document.length - 1;
+    editor.controller.replaceText(end, 0, '\n', TextSelection.collapsed(offset: end + 1));
+    editor.pickBlock(NoteBlockType.text);
+    editor.controller.replaceText(end + 1, 0, '/tit', TextSelection.collapsed(offset: end + 5));
+    await settle(tester);
+    expect(find.byType(BlockMenu), findsOneWidget);
+    expect(find.text('Liste à puces'), findsNothing, reason: 'filtered by what follows the "/"');
+
+    await tester.tap(find.text('Titre'));
+    await settle(tester);
+    expect(find.byType(BlockMenu), findsNothing);
+    final blocks = tester
+        .element(find.byType(NoteEditor))
+        .read<NoteRepository>()
+        .notes
+        .firstWhere((n) => n.id == 'mo')
+        .blocks;
+    expect(blocks.last.type, NoteBlockType.heading);
+    expect(blocks.last.text, isEmpty);
+  });
+
+  testWidgets('a checkbox in a note checks its line', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.note('mo'));
+    await settle(tester);
+
+    await tester.tap(find.byType(PnCheck).first);
+    await settle(tester);
+    final blocks = tester
+        .element(find.byType(NoteEditor))
+        .read<NoteRepository>()
+        .notes
+        .firstWhere((n) => n.id == 'mo')
+        .blocks;
+    expect(blocks[1].done, isTrue);
+    expect(blocks[2].done, isFalse);
+  });
+
+  testWidgets('on home, tapping a task checks it instead of editing it', (tester) async {
+    await pumpApp(tester, const Size(390, 844));
+    final tomatoes = find.text('Tomates');
+    await tester.ensureVisible(tomatoes);
+    await settle(tester);
+
+    final haptics = <Object?>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'HapticFeedback.vibrate') haptics.add(call.arguments);
+      return null;
+    });
+    addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+
+    await tester.tap(tomatoes);
+    await settle(tester);
+    expect(find.byType(TextField), findsNothing);
+    final check = find.descendant(
+      of: find.ancestor(of: tomatoes, matching: find.byType(Row)).first,
+      matching: find.byType(PnCheck),
+    );
+    expect(tester.widget<PnCheck>(check).done, isTrue);
+    // A short tick when checking…
+    expect(haptics, ['HapticFeedbackType.lightImpact']);
+
+    // …and none when unchecking.
+    await tester.tap(check);
+    await settle(tester);
+    expect(tester.widget<PnCheck>(check).done, isFalse);
+    expect(haptics, hasLength(1));
+  });
+}

@@ -1,0 +1,810 @@
+{
+  "@@locale": "fr",
+  "appTitle": "PICNOTE.",
+  "appName": "Picnote",
+  "listEmpty": "Vide",
+  "listRemaining": "{count, plural, =0{Tout est fait} =1{1 restant} other{{count} restants}}",
+  "@listRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listPersonal": "Perso",
+  "homeLoadError": "Impossible de charger tes listes",
+  "tryAgain": "Réessayer",
+  "today": "Aujourd’hui",
+  "tomorrow": "Demain",
+  "yesterday": "Hier",
+  "inDays": "dans {n} jours",
+  "@inDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderAt": "{date} à {time}",
+  "@reminderAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "dateNone": "Aucun",
+  "dateThisWeekend": "Ce week-end",
+  "dateNextWeek": "La semaine prochaine",
+  "datePick": "Choisir une date",
+  "optional": "Facultatif",
+  "previousMonth": "Mois précédent",
+  "nextMonth": "Mois suivant",
+  "datePickDay": "Choisis un jour",
+  "calendarDone": "Valider",
+  "time": "Heure",
+  "reminder": "Rappel",
+  "reminderForBoth": "Une notification pour toi et {name}",
+  "@reminderForBoth": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderForYou": "Une notification pour toi",
+  "remindMeOn": "Me le rappeler",
+  "whoSeesIt": "Qui la voit",
+  "onlyMe": "Juste moi",
+  "personalNote": "Note perso",
+  "personalList": "Liste perso",
+  "theHousehold": "Le foyer",
+  "partnerSeesItToo": "{name} la voit aussi",
+  "@partnerSeesItToo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cantBeEmpty": "Ne peut pas être vide.",
+  "editField": "Modifier : {label}",
+  "@editField": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "undo": "Annuler",
+  "delete": "Supprimer",
+  "markDone": "Marquer comme fait",
+  "markNotDone": "Marquer comme à faire",
+  "ok": "OK",
+  "back": "Retour",
+  "continueLabel": "Continuer",
+  "create": "Créer",
+  "later": "Plus tard",
+  "edit": "Modifier",
+  "you": "toi",
+  "youLabel": "Toi",
+  "and": " et ",
+  "editListTitle": "Modifier la liste.",
+  "newListTitle": "Nouvelle liste.",
+  "createList": "Créer la liste",
+  "changeIconAndColor": "Changer l’icône et la couleur",
+  "listName": "Nom de la liste",
+  "day": "Jour",
+  "dayHint": "Apparaît dans Aujourd’hui et Demain",
+  "color": "Couleur",
+  "icon": "Icône",
+  "newNoteTitle": "Nouvelle note.",
+  "createNote": "Créer la note",
+  "titleOptional": "Titre (facultatif)",
+  "makePersonalQuestion": "Passer en perso ?",
+  "shareListQuestion": "Partager la liste ?",
+  "shareNoteQuestion": "Partager la note ?",
+  "makePersonal": "Passer en perso",
+  "share": "Partager",
+  "partnerWontSee": "{name} ne verra plus « {item} ».",
+  "@partnerWontSee": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "partnerWillSee": "{name} verra « {item} » et pourra la modifier.",
+  "@partnerWillSee": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteResentStatus": "Renvoyée",
+  "invitePendingStatus": "En attente",
+  "inviteCode": "Code à partager : {code}",
+  "@inviteCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "copyCode": "Copier le code",
+  "codeCopied": "Code copié",
+  "resend": "Renvoyer",
+  "invalidEmail": "Cette adresse ne semble pas valide",
+  "inviteEmailHelp": "Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « J’ai une invitation ».",
+  "theirEmail": "Son adresse e-mail",
+  "inviteSomeoneTitle": "Inviter quelqu’un.",
+  "inviteSentSub": "L’autre a 7 jours pour rejoindre {household}.",
+  "@inviteSentSub": {
+    "placeholders": {
+      "household": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteSub": "Saisis son adresse e-mail. On lui envoie un lien pour rejoindre {household}.",
+  "@inviteSub": {
+    "placeholders": {
+      "household": {
+        "type": "String"
+      }
+    }
+  },
+  "sendInvitation": "Envoyer l’invitation",
+  "inviteSomeone": "Inviter quelqu’un",
+  "invite": "Inviter",
+  "welcomeTitle": "Bonjour,",
+  "welcomeSub": "Tes listes et tes notes, pour toi ou à partager avec ton foyer.",
+  "continueWithEmail": "Continuer avec un e-mail",
+  "emailTitle": "Ton adresse e-mail ?",
+  "emailSub": "On t’envoie un code. Aucun mot de passe à retenir.",
+  "emailHint": "email@exemple.fr",
+  "offlineTryAgain": "Pas de connexion, réessaie quand tu seras en ligne",
+  "codeTitle": "Regarde tes e-mails.",
+  "codeSentTo": "Code à 6 chiffres envoyé à ",
+  "codeFieldLabel": "Code à 6 chiffres",
+  "codeWrong": "Ce code ne correspond pas, vérifie ton email",
+  "codeExpired": "Ce code a expiré",
+  "getNewCode": "Recevoir un nouveau code",
+  "codeLocked": "Trop d’essais, réessaie dans quelques minutes",
+  "changeEmail": "Modifier l’email",
+  "resendIn": "Renvoyer dans {seconds} s",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "resendCode": "Renvoyer le code",
+  "checkSpam": "Rien reçu ? Regarde dans tes spams.",
+  "nameTitle": "Comment on t’appelle ?",
+  "firstName": "Prénom",
+  "avatarTitle": "Choisis ta couleur.",
+  "avatarSub": "Elle s’affiche à côté de tout ce que tu ajoutes ou coches.",
+  "householdTitle": "C’est pour qui ?",
+  "householdSub": "Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.",
+  "justMe": "Pour moi",
+  "justMeSub": "Tes listes et notes, rien qu’à toi",
+  "twoOfUs": "À deux",
+  "twoOfUsSub": "Crée le foyer et invite l’autre",
+  "haveInvitation": "J’ai une invitation",
+  "createTitle": "Nomme ton foyer.",
+  "createSubSolo": "Il sera prêt le jour où tu invites quelqu’un.",
+  "createSubDuo": "L’autre verra ce nom dans l’invitation.",
+  "householdNameHint": "ex. L’appart",
+  "youAreTwo": "Vous êtes deux.",
+  "partnerJoinedHousehold": "{name} a rejoint ton foyer.",
+  "@partnerJoinedHousehold": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "seeMyLists": "Voir mes listes",
+  "invitationSent": "Invitation envoyée.",
+  "inviteTheOther": "Invite l’autre.",
+  "joinCodeTitle": "Ton code d’invitation.",
+  "joinCodeSub": "Les 6 caractères du code que l’autre personne t’a envoyé.",
+  "inviteCodeFieldLabel": "Code d’invitation à 6 caractères",
+  "joinCodeInvalid": "Ce code n’est pas valide ou a expiré. Demande une nouvelle invitation.",
+  "joinCodeChecking": "Vérification du code…",
+  "joinCodeAlphabet": "Lettres et chiffres, jamais de 0, O, 1 ou I.",
+  "householdFullTitle": "Ce foyer est complet.",
+  "householdFullSub": "Pour l’instant, un foyer compte 2 personnes au maximum. Tu peux créer le tien.",
+  "householdFullWho": "{names}, 2 sur 2",
+  "@householdFullWho": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "createMyHousehold": "Créer mon foyer",
+  "partnerInvitesYou": "{name} t’invite.",
+  "@partnerInvitesYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "joinSub": "Rejoins son foyer pour partager des listes et des notes avec {name}.",
+  "@joinSub": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "joinWho": "{name}, et toi en rejoignant",
+  "@joinWho": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "colorTaken": "{name} a déjà ta couleur. Choisis-en une autre :",
+  "@colorTaken": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "colorTakenShort": "Couleur déjà prise",
+  "joinHousehold": "Rejoindre le foyer",
+  "tabLists": "Listes",
+  "tabNotes": "Notes",
+  "newNote": "Nouvelle note",
+  "newList": "Nouvelle liste",
+  "settings": "Réglages",
+  "offline": "Hors ligne",
+  "taskDeleted": "« {title} » supprimé",
+  "@taskDeleted": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "greeting": "Salut {name},",
+  "@greeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shallWeStart": "On commence ?",
+  "goodDay": "Bonne journée ?",
+  "goodNight": "Bonne soirée ?",
+  "todayTitle": "Aujourd’hui.",
+  "tomorrowTitle": "Demain.",
+  "seeAllLists": "Voir les {count} listes",
+  "@seeAllLists": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nothingPlanned": "Rien de prévu. Profites-en.",
+  "firstListTitle": "Ta première liste.",
+  "firstListSub": "Courses, maison, idées cadeaux : commence par ce que tu as en tête.",
+  "createAList": "Créer une liste",
+  "justNow": "à l’instant",
+  "minutesAgo": "il y a {n} min",
+  "@minutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "il y a {n} h",
+  "@hoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "yesterdayLower": "hier",
+  "noNotesYet": "Pas encore de note. Touche + pour en créer une.",
+  "notesTitle": "Notes.",
+  "notesLede": "Une idée à garder ?",
+  "untitled": "Sans titre",
+  "nowPersonalList": "Liste passée en perso",
+  "sharedWith": "Partagée avec {name}",
+  "@sharedWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "listDeleted": "{name} supprimée",
+  "@listDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "editList": "Modifier la liste",
+  "editListSub": "Nom, couleur, icône, jour, rappel",
+  "inviteToShareList": "Pour partager cette liste avec l’autre",
+  "shareWithHousehold": "Partager avec le foyer",
+  "onlyYouWillSee": "Visible par toi uniquement",
+  "partnerWillSeeAndEdit": "{name} la verra et pourra la modifier",
+  "@partnerWillSeeAndEdit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteList": "Supprimer la liste",
+  "deleteListSub": "{count, plural, =1{Supprime 1 élément. Tu pourras annuler.} other{Supprime {count} éléments. Tu pourras annuler.}}",
+  "@deleteListSub": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dragToReorder": "Glisser pour déplacer",
+  "firstItemPlaceholder": "Écris ton premier élément…",
+  "addItem": "Ajouter un élément",
+  "doneSection": "Fait",
+  "listHint": "Touche un élément pour le modifier, glisse les points pour le déplacer, ou vers la gauche pour le supprimer.",
+  "allLists": "Toutes les listes",
+  "home": "Accueil",
+  "personalShareWith": "Perso. Partager avec {name}",
+  "@personalShareWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "listOptions": "Options de la liste",
+  "mascot": "Mascotte",
+  "sharedList": "Liste partagée",
+  "personalListOnlyYou": "Liste perso, visible par toi uniquement",
+  "allListsTitle": "Toutes les listes.",
+  "noListsYet": "Aucune liste. Touche + pour en créer une.",
+  "deleteNamed": "Supprimer {name}",
+  "@deleteNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nowPersonalNote": "Note passée en perso",
+  "noteDeleted": "{name} supprimée",
+  "@noteDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "lastEditedBy": "Dernière modification par",
+  "reminderOff": "Aucun",
+  "inviteToShareNote": "Pour partager cette note avec l’autre",
+  "deleteNote": "Supprimer la note",
+  "youCanUndo": "Tu pourras annuler.",
+  "noteOptions": "Options de la note",
+  "sharedNote": "Note partagée",
+  "personalNoteOnlyYou": "Note perso, visible par toi uniquement",
+  "slashHint": "Tape / pour ajouter un titre, une liste ou un lien.",
+  "reminderTitle": "Rappel.",
+  "removeReminder": "Retirer le rappel",
+  "reminderBothNotified": "Toi et {name} recevez une notification.",
+  "@reminderBothNotified": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "blockText": "Texte",
+  "blockTextDesc": "Écris, tout simplement",
+  "blockHeading": "Titre",
+  "blockHeadingDesc": "Titre de section",
+  "blockBullet": "Liste à puces",
+  "blockBulletDesc": "Liste simple",
+  "blockCheckbox": "Case à cocher",
+  "blockCheckboxDesc": "Choses à cocher",
+  "blockLink": "Lien",
+  "blockLinkDesc": "Colle une adresse web",
+  "formatBold": "Gras",
+  "formatItalic": "Italique",
+  "formatUnderline": "Souligné",
+  "blockListItem": "Élément",
+  "blockTodo": "À faire",
+  "blockLinkHint": "Colle un lien",
+  "blockTextHint": "Tape / pour les blocs",
+  "noBlockNamed": "Aucun bloc nommé « {query} »",
+  "@noBlockNamed": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "leaveHouseholdQuestion": "Quitter le foyer ?",
+  "leaveHousehold": "Quitter le foyer",
+  "sharedStayIn": "Les listes et notes partagées restent dans {household} avec {name}.",
+  "@sharedStayIn": {
+    "placeholders": {
+      "household": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "lastMemberLeave": "Tu es le dernier membre : {household} et toutes ses listes et notes seront supprimés définitivement.",
+  "@lastMemberLeave": {
+    "placeholders": {
+      "household": {
+        "type": "String"
+      }
+    }
+  },
+  "keepAccount": "Tu gardes ton compte et tu peux créer ou rejoindre un autre foyer.",
+  "removeQuestion": "Retirer {name} ?",
+  "@removeQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeNamed": "Retirer {name}",
+  "@removeNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "loseAccess": "{name} n’a plus accès à {household}.",
+  "@loseAccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "household": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedStayInHousehold": "Les listes et notes partagées restent dans le foyer.",
+  "wasRemoved": "{name} a été retiré",
+  "@wasRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Réglages.",
+  "myAccount": "Mon compte",
+  "householdSection": "Foyer.",
+  "householdName": "Nom du foyer",
+  "householdRenamed": "Foyer renommé",
+  "justYouForNow": "Juste toi pour l’instant",
+  "member": "Membre",
+  "remove": "Retirer",
+  "invitationResent": "Invitation renvoyée",
+  "invitationCancelled": "Invitation annulée",
+  "inviteSomeoneSub": "Par e-mail, pour partager listes et notes",
+  "householdFullNote": "Ton foyer est complet : 2 membres au maximum pour l’instant.",
+  "notificationsSection": "Notifications.",
+  "notifications": "Notifications",
+  "notificationsOnAt": "Activées, rappels à {time}",
+  "@notificationsOnAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsOff": "Coupées",
+  "aboutSection": "À propos.",
+  "termsOfUse": "Conditions d’utilisation",
+  "privacyPolicy": "Confidentialité",
+  "contactAndBugs": "Contact et bugs",
+  "opensInBrowser": "S’ouvre dans ton navigateur",
+  "opensMailApp": "Ouvre ton app e-mail",
+  "aboutFooter": "Picnote 1.0.0. L’apparence et la langue suivent les réglages du téléphone.",
+  "deletionCancelled": "Suppression annulée.",
+  "deletionBanner": "Ton compte sera supprimé le {date}. D’ici là, tu peux changer d’avis.",
+  "@deletionBanner": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelDeletion": "Annuler la suppression",
+  "personalBothDeleted": "{lists, plural, =1{Ta liste} other{Tes {lists} listes}} et {notes, plural, =1{ta note} other{tes {notes} notes}} perso seront supprimées.",
+  "@personalBothDeleted": {
+    "placeholders": {
+      "lists": {
+        "type": "int"
+      },
+      "notes": {
+        "type": "int"
+      }
+    }
+  },
+  "personalListsDeleted": "{count, plural, =1{Ta liste perso sera supprimée.} other{Tes {count} listes perso seront supprimées.}}",
+  "@personalListsDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "personalNotesDeleted": "{count, plural, =1{Ta note perso sera supprimée.} other{Tes {count} notes perso seront supprimées.}}",
+  "@personalNotesDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteAccountQuestion": "Supprimer ton compte ?",
+  "deleteMyAccount": "Supprimer mon compte",
+  "accountDeletedOn": "Ton compte sera supprimé le {date}",
+  "@accountDeletedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "lastMemberDelete": "Tu es le dernier membre : {household} et tout son contenu seront supprimés aussi.",
+  "@lastMemberDelete": {
+    "placeholders": {
+      "household": {
+        "type": "String"
+      }
+    }
+  },
+  "deactivatedFor15Days": "Ton compte est désactivé pendant 15 jours, puis effacé définitivement. Reconnecte-toi d’ici là pour changer d’avis.",
+  "accountTitle": "Compte.",
+  "avatarColor": "Couleur de l’avatar",
+  "colorShownTo": "{name} voit cette couleur à côté de ce que tu modifies.",
+  "@colorShownTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "colorShown": "Cette couleur s’affiche à côté de ce que tu modifies.",
+  "profileSection": "Profil.",
+  "firstNameSaved": "Prénom enregistré",
+  "signInSection": "Connexion.",
+  "codeByEmail": "Code par e-mail",
+  "codeByEmailSub": "Pas de mot de passe : un code à 6 chiffres à chaque fois",
+  "logOut": "Se déconnecter",
+  "fifteenDays": "15 jours pour changer d’avis",
+  "notificationsTitle": "Notifications.",
+  "generalSection": "Général.",
+  "allowNotifications": "Autoriser les notifications",
+  "allowNotificationsOn": "Rappels et activité du foyer",
+  "allowNotificationsOff": "Coupées : ni rappels ni alertes",
+  "remindersSection": "Rappels.",
+  "defaultTime": "Heure par défaut",
+  "defaultTimeSub": "Proposée quand tu ajoutes un rappel",
+  "whenPartnerEdits": "Quand {name} coche ou modifie",
+  "@whenPartnerEdits": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "eachTime": "Une notification à chaque fois",
+  "phoneNotificationSettings": "Tu peux aussi gérer Picnote dans les réglages de notifications du téléphone.",
+  "visibilityShared": "Partagée",
+  "noDeadline": "Non due",
+  "noReminder": "Pas de rappel",
+  "editNoteTitle": "Modifier la note.",
+  "editNote": "Modifier la note",
+  "whoSeesItTitle": "Qui la voit.",
+  "deadlineTitle": "Échéance.",
+  "deadline": "Échéance",
+  "removeDeadline": "Retirer l’échéance",
+  "reminderOnlyYou": "Toi seul reçois une notification.",
+  "defaultListName": "Liste",
+  "renameList": "Renommer la liste",
+  "add": "Ajouter",
+  "householdAndSettings": "Foyer et réglages",
+  "whosHere": "Qui est là",
+  "memberYou": "{name} (toi)",
+  "@memberYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "quoted": "« {item} »",
+  "@quoted": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "aListLower": "une liste",
+  "aNoteLower": "une note",
+  "youEditedAgo": "Tu as modifié {what}, {ago}",
+  "@youEditedAgo": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      },
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "theyEditedAgo": "A modifié {what}, {ago}",
+  "@theyEditedAgo": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      },
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "nothingChangedYet": "Rien de modifié pour l’instant",
+  "pinnedTitle": "Épinglées.",
+  "otherListsTitle": "Autres listes.",
+  "pinHint": "Épingle jusqu’à 4 listes pour les voir sur l’accueil.",
+  "homeFull": "L’accueil est plein. Retire une liste pour en épingler une autre.",
+  "pinNamed": "Épingler {name}",
+  "@pinNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unpinNamed": "Désépingler {name}",
+  "@unpinNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "latestChanges": "Dernières modifs",
+  "toShareThisList": "Pour partager cette liste",
+  "toShareThisNote": "Pour partager cette note",
+  "theListLower": "la liste",
+  "theNoteLower": "la note",
+  "logByYou": "{verb, select, check{Tu as coché} uncheck{Tu as décoché} add{Tu as ajouté} edit{Tu as modifié} del{Tu as supprimé} other{Tu as créé}} {what}",
+  "@logByYou": {
+    "placeholders": {
+      "verb": {
+        "type": "String"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "logByName": "{name} {verb, select, check{a coché} uncheck{a décoché} add{a ajouté} edit{a modifié} del{a supprimé} other{a créé}} {what}",
+  "@logByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "verb": {
+        "type": "String"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "logSolo": "{verb, select, check{Coché} uncheck{Décoché} add{Ajouté} edit{Modifié} del{Supprimé} other{Créé}} {what}",
+  "@logSolo": {
+    "placeholders": {
+      "verb": {
+        "type": "String"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "logSoloList": "{verb, select, edit{Liste modifiée} other{Liste créée}}",
+  "@logSoloList": {
+    "placeholders": {
+      "verb": {
+        "type": "String"
+      }
+    }
+  },
+  "logSoloNote": "{verb, select, edit{Note modifiée} other{Note créée}}",
+  "@logSoloNote": {
+    "placeholders": {
+      "verb": {
+        "type": "String"
+      }
+    }
+  },
+  "listDoneUnpin": "« {name} » est terminée. La désépingler ?",
+  "@listDoneUnpin": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unpin": "Désépingler",
+  "partnerCreatedList": "{who} a créé la liste « {name} »",
+  "@partnerCreatedList": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "partnerCreatedNote": "{who} a créé la note « {name} »",
+  "@partnerCreatedNote": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "see": "Voir",
+  "isTyping": "{name} écrit…",
+  "@isTyping": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

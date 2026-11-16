@@ -1,0 +1,225 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../domain/models/list_stats.dart';
+import '../../../domain/models/task.dart';
+import '../../../domain/models/task_list.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../routing/routes.dart';
+import '../../core/themes/colors.dart';
+import '../../core/themes/theme.dart';
+import '../../core/ui/buttons.dart';
+import '../../core/ui/controls.dart';
+import '../../core/ui/home_header.dart';
+import '../../core/ui/layout.dart';
+import '../../core/ui/pn_icon.dart';
+import '../../core/ui/task_row.dart';
+import '../../core/ui/toast.dart';
+import '../../invite/widgets/invite_sheet.dart';
+import '../view_models/home_viewmodel.dart';
+import 'list_card.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key, required this.viewModel, this.onCreateList});
+
+  final HomeViewModel viewModel;
+
+  /// Opens the "New list" sheet (from the empty-state card).
+  final VoidCallback? onCreateList;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _wink = false;
+  Timer? _winkTimer;
+
+  @override
+  void dispose() {
+    _winkTimer?.cancel();
+    super.dispose();
+  }
+
+  void _winkWatermark() {
+    _winkTimer?.cancel();
+    setState(() => _wink = true);
+    _winkTimer = Timer(const Duration(milliseconds: 1500), () => setState(() => _wink = false));
+  }
+
+  Future<void> _delete(Task task) async {
+    final l10n = AppLocalizations.of(context);
+    final deleted = await widget.viewModel.delete(task);
+    if (deleted == null || !mounted) return;
+    showToast(context, l10n.taskDeleted(task.title), onUndo: () => widget.viewModel.restore(deleted));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ListenableBuilder(
+      listenable: widget.viewModel.load,
+      builder: (context, child) {
+        final vm = widget.viewModel;
+        // Data already on screen stays there while it refreshes.
+        if (vm.load.running && vm.isEmpty) return const Center(child: CircularProgressIndicator(color: PnColors.terra));
+        if (vm.load.error && vm.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.homeLoadError, style: PnText.sub),
+                const SizedBox(height: 8),
+                LinkButton(label: l10n.tryAgain, onPressed: widget.viewModel.load.execute),
+              ],
+            ),
+          );
+        }
+        return child!;
+      },
+      child: ListenableBuilder(listenable: widget.viewModel, builder: (context, _) => _content(context, l10n)),
+    );
+  }
+
+  Widget _content(BuildContext context, AppLocalizations l10n) {
+    final vm = widget.viewModel;
+    final day = isDaytime();
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 12, bottom: bottomBarClearance),
+          child: ContentWidth(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  right: day ? -70 : -56,
+                  top: day ? 18 : 34,
+                  child: Watermark(winking: _wink),
+                ),
+                Gap(
+                  gap: 20,
+                  children: [
+                    HomeHeader(
+                      whoIsHere: vm.whoIsHere,
+                      onWordmark: _winkWatermark,
+                      onInvite: () => showInviteSheet(context),
+                      onSettings: () => context.go(Routes.settings),
+                    ),
+                    Gap(
+                      gap: 8,
+                      children: [
+                        Text(l10n.greeting(vm.name), style: PnText.greeting),
+                        Text(
+                          vm.isEmpty ? l10n.shallWeStart : (day ? l10n.goodDay : l10n.goodNight),
+                          style: PnText.lede,
+                        ),
+                      ],
+                    ),
+                    _lists(context, l10n),
+                    _section(context, l10n, l10n.todayTitle, vm.today, alwaysShow: true),
+                    if (vm.tomorrow.isNotEmpty) _section(context, l10n, l10n.tomorrowTitle, vm.tomorrow),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _lists(BuildContext context, AppLocalizations l10n) {
+    final vm = widget.viewModel;
+    final shown = vm.visibleLists;
+    return Gap(
+      gap: 10,
+      children: [
+        if (shown.isNotEmpty)
+          PairedGrid(
+            children: [
+              for (final (i, list) in shown.indexed)
+                ListCard(
+                  list: list,
+                  index: i,
+                  showPerso: !vm.isSolo,
+                  subtitle: _progress(l10n, vm.stats(list)),
+                  // Pushed, so that going back pops it and the card shrinks back.
+                  onTap: () => context.push(Routes.list(list.id)),
+                ),
+            ],
+          ),
+        if (vm.listCount > shown.length)
+          Center(
+            child: Pressable(
+              onTap: () => context.push(Routes.lists),
+              child: SizedBox(
+                height: 40,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l10n.seeAllLists(vm.listCount), style: PnText.pill.copyWith(color: PnColors.terraDark)),
+                    const SizedBox(width: 4),
+                    const PnIcon(PnIcons.chevronRight, color: PnColors.terraDark, size: 16),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        if (vm.listCount == 0) FirstListCard(onCreate: widget.onCreateList),
+      ],
+    );
+  }
+
+  Widget _section(
+    BuildContext context,
+    AppLocalizations l10n,
+    String title,
+    List<Task> tasks, {
+    bool alwaysShow = false,
+  }) {
+    final vm = widget.viewModel;
+    final open = tasks.where((t) => !t.done).length;
+    return Gap(
+      gap: 6,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(child: Text(title, style: PnText.section)),
+            if (tasks.isNotEmpty)
+              Text(
+                _progress(l10n, ListStats(total: tasks.length, open: open)),
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.muted),
+              ),
+          ],
+        ),
+        if (tasks.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(l10n.nothingPlanned, style: PnText.sub),
+          ),
+        for (final t in tasks)
+          TaskRow(
+            key: ValueKey(t.id),
+            task: t,
+            tag: _tag(vm.listOf(t)),
+            // Checked from here, renamed from the list itself.
+            onToggle: () => vm.toggle(t),
+            onDelete: () => _delete(t),
+          ),
+      ],
+    );
+  }
+
+  Widget? _tag(TaskList? list) {
+    if (list == null) return null;
+    final theme = ListTheme.of(list.color);
+    return InfoPill(text: list.name, color: theme.fg, background: theme.bg);
+  }
+}
+
+String _progress(AppLocalizations l10n, ListStats s) => s.total == 0 ? l10n.listEmpty : l10n.listRemaining(s.open);
