@@ -622,6 +622,8 @@
   "allowNotificationsOn": "Rappels et activité du foyer",
   "allowNotificationsOff": "Coupées : ni rappels ni alertes",
   "remindersSection": "Rappels.",
+  "dailyReminders": "Ce qu’il reste à faire",
+  "dailyRemindersSub": "Toutes les 3 h de 9 h à 21 h, s’il reste des choses pour aujourd’hui ou demain",
   "defaultTime": "Heure par défaut",
   "defaultTimeSub": "Proposée quand tu ajoutes un rappel",
   "whenPartnerEdits": "Quand {name} coche ou modifie",

@@ -31,12 +31,14 @@ NotificationPrefs prefsFromRow(Row r) => NotificationPrefs(
   enabled: r['notify_enabled'] as bool,
   defaultTime: r['notify_default_time'] as String,
   partnerActivity: r['notify_partner_activity'] as bool,
+  dailyReminders: r['notify_daily_reminders'] as bool? ?? true,
 );
 
 Row prefsToRow(NotificationPrefs p) => {
   'notify_enabled': p.enabled,
   'notify_default_time': p.defaultTime,
   'notify_partner_activity': p.partnerActivity,
+  'notify_daily_reminders': p.dailyReminders,
 };
 
 TaskList listFromRow(Row r) => TaskList(

@@ -59,6 +59,8 @@ class PushRepositorySupabase extends PushRepository {
           'device_token': token,
           'device_platform': 'android',
           'device_locale': PlatformDispatcher.instance.locale.languageCode == 'fr' ? 'fr' : 'en',
+          // The reminders go out at 9:00, 12:00… phone time.
+          'device_utc_offset': DateTime.now().timeZoneOffset.inMinutes,
         },
       );
     } on Exception catch (e) {

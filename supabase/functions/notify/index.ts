@@ -2,6 +2,8 @@
 // someone created or changed, as soon as that person leaves it (the app
 // calls release_activity) or after a minute of quiet. Called then, and
 // every minute by the `notify-activity` cron job (see migrations/*push*).
+// Called on the hour with {"kind": "reminders"} by the `daily-reminders`
+// job, it reminds each phone whose hour it is of what is left to do.
 //
 // Secret: FIREBASE_SERVICE_ACCOUNT, the JSON key of a Firebase service
 // account (Firebase console > Project settings > Service accounts).
@@ -25,15 +27,20 @@ type Burst = {
   devices: Device[];
 };
 
+/** A phone to remind, from due_reminders. */
+type Reminder = { token: string; locale: string; today: string[]; tomorrow: string[] };
+
 type ServiceAccount = { project_id: string; client_email: string; private_key: string };
 
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-Deno.serve(async () => {
+Deno.serve(async (request) => {
   // Checked before claiming, so nothing is lost while the secret is missing.
   const secret = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
   if (!secret) return Response.json({ error: "FIREBASE_SERVICE_ACCOUNT is not set" }, { status: 500 });
   const account = JSON.parse(secret) as ServiceAccount;
+  const body = await request.json().catch(() => ({}));
+  if (body?.kind === "reminders") return await remind(account);
 
   const { data, error } = await supabase.rpc("claim_activity_notifications");
   if (error) return Response.json({ error: error.message }, { status: 500 });
@@ -46,11 +53,27 @@ Deno.serve(async () => {
     for (const device of burst.devices) {
       const message = wording(burst, device.locale === "fr" ? fr : en);
       if (message == null) continue;
-      if (await send(account.project_id, accessToken, device.token, burst, message)) sent++;
+      const route = burst.note_id != null ? `/notes/${burst.note_id}` : `/lists/${burst.list_id}`;
+      if (await send(account.project_id, accessToken, device.token, message, route, route)) sent++;
     }
   }
   return Response.json({ sent });
 });
+
+async function remind(account: ServiceAccount): Promise<Response> {
+  const { data, error } = await supabase.rpc("due_reminders");
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+  const phones = (data ?? []) as Reminder[];
+  if (phones.length === 0) return Response.json({ sent: 0 });
+
+  const accessToken = await googleAccessToken(account);
+  let sent = 0;
+  for (const phone of phones) {
+    const message = reminderWording(phone, phone.locale === "fr" ? fr : en);
+    if (await send(account.project_id, accessToken, phone.token, message, "/", "reminder")) sent++;
+  }
+  return Response.json({ sent });
+}
 
 // ---------------------------------------------------------------------------
 // Wording
@@ -69,6 +92,9 @@ type Words = {
   deleted: (n: number) => string;
   and: string;
   others: (n: number) => string;
+  leftToday: (n: number) => string;
+  leftTomorrow: (n: number) => string;
+  tomorrow: string;
 };
 
 const fr: Words = {
@@ -84,6 +110,9 @@ const fr: Words = {
   deleted: (n) => `${n} supprimé${n > 1 ? "s" : ""}`,
   and: "et",
   others: (n) => `${n} autre${n > 1 ? "s" : ""}`,
+  leftToday: (n) => `${n} chose${n > 1 ? "s" : ""} à faire aujourd’hui`,
+  leftTomorrow: (n) => `${n} chose${n > 1 ? "s" : ""} à faire demain`,
+  tomorrow: "Demain",
 };
 
 const en: Words = {
@@ -99,6 +128,9 @@ const en: Words = {
   deleted: (n) => `${n} deleted`,
   and: "and",
   others: (n) => `${n} other${n > 1 ? "s" : ""}`,
+  leftToday: (n) => `${n} thing${n > 1 ? "s" : ""} to do today`,
+  leftTomorrow: (n) => `${n} thing${n > 1 ? "s" : ""} to do tomorrow`,
+  tomorrow: "Tomorrow",
 };
 
 /** "Lait, Pain et Œufs", or "Lait, Pain, Œufs et 2 autres". */
@@ -127,6 +159,17 @@ function wording(b: Burst, w: Words): { title: string; body?: string } | null {
   return changes.length > 0 ? { title, body: changes.join(" · ") } : { title };
 }
 
+/** "3 choses à faire aujourd’hui" over "Lait, Pain et 1 autre · Demain : 2",
+ * or only tomorrow's when today is clear. */
+function reminderWording(r: Reminder, w: Words): { title: string; body: string } {
+  if (r.today.length === 0) return { title: w.leftTomorrow(r.tomorrow.length), body: itemList(r.tomorrow, w) };
+  const body = itemList(r.today, w);
+  return {
+    title: w.leftToday(r.today.length),
+    body: r.tomorrow.length > 0 ? `${body} · ${w.tomorrow} : ${r.tomorrow.length}` : body,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Firebase Cloud Messaging
 // ---------------------------------------------------------------------------
@@ -136,10 +179,10 @@ async function send(
   projectId: string,
   accessToken: string,
   token: string,
-  burst: Burst,
   message: { title: string; body?: string },
+  route: string,
+  tag: string,
 ): Promise<boolean> {
-  const route = burst.note_id != null ? `/notes/${burst.note_id}` : `/lists/${burst.list_id}`;
   const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -150,8 +193,9 @@ async function send(
         data: { route },
         android: {
           priority: "high",
-          // A newer notification about the same list or note replaces it.
-          notification: { tag: route },
+          // A newer notification about the same list or note, or a newer
+          // reminder, replaces it.
+          notification: { tag },
         },
       },
     }),

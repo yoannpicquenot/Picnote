@@ -47,6 +47,16 @@ class NotificationsScreen extends StatelessWidget {
             SettingsGroup(
               title: l10n.remindersSection,
               children: [
+                SettingsRow(
+                  icon: PnIcons.calendar,
+                  title: l10n.dailyReminders,
+                  subtitle: l10n.dailyRemindersSub,
+                  dimmed: !prefs.enabled,
+                  trailing: PnToggle(on: prefs.dailyReminders && prefs.enabled),
+                  onTap: prefs.enabled
+                      ? () => vm.updateNotifications(prefs.copyWith(dailyReminders: !prefs.dailyReminders))
+                      : null,
+                ),
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
                   opacity: prefs.enabled ? 1 : 0.4,

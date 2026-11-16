@@ -260,8 +260,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidEmail => 'This address doesn’t look valid';
 
   @override
-  String get inviteEmailHelp =>
-      'Send them the code above: they type it in Picnote via “I have an invitation”.';
+  String get inviteEmailHelp => 'Send them the code above: they type it in Picnote via “I have an invitation”.';
 
   @override
   String get theirEmail => 'Their email';
@@ -292,8 +291,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeTitle => 'Hi there,';
 
   @override
-  String get welcomeSub =>
-      'Your lists and notes, just for you or shared with your household.';
+  String get welcomeSub => 'Your lists and notes, just for you or shared with your household.';
 
   @override
   String get continueWithEmail => 'Continue with email';
@@ -361,8 +359,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get householdTitle => 'Who is it for?';
 
   @override
-  String get householdSub =>
-      'Start on your own or as a pair. You can invite someone later.';
+  String get householdSub => 'Start on your own or as a pair. You can invite someone later.';
 
   @override
   String get justMe => 'Just me';
@@ -418,8 +415,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteCodeFieldLabel => '6-character invite code';
 
   @override
-  String get joinCodeInvalid =>
-      'This code is invalid or has expired. Ask for a new invitation.';
+  String get joinCodeInvalid => 'This code is invalid or has expired. Ask for a new invitation.';
 
   @override
   String get joinCodeChecking => 'Checking the code…';
@@ -431,8 +427,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get householdFullTitle => 'This household is full.';
 
   @override
-  String get householdFullSub =>
-      'For now, a household holds 2 people at most. You can create your own.';
+  String get householdFullSub => 'For now, a household holds 2 people at most. You can create your own.';
 
   @override
   String householdFullWho(String names) {
@@ -523,8 +518,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get firstListTitle => 'Your first list.';
 
   @override
-  String get firstListSub =>
-      'Groceries, chores, gift ideas: start with whatever is on your mind.';
+  String get firstListSub => 'Groceries, chores, gift ideas: start with whatever is on your mind.';
 
   @override
   String get createAList => 'Create a list';
@@ -617,8 +611,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doneSection => 'Done';
 
   @override
-  String get listHint =>
-      'Tap an item to edit it, drag the dots to move it, swipe left to delete it.';
+  String get listHint => 'Tap an item to edit it, drag the dots to move it, swipe left to delete it.';
 
   @override
   String get allLists => 'All lists';
@@ -773,8 +766,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get keepAccount =>
-      'You keep your account and can create or join another household.';
+  String get keepAccount => 'You keep your account and can create or join another household.';
 
   @override
   String removeQuestion(String name) {
@@ -792,8 +784,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get sharedStayInHousehold =>
-      'Every shared list and note stays in the household.';
+  String get sharedStayInHousehold => 'Every shared list and note stays in the household.';
 
   @override
   String wasRemoved(String name) {
@@ -834,8 +825,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteSomeoneSub => 'By email, to share lists and notes';
 
   @override
-  String get householdFullNote =>
-      'Your household is full: 2 members at most for now.';
+  String get householdFullNote => 'Your household is full: 2 members at most for now.';
 
   @override
   String get notificationsSection => 'Notifications.';
@@ -870,8 +860,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get opensMailApp => 'Opens your mail app';
 
   @override
-  String get aboutFooter =>
-      'Picnote 1.0.0. Appearance and language follow your phone settings.';
+  String get aboutFooter => 'Picnote 1.0.0. Appearance and language follow your phone settings.';
 
   @override
   String get deletionCancelled => 'Deletion cancelled. Welcome back.';
@@ -997,6 +986,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remindersSection => 'Reminders.';
 
   @override
+  String get dailyReminders => 'What’s left to do';
+
+  @override
+  String get dailyRemindersSub => 'Every 3 hours from 9am to 9pm, when something is left for today or tomorrow';
+
+  @override
   String get defaultTime => 'Default time';
 
   @override
@@ -1011,8 +1006,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eachTime => 'A notification each time';
 
   @override
-  String get phoneNotificationSettings =>
-      'You can also manage Picnote in your phone notification settings.';
+  String get phoneNotificationSettings => 'You can also manage Picnote in your phone notification settings.';
 
   @override
   String get visibilityShared => 'Shared';
@@ -1166,19 +1160,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String logSoloList(String verb) {
-    String _temp0 = intl.Intl.selectLogic(verb, {
-      'edit': 'List edited',
-      'other': 'List created',
-    });
+    String _temp0 = intl.Intl.selectLogic(verb, {'edit': 'List edited', 'other': 'List created'});
     return '$_temp0';
   }
 
   @override
   String logSoloNote(String verb) {
-    String _temp0 = intl.Intl.selectLogic(verb, {
-      'edit': 'Note edited',
-      'other': 'Note created',
-    });
+    String _temp0 = intl.Intl.selectLogic(verb, {'edit': 'Note edited', 'other': 'Note created'});
     return '$_temp0';
   }
 

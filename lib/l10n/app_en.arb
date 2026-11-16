@@ -289,6 +289,8 @@
   "allowNotificationsOn": "Reminders and household activity",
   "allowNotificationsOff": "Off: no reminders, no alerts",
   "remindersSection": "Reminders.",
+  "dailyReminders": "What’s left to do",
+  "dailyRemindersSub": "Every 3 hours from 9am to 9pm, when something is left for today or tomorrow",
   "defaultTime": "Default time",
   "defaultTimeSub": "Suggested when you add a reminder",
   "whenPartnerEdits": "When {name} checks or edits",
