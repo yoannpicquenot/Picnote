@@ -13,14 +13,14 @@ import 'controls.dart';
 
 /// A task: checkbox, title (tap to rename, or to check when [onRename] is
 /// null), optional tag or author avatar, and a drag handle. Swipe left to
-/// delete.
+/// delete, where [onDelete] is given.
 class TaskRow extends StatefulWidget {
   const TaskRow({
     super.key,
     required this.task,
     required this.onToggle,
     this.onRename,
-    required this.onDelete,
+    this.onDelete,
     this.tag,
     this.author,
     this.handle,
@@ -32,7 +32,10 @@ class TaskRow extends StatefulWidget {
 
   /// Null where tasks can only be checked (home's Today / Tomorrow).
   final ValueChanged<String>? onRename;
-  final VoidCallback onDelete;
+
+  /// Null on home's Today / Tomorrow: a swipe there changes page, and must
+  /// not delete a task by mistake.
+  final VoidCallback? onDelete;
 
   /// List name chip, on the home screen.
   final Widget? tag;
@@ -82,7 +85,7 @@ class _TaskRowState extends State<TaskRow> {
     setState(() => _editing = false);
     final title = _controller.text.trim();
     if (title.isEmpty) {
-      widget.onDelete();
+      widget.onDelete?.call();
     } else if (title != widget.task.title) {
       widget.onRename?.call(title);
     }
@@ -103,8 +106,8 @@ class _TaskRowState extends State<TaskRow> {
     );
     return Dismissible(
       key: ValueKey('dismiss-${task.id}'),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => widget.onDelete(),
+      direction: widget.onDelete == null ? DismissDirection.none : DismissDirection.endToStart,
+      onDismissed: (_) => widget.onDelete?.call(),
       background: Container(
         color: PnColors.danger,
         alignment: Alignment.centerRight,

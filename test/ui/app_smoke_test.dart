@@ -779,6 +779,30 @@ void main() {
     }
   });
 
+  testWidgets('a swipe on a task of Today goes to Notes, and deletes nothing', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final repo = tester.element(find.byType(HomeScreen)).read<ListRepository>();
+    final before = repo.tasks.length;
+    await tester.fling(find.text('Tomates'), const Offset(-300, 0), 1000);
+    await settle(tester);
+    expect(router.state.uri.path, Routes.notes);
+    expect(repo.tasks, hasLength(before));
+  });
+
+  testWidgets('the bottom bar shows on Lists and Notes only', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    bool barShown() => tester.getTopLeft(find.text('Listes')).dy < 844;
+    expect(barShown(), isTrue);
+    for (final route in [Routes.lists, Routes.settings, Routes.list('c')]) {
+      router.go(route);
+      await settle(tester);
+      expect(barShown(), isFalse, reason: route);
+    }
+    router.go(Routes.notes);
+    await settle(tester);
+    expect(barShown(), isTrue);
+  });
+
   testWidgets('a swipe sideways goes from Lists to Notes and back', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     // Mid-swipe, both pages follow the finger, side by side.
@@ -790,6 +814,8 @@ void main() {
     expect(tester.getTopLeft(find.text('PICNOTE.')).dx, 20, reason: 'the header stays in place');
     expect(find.text('Notes.'), findsOneWidget);
     expect(tester.getTopLeft(find.text('Notes.')).dx, lessThan(390));
+    // The blocks trail the title: Today, leaving, is further to the left.
+    expect(tester.getTopLeft(find.text('Aujourd’hui.')).dx, lessThan(tester.getTopLeft(find.text('Salut Mel,')).dx));
     // The tabs follow the finger: Lists fading, Notes not yet selected.
     final lists = tester.widget<Text>(find.text('Listes')).style!.color!;
     expect(lists, isNot(PnColors.terraDark));

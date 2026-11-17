@@ -123,7 +123,9 @@ class _AppShellState extends State<AppShell> {
   String get _location => widget.location;
 
   /// A list or a note is open.
-  bool get _inItem => (_location.startsWith('${Routes.lists}/') || _location.startsWith('${Routes.notes}/'));
+  /// Lists or Notes: the bar shows only there, not on the pages opened
+  /// from them (a list, a note, all lists, settings…).
+  bool get _onTabs => _location == Routes.home || _location == Routes.notes;
 
   /// Settings select no tab; all lists belong to Lists.
   int get _tab {
@@ -169,7 +171,7 @@ class _AppShellState extends State<AppShell> {
     return ValueListenableBuilder(
       valueListenable: openSheets,
       builder: (context, sheets, _) {
-        final hidden = _inItem || sheets > 0 || MediaQuery.viewInsetsOf(context).bottom > 0;
+        final hidden = !_onTabs || sheets > 0 || MediaQuery.viewInsetsOf(context).bottom > 0;
         _barHidden = hidden;
         return PopScope(
           // Android back closes the "+" menu first, then goes back to home,
@@ -271,7 +273,7 @@ class _AppShellState extends State<AppShell> {
                                 tab: _tab,
                                 // On Lists or Notes, the tabs follow the pager as
                                 // it is swiped, not just once it has settled.
-                                position: _location == Routes.home || _location == Routes.notes ? position : null,
+                                position: _onTabs ? position : null,
                                 tabs: [(PnIcons.list, l10n.tabLists), (PnIcons.document, l10n.tabNotes)],
                                 onTab: (i) {
                                   _setAdd(false);

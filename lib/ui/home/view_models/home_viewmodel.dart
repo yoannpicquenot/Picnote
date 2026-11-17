@@ -89,13 +89,6 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> toggle(Task task) => _listRepository.updateTask(task.copyWith(done: !task.done, byId: _meId));
 
-  Future<DeletedTask?> delete(Task task) async {
-    final result = await _listRepository.deleteTask(task.id);
-    return result is Ok<DeletedTask> ? result.value : null;
-  }
-
-  Future<void> restore(DeletedTask deleted) => _listRepository.restoreTask(deleted);
-
   @override
   void dispose() {
     _listRepository.removeListener(notifyListeners);

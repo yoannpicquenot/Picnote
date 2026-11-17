@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../../core/ui/home_header.dart';
 import '../../core/ui/layout.dart';
+import '../../core/ui/tab_stagger.dart';
 
 /// Where the Lists / Notes pager stands: 0 on Lists, 1 on Notes, in
 /// between while swiping. The bottom bar's tabs follow it.
@@ -191,7 +192,11 @@ class _TabPagerState extends State<TabPager> {
                 for (final (i, page) in widget.pages.indexed)
                   NotificationListener<Notification>(
                     onNotification: (n) => _onPageScroll(i, n),
-                    child: _KeepAlive(child: page),
+                    child: TabPagePosition(
+                      controller: _controller,
+                      index: i,
+                      child: _KeepAlive(child: page),
+                    ),
                   ),
               ],
             ),

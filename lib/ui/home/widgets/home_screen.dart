@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,8 +13,8 @@ import '../../core/ui/controls.dart';
 import '../../core/ui/home_header.dart';
 import '../../core/ui/layout.dart';
 import '../../core/ui/pn_icon.dart';
+import '../../core/ui/tab_stagger.dart';
 import '../../core/ui/task_row.dart';
-import '../../core/ui/toast.dart';
 import '../view_models/home_viewmodel.dart';
 import 'list_card.dart';
 import 'pinned_grid.dart';
@@ -34,13 +32,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Future<void> _delete(Task task) async {
-    final l10n = AppLocalizations.of(context);
-    final deleted = await widget.viewModel.delete(task);
-    if (deleted == null || !mounted) return;
-    showToast(context, l10n.taskDeleted(task.title), onUndo: () => widget.viewModel.restore(deleted));
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -93,9 +84,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    _lists(context, l10n),
-                    _section(context, l10n, l10n.todayTitle, vm.today, alwaysShow: true),
-                    if (vm.tomorrow.isNotEmpty) _section(context, l10n, l10n.tomorrowTitle, vm.tomorrow),
+                    // While swiping, the blocks trail the title, one after another.
+                    TabStagger(depth: 1, child: _lists(context, l10n)),
+                    TabStagger(depth: 2, child: _section(context, l10n, l10n.todayTitle, vm.today, alwaysShow: true)),
+                    if (vm.tomorrow.isNotEmpty)
+                      TabStagger(depth: 3, child: _section(context, l10n, l10n.tomorrowTitle, vm.tomorrow)),
                   ],
                 ),
               ],
@@ -184,9 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
             key: ValueKey(t.id),
             task: t,
             tag: _tag(vm.listOf(t)),
-            // Checked from here, renamed from the list itself.
+            // Checked from here, renamed or deleted from the list itself:
+            // a swipe here goes to Notes.
             onToggle: () => vm.toggle(t),
-            onDelete: () => _delete(t),
           ),
       ],
     );

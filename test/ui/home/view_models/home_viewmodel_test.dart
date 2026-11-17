@@ -103,16 +103,5 @@ void main() {
       expect(viewModel.authorOf(kSharedTasks[0])?.name, 'Yoann');
       expect(viewModel.authorOf(kSharedTasks[1].copyWith(byId: 'me')), isNull);
     });
-
-    test('deleting a task can be undone', () async {
-      final lists = FakeListRepository(lists: [kSharedList], tasks: kSharedTasks);
-      final viewModel = build(lists);
-
-      final deleted = await viewModel.delete(kSharedTasks[1]);
-      expect(lists.tasks, hasLength(4));
-
-      await viewModel.restore(deleted!);
-      expect(lists.tasks.map((t) => t.id), kSharedTasks.map((t) => t.id));
-    });
   });
 }
