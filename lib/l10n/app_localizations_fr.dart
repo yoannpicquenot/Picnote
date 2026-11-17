@@ -292,7 +292,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get welcomeTitle => 'Bonjour,';
 
   @override
-  String get welcomeSub => 'Tes listes et tes notes, pour toi ou à partager avec ton foyer.';
+  String get welcomeSub =>
+      'Tes listes et tes notes, pour toi ou à partager avec ton foyer.';
 
   @override
   String get continueWithEmail => 'Continuer avec un e-mail';
@@ -307,7 +308,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get emailHint => 'email@exemple.fr';
 
   @override
-  String get offlineTryAgain => 'Pas de connexion, réessaie quand tu seras en ligne';
+  String get offlineTryAgain =>
+      'Pas de connexion, réessaie quand tu seras en ligne';
 
   @override
   String get codeTitle => 'Regarde tes e-mails.';
@@ -354,13 +356,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get avatarTitle => 'Choisis ta couleur.';
 
   @override
-  String get avatarSub => 'Elle s’affiche à côté de tout ce que tu ajoutes ou coches.';
+  String get avatarSub =>
+      'Elle s’affiche à côté de tout ce que tu ajoutes ou coches.';
 
   @override
   String get householdTitle => 'C’est pour qui ?';
 
   @override
-  String get householdSub => 'Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.';
+  String get householdSub =>
+      'Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.';
 
   @override
   String get justMe => 'Pour moi';
@@ -410,13 +414,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get joinCodeTitle => 'Ton code d’invitation.';
 
   @override
-  String get joinCodeSub => 'Les 6 caractères du code que l’autre personne t’a envoyé.';
+  String get joinCodeSub =>
+      'Les 6 caractères du code que l’autre personne t’a envoyé.';
 
   @override
   String get inviteCodeFieldLabel => 'Code d’invitation à 6 caractères';
 
   @override
-  String get joinCodeInvalid => 'Ce code n’est pas valide ou a expiré. Demande une nouvelle invitation.';
+  String get joinCodeInvalid =>
+      'Ce code n’est pas valide ou a expiré. Demande une nouvelle invitation.';
 
   @override
   String get joinCodeChecking => 'Vérification du code…';
@@ -428,7 +434,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get householdFullTitle => 'Ce foyer est complet.';
 
   @override
-  String get householdFullSub => 'Pour l’instant, un foyer compte 2 personnes au maximum. Tu peux créer le tien.';
+  String get householdFullSub =>
+      'Pour l’instant, un foyer compte 2 personnes au maximum. Tu peux créer le tien.';
 
   @override
   String householdFullWho(String names) {
@@ -519,7 +526,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get firstListTitle => 'Ta première liste.';
 
   @override
-  String get firstListSub => 'Courses, maison, idées cadeaux : commence par ce que tu as en tête.';
+  String get firstListSub =>
+      'Courses, maison, idées cadeaux : commence par ce que tu as en tête.';
 
   @override
   String get createAList => 'Créer une liste';
@@ -768,7 +776,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get keepAccount => 'Tu gardes ton compte et tu peux créer ou rejoindre un autre foyer.';
+  String get keepAccount =>
+      'Tu gardes ton compte et tu peux créer ou rejoindre un autre foyer.';
 
   @override
   String removeQuestion(String name) {
@@ -786,7 +795,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get sharedStayInHousehold => 'Les listes et notes partagées restent dans le foyer.';
+  String get sharedStayInHousehold =>
+      'Les listes et notes partagées restent dans le foyer.';
 
   @override
   String wasRemoved(String name) {
@@ -827,7 +837,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inviteSomeoneSub => 'Par e-mail, pour partager listes et notes';
 
   @override
-  String get householdFullNote => 'Ton foyer est complet : 2 membres au maximum pour l’instant.';
+  String get householdFullNote =>
+      'Ton foyer est complet : 2 membres au maximum pour l’instant.';
 
   @override
   String get notificationsSection => 'Notifications.';
@@ -862,7 +873,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get opensMailApp => 'Ouvre ton app e-mail';
 
   @override
-  String get aboutFooter => 'Picnote 1.0.0. L’apparence et la langue suivent les réglages du téléphone.';
+  String get aboutFooter =>
+      'Picnote 1.0.0. L’apparence et la langue suivent les réglages du téléphone.';
 
   @override
   String get deletionCancelled => 'Suppression annulée.';
@@ -877,8 +889,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String personalBothDeleted(int lists, int notes) {
-    String _temp0 = intl.Intl.pluralLogic(lists, locale: localeName, other: 'Tes $lists listes', one: 'Ta liste');
-    String _temp1 = intl.Intl.pluralLogic(notes, locale: localeName, other: 'tes $notes notes', one: 'ta note');
+    String _temp0 = intl.Intl.pluralLogic(
+      lists,
+      locale: localeName,
+      other: 'Tes $lists listes',
+      one: 'Ta liste',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      notes,
+      locale: localeName,
+      other: 'tes $notes notes',
+      one: 'ta note',
+    );
     return '$_temp0 et $_temp1 perso seront supprimées.';
   }
 
@@ -936,7 +958,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get colorShown => 'Cette couleur s’affiche à côté de ce que tu modifies.';
+  String get colorShown =>
+      'Cette couleur s’affiche à côté de ce que tu modifies.';
 
   @override
   String get profileSection => 'Profil.';
@@ -951,7 +974,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get codeByEmail => 'Code par e-mail';
 
   @override
-  String get codeByEmailSub => 'Pas de mot de passe : un code à 6 chiffres à chaque fois';
+  String get codeByEmailSub =>
+      'Pas de mot de passe : un code à 6 chiffres à chaque fois';
 
   @override
   String get logOut => 'Se déconnecter';
@@ -981,7 +1005,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dailyReminders => 'Ce qu’il reste à faire';
 
   @override
-  String get dailyRemindersSub => 'Toutes les 3 h de 9 h à 21 h, s’il reste des choses pour aujourd’hui ou demain';
+  String get dailyRemindersSub =>
+      'Toutes les 3 h de 9 h à 21 h, s’il reste des choses pour aujourd’hui ou demain';
 
   @override
   String get defaultTime => 'Heure par défaut';
@@ -1085,7 +1110,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pinHint => 'Épingle jusqu’à 4 listes pour les voir sur l’accueil.';
 
   @override
-  String get homeFull => 'L’accueil est plein. Retire une liste pour en épingler une autre.';
+  String get homeFull =>
+      'L’accueil est plein. Retire une liste pour en épingler une autre.';
 
   @override
   String pinNamed(String name) {
@@ -1153,13 +1179,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String logSoloList(String verb) {
-    String _temp0 = intl.Intl.selectLogic(verb, {'edit': 'Liste modifiée', 'other': 'Liste créée'});
+    String _temp0 = intl.Intl.selectLogic(verb, {
+      'edit': 'Liste modifiée',
+      'other': 'Liste créée',
+    });
     return '$_temp0';
   }
 
   @override
   String logSoloNote(String verb) {
-    String _temp0 = intl.Intl.selectLogic(verb, {'edit': 'Note modifiée', 'other': 'Note créée'});
+    String _temp0 = intl.Intl.selectLogic(verb, {
+      'edit': 'Note modifiée',
+      'other': 'Note créée',
+    });
     return '$_temp0';
   }
 
