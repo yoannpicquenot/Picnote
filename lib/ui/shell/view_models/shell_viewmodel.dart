@@ -162,7 +162,7 @@ class ShellViewModel extends ChangeNotifier {
 
   Future<void> unpin(TaskList list) async {
     final current = _listRepository.lists.where((l) => l.id == list.id).firstOrNull;
-    if (current != null) await _listRepository.updateList(current.copyWith(pinned: false));
+    if (current != null) await _listRepository.updateList(current.copyWith(pinned: false, pinOrder: () => null));
   }
 
   String get _meId => _authRepository.user?.id ?? '';

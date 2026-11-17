@@ -19,6 +19,7 @@ import '../../core/ui/task_row.dart';
 import '../../core/ui/toast.dart';
 import '../view_models/home_viewmodel.dart';
 import 'list_card.dart';
+import 'pinned_grid.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.viewModel, this.onCreateList});
@@ -112,18 +113,20 @@ class _HomeScreenState extends State<HomeScreen> {
       gap: 10,
       children: [
         if (shown.isNotEmpty)
-          PairedGrid(
-            children: [
-              for (final (i, list) in shown.indexed)
-                ListCard(
-                  list: list,
-                  index: i,
-                  showPerso: !vm.isSolo,
-                  subtitle: _progress(l10n, vm.stats(list)),
-                  // Pushed, so that going back pops it and the card shrinks back.
-                  onTap: () => context.push(Routes.list(list.id)),
-                ),
-            ],
+          // A long press on a card lets the cards be rearranged.
+          PinnedGrid(
+            lists: shown,
+            onReorder: vm.reorderPinned,
+            // Pushed, so that going back pops it and the card shrinks back.
+            onOpen: (list) => context.push(Routes.list(list.id)),
+            cardBuilder: (list, i, onTap, {rise = true}) => ListCard(
+              list: list,
+              index: i,
+              rise: rise,
+              showPerso: !vm.isSolo,
+              subtitle: _progress(l10n, vm.stats(list)),
+              onTap: onTap,
+            ),
           ),
         if (vm.listCount > shown.length)
           Center(

@@ -129,6 +129,9 @@ class PnCheck extends StatelessWidget {
   final Color color;
   final Color ink;
 
+  /// Always this size, whatever the line it stands by.
+  static const size = 28.0;
+
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -145,8 +148,8 @@ class PnCheck extends StatelessWidget {
           builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            width: 28,
-            height: 28,
+            width: size,
+            height: size,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: done ? color : Colors.transparent,
@@ -161,7 +164,8 @@ class PnCheck extends StatelessWidget {
   }
 }
 
-/// Task title with a terracotta line drawn across when done.
+/// Task title with a terracotta line drawn across each of its lines when
+/// done, wiping in from the left.
 class StrikeTitle extends StatelessWidget {
   const StrikeTitle({
     super.key,
@@ -178,36 +182,84 @@ class StrikeTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        AnimatedDefaultTextStyle(
+    // Replaces the inherited style, font family included.
+    final style = PnText.body.copyWith(fontFamily: PnFonts.body, color: done ? PnColors.muted : color);
+    final direction = Directionality.of(context);
+    final scaler = MediaQuery.textScalerOf(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Where the lines of text are, laid out as the Text below lays them.
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: direction,
+          textScaler: scaler,
+        )..layout(maxWidth: constraints.maxWidth);
+        final lines = [
+          for (final m in painter.computeLineMetrics())
+            Rect.fromLTRB(m.left, m.baseline - m.ascent, m.left + m.width, m.baseline + m.descent),
+        ];
+        painter.dispose();
+        return TweenAnimationBuilder<double>(
+          tween: Tween(end: done ? 1 : 0),
           duration: const Duration(milliseconds: 220),
-          // Replaces the inherited style, font family included.
-          style: PnText.body.copyWith(fontFamily: PnFonts.body, color: done ? PnColors.muted : color),
-          child: Text(text),
-        ),
-        Positioned.fill(
-          left: -16,
-          right: -16,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(end: done ? 1 : 0),
-              duration: const Duration(milliseconds: 220),
-              builder: (context, t, _) => FractionallySizedBox(
-                widthFactor: t == 0 ? 0.0001 : t,
-                child: Container(
-                  height: 2,
-                  decoration: BoxDecoration(color: strike, borderRadius: BorderRadius.circular(1)),
-                ),
-              ),
-            ),
+          builder: (context, t, child) => CustomPaint(
+            foregroundPainter: StrikePainter(items: () => [(lines: lines, progress: t)], color: strike),
+            child: child,
           ),
-        ),
-      ],
+          child: AnimatedDefaultTextStyle(duration: const Duration(milliseconds: 220), style: style, child: Text(text)),
+        );
+      },
     );
   }
+}
+
+/// A struck item: each of its lines of text, from the first letter to the
+/// last, and how far the strike is drawn in (0 to 1).
+typedef StrikeItem = ({List<Rect> lines, double progress});
+
+/// The strike of done tasks and checked note items: a terracotta bar
+/// across the middle of each line of text, a little past both ends, drawn
+/// in from the left, line after line.
+class StrikePainter extends CustomPainter {
+  StrikePainter({required this.items, this.color = PnColors.terra, super.repaint});
+
+  final List<StrikeItem> Function() items;
+  final Color color;
+
+  /// How far the bar goes past the text, on each side.
+  static const overshoot = 16.0;
+  static const thickness = 2.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    for (final item in items()) {
+      _paintItem(canvas, item, paint);
+    }
+  }
+
+  void _paintItem(Canvas canvas, StrikeItem item, Paint paint) {
+    if (item.progress <= 0) return;
+    final bars = [
+      for (final l in item.lines)
+        Rect.fromLTRB(
+          l.left - overshoot,
+          l.center.dy - thickness / 2,
+          l.right + overshoot,
+          l.center.dy + thickness / 2,
+        ),
+    ];
+    var left = item.progress * bars.fold(0.0, (sum, b) => sum + b.width);
+    for (final bar in bars) {
+      if (left <= 0) break;
+      final drawn = Rect.fromLTWH(bar.left, bar.top, left < bar.width ? left : bar.width, thickness);
+      canvas.drawRRect(RRect.fromRectAndRadius(drawn, const Radius.circular(thickness / 2)), paint);
+      left -= bar.width;
+    }
+  }
+
+  @override
+  bool shouldRepaint(StrikePainter oldDelegate) => true;
 }
 
 /// iOS-like switch, display only: the row around it handles taps.

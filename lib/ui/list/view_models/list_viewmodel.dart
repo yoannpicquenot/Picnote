@@ -132,7 +132,9 @@ class ListViewModel extends ChangeNotifier {
 
   Future<void> setPinned(bool pinned) async {
     final l = list;
-    if (l != null) await _listRepository.updateList(l.copyWith(pinned: pinned));
+    if (l == null) return;
+    final order = pinned ? nextPinOrder(_listRepository.lists) : null;
+    await _listRepository.updateList(l.copyWith(pinned: pinned, pinOrder: () => order));
   }
 
   Future<void> toggleShared() async {

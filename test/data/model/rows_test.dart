@@ -15,6 +15,7 @@ void main() {
       icon: ListIcon.shoppingCart,
       isShared: true,
       pinned: true,
+      pinOrder: 2,
       day: DateTime(2026, 11, 3),
       reminder: Reminder(date: DateTime(2026, 11, 2), time: '9:00'),
     );
@@ -26,6 +27,7 @@ void main() {
     expect(back.color, ListColor.mustard);
     expect(back.icon, ListIcon.shoppingCart);
     expect(back.pinned, isTrue);
+    expect(back.pinOrder, 2);
     expect(back.day, DateTime(2026, 11, 3));
     expect(back.reminder, list.reminder);
   });

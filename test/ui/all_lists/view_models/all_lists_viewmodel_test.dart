@@ -32,6 +32,26 @@ void main() {
       expect(vm.pinned.map((l) => l.id), ['l1']);
     });
 
+    test('rearranges the pinned lists, and keeps that order', () async {
+      final lists = FakeListRepository(lists: manyLists(5, pinned: 3));
+      final vm = build(lists);
+
+      await vm.reorderPinned(2, 0);
+      expect(vm.pinned.map((l) => l.id), ['l2', 'l0', 'l1']);
+
+      await vm.reorderPinned(0, 2);
+      expect(vm.pinned.map((l) => l.id), ['l0', 'l1', 'l2']);
+      expect(pinnedInOrder(lists.lists).map((l) => l.id), ['l0', 'l1', 'l2'], reason: 'home shows the same order');
+    });
+
+    test('a list pinned after rearranging goes last', () async {
+      final vm = build(FakeListRepository(lists: manyLists(5, pinned: 3)));
+      await vm.reorderPinned(2, 0);
+
+      await vm.setPinned(vm.others.first, true);
+      expect(vm.pinned.map((l) => l.id), ['l2', 'l0', 'l1', 'l3']);
+    });
+
     test('pins no more than home holds', () async {
       final vm = build(FakeListRepository(lists: manyLists(6, pinned: maxPinnedLists)));
       expect(vm.homeFull, isTrue);

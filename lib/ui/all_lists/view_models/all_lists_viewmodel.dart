@@ -6,8 +6,9 @@ import '../../../domain/models/list_stats.dart';
 import '../../../domain/models/task_list.dart';
 import '../../../utils/result.dart';
 
-/// Every list, pinned ones (shown on home) first. "Edit" reveals pin and
-/// delete buttons.
+/// Every list, pinned ones (shown on home, in their order there) first.
+/// "Edit" reveals pin and delete buttons, and lets the pinned lists be
+/// rearranged.
 class AllListsViewModel extends ChangeNotifier {
   AllListsViewModel({required this._listRepository, required this._householdRepository, this.editing = false}) {
     _listRepository.addListener(notifyListeners);
@@ -21,7 +22,7 @@ class AllListsViewModel extends ChangeNotifier {
 
   List<TaskList> get lists => _listRepository.lists;
 
-  List<TaskList> get pinned => lists.where((l) => l.pinned).toList();
+  List<TaskList> get pinned => pinnedInOrder(lists);
 
   List<TaskList> get others => lists.where((l) => !l.pinned).toList();
 
@@ -42,7 +43,16 @@ class AllListsViewModel extends ChangeNotifier {
 
   Future<void> setPinned(TaskList list, bool pinned) async {
     if (pinned && homeFull) return;
-    await _listRepository.updateList(list.copyWith(pinned: pinned));
+    await _listRepository.updateList(
+      list.copyWith(pinned: pinned, pinOrder: () => pinned ? nextPinOrder(lists) : null),
+    );
+  }
+
+  /// [newIndex] is the position once [oldIndex] has been taken out.
+  Future<void> reorderPinned(int oldIndex, int newIndex) {
+    final ids = [for (final l in pinned) l.id];
+    ids.insert(newIndex, ids.removeAt(oldIndex));
+    return _listRepository.reorderPinned(ids);
   }
 
   Future<DeletedList?> delete(TaskList list) async {

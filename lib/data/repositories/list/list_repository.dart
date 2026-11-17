@@ -59,4 +59,14 @@ abstract class ListRepository extends ChangeNotifier {
   /// Archives the tasks checked before today: they leave [tasks] but stay
   /// stored.
   Future<Result<void>> archiveStaleTasks();
+
+  /// Puts the pinned lists in the order of [ids] on home. Each list changed
+  /// is saved, and shows in its new place at once.
+  Future<void> reorderPinned(List<String> ids) async {
+    final byId = {for (final l in lists) l.id: l};
+    await Future.wait([
+      for (final (i, id) in ids.indexed)
+        if (byId[id] case final l? when l.pinOrder != i) updateList(l.copyWith(pinOrder: () => i)),
+    ]);
+  }
 }

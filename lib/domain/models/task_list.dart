@@ -28,6 +28,34 @@ enum ListColor { peach, sage, mustard, rose, cocoa }
 /// visible without scrolling.
 const maxPinnedLists = 4;
 
+/// The pinned lists of [lists], in their order on home: those never
+/// arranged ([TaskList.pinOrder] null) first, in [lists]' order, then the
+/// others by [TaskList.pinOrder], so that a list pinned now comes last.
+List<TaskList> pinnedInOrder(Iterable<TaskList> lists) {
+  final pinned = [
+    for (final (i, l) in lists.indexed)
+      if (l.pinned) (i, l),
+  ];
+  pinned.sort((a, b) {
+    final (x, y) = (a.$2.pinOrder, b.$2.pinOrder);
+    if (x == y) return a.$1.compareTo(b.$1);
+    if (x == null) return -1;
+    if (y == null) return 1;
+    return x.compareTo(y);
+  });
+  return [for (final (_, l) in pinned) l];
+}
+
+/// Where a list pinned now goes: last on home.
+int nextPinOrder(Iterable<TaskList> lists) {
+  var next = 0;
+  for (final l in lists) {
+    final order = l.pinOrder;
+    if (l.pinned && order != null && order >= next) next = order + 1;
+  }
+  return next;
+}
+
 /// A checklist, personal by default or shared with the household.
 ///
 /// [day] puts it in "Today" / "Tomorrow" on the home screen; [reminder] is
@@ -40,6 +68,7 @@ class TaskList {
     this.icon = ListIcon.heart,
     this.isShared = false,
     this.pinned = false,
+    this.pinOrder,
     this.day,
     this.reminder,
     this.ownerId,
@@ -52,6 +81,9 @@ class TaskList {
   final ListIcon icon;
   final bool isShared;
   final bool pinned;
+
+  /// Its place on home among the pinned lists, smallest first.
+  final int? pinOrder;
   final DateTime? day;
   final Reminder? reminder;
 
@@ -66,6 +98,7 @@ class TaskList {
     ListIcon? icon,
     bool? isShared,
     bool? pinned,
+    int? Function()? pinOrder,
     DateTime? Function()? day,
     Reminder? Function()? reminder,
   }) => TaskList(
@@ -75,6 +108,7 @@ class TaskList {
     icon: icon ?? this.icon,
     isShared: isShared ?? this.isShared,
     pinned: pinned ?? this.pinned,
+    pinOrder: pinOrder != null ? pinOrder() : this.pinOrder,
     day: day != null ? day() : this.day,
     reminder: reminder != null ? reminder() : this.reminder,
     ownerId: ownerId,

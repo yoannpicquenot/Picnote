@@ -19,6 +19,7 @@ class ListCard extends StatelessWidget {
     required this.onTap,
     this.index = 0,
     this.showPerso = true,
+    this.rise = true,
   });
 
   final TaskList list;
@@ -29,55 +30,56 @@ class ListCard extends StatelessWidget {
   /// Hidden while alone in the household: everything is personal anyway.
   final bool showPerso;
 
+  /// Rises in when it first shows.
+  final bool rise;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final t = ListTheme.of(list.color);
-    return RiseIn.staggered(
-      index: index,
-      child: Pressable(
-        onTap: onTap,
-        child: Stack(
-          // Passes the grid row's height on, so the title sits at the bottom.
-          fit: StackFit.passthrough,
-          children: [
-            Positioned.fill(
-              child: ListBackdrop(listId: list.id, color: t.bg, radius: BorderRadius.circular(24)),
+    final card = Pressable(
+      onTap: onTap,
+      child: Stack(
+        // Passes the grid row's height on, so the title sits at the bottom.
+        fit: StackFit.passthrough,
+        children: [
+          Positioned.fill(
+            child: ListBackdrop(listId: list.id, color: t.bg, radius: BorderRadius.circular(24)),
+          ),
+          Container(
+            constraints: const BoxConstraints(minHeight: 112),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PnIcon.list(list.icon, color: t.fg, size: 26),
+                    const Spacer(),
+                    if (!list.isShared && showPerso) PersoMark(label: l10n.listPersonal, color: t.fg),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Spacer(),
+                ListTitle(
+                  listId: list.id,
+                  text: '${list.name}.',
+                  maxLines: 2,
+                  style: PnText.cardTitle.copyWith(color: t.fg),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12, color: t.fg),
+                ),
+              ],
             ),
-            Container(
-              constraints: const BoxConstraints(minHeight: 112),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      PnIcon.list(list.icon, color: t.fg, size: 26),
-                      const Spacer(),
-                      if (!list.isShared && showPerso) PersoMark(label: l10n.listPersonal, color: t.fg),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Spacer(),
-                  ListTitle(
-                    listId: list.id,
-                    text: '${list.name}.',
-                    maxLines: 2,
-                    style: PnText.cardTitle.copyWith(color: t.fg),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12, color: t.fg),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+    return rise ? RiseIn.staggered(index: index, child: card) : card;
   }
 }
 

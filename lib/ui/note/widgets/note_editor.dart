@@ -42,7 +42,7 @@ class NoteEditor extends StatefulWidget {
   State<NoteEditor> createState() => NoteEditorState();
 }
 
-class NoteEditorState extends State<NoteEditor> {
+class NoteEditorState extends State<NoteEditor> with SingleTickerProviderStateMixin {
   late final controller = _NoteController(
     document: _NoteDocument.fromDelta(blocksToDelta(widget.blocks)),
     selection: const TextSelection.collapsed(offset: 0),
@@ -55,6 +55,35 @@ class NoteEditorState extends State<NoteEditor> {
 
   NoteViewModel get vm => widget.viewModel;
 
+  /// Body text: size and line height, which the checkbox lines up with.
+  static const _bodySize = 16.0;
+  static const _bodyHeight = 1.45;
+
+  /// The items just checked, whose strike is drawn in as on lists.
+  Set<Line> _striking = {};
+  Set<Line> _checkedSeen = {};
+  late final _strikeIn = AnimationController(vsync: this, duration: const Duration(milliseconds: 220));
+
+  Set<Line> _checked() => {
+    for (final line in _allLines)
+      if (line.style.attributes[Attribute.list.key] == Attribute.checked) line,
+  };
+
+  /// Starts the strike of the items checked since last time.
+  void _checksChanged() {
+    final checked = _checked();
+    final added = checked.difference(_checkedSeen);
+    _checkedSeen = checked;
+    // The housemate's checks show at once.
+    if (added.isEmpty || _composingRemote) return;
+    _striking = added;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _strikeIn.value = 1;
+    } else {
+      _strikeIn.forward(from: 0);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +94,8 @@ class NoteEditorState extends State<NoteEditor> {
       _save();
     });
     controller.addListener(_selectionChanged);
+    controller.addListener(_checksChanged);
+    _checkedSeen = _checked();
     _focus.addListener(_selectionChanged);
   }
 
@@ -168,6 +199,43 @@ class NoteEditorState extends State<NoteEditor> {
     return stack.globalToLocal(editor.localToGlobal(rect.topLeft)) & rect.size;
   }
 
+  /// Each line of text of the checked items, in this widget, for their
+  /// strike. Drawn over the editor, as lists draw it ([StrikeTitle]): Quill's
+  /// own strike is the font's, thinner, and stops at the letters.
+  List<StrikeItem> _strikes() {
+    final editor = _renderEditor;
+    final stack = _stack.currentContext?.findRenderObject() as RenderBox?;
+    if (editor == null || stack == null || !stack.hasSize) return const [];
+    final shift = stack.globalToLocal(editor.localToGlobal(Offset.zero));
+    final items = <StrikeItem>[];
+    for (final line in _allLines) {
+      if (line.length <= 1 || line.style.attributes[Attribute.list.key] != Attribute.checked) continue;
+      // The caret before and after each letter, grouped by visual line.
+      final rows = <double, Rect>{};
+      final start = line.documentOffset;
+      for (var offset = start; offset < start + line.length; offset++) {
+        for (final affinity in TextAffinity.values) {
+          final caret = editor.getLocalRectForCaret(TextPosition(offset: offset, affinity: affinity));
+          final point = Rect.fromLTRB(caret.left, caret.top, caret.left, caret.bottom);
+          rows.update(caret.top.roundToDouble(), (row) => row.expandToInclude(point), ifAbsent: () => point);
+        }
+      }
+      items.add((
+        lines: [for (final row in rows.values) row.shift(shift)],
+        progress: _striking.contains(line) ? _strikeIn.value : 1,
+      ));
+    }
+    return items;
+  }
+
+  /// Every line of the note, those in lists included.
+  Iterable<Line> get _allLines sync* {
+    for (final node in controller.document.root.children) {
+      if (node is Line) yield node;
+      if (node is Block) yield* node.children.whereType<Line>();
+    }
+  }
+
   void _placeOverlays() {
     if (!mounted) return;
     final remote = vm.live?.cursor;
@@ -248,6 +316,7 @@ class NoteEditorState extends State<NoteEditor> {
     _typing?.cancel();
     _handleTimer?.cancel();
     _changes.cancel();
+    _strikeIn.dispose();
     controller.dispose();
     _focus.dispose();
     _scroll.dispose();
@@ -519,8 +588,8 @@ class NoteEditorState extends State<NoteEditor> {
     const base = TextStyle(
       fontFamily: PnFonts.body,
       fontWeight: FontWeight.w500,
-      fontSize: 16,
-      height: 1.45,
+      fontSize: _bodySize,
+      height: _bodyHeight,
       color: PnColors.ink,
     );
     const lineGap = VerticalSpacing(0, 6);
@@ -607,21 +676,22 @@ class NoteEditorState extends State<NoteEditor> {
                     decorationColor: PnColors.terraDark,
                   ),
                 ),
-                // A checked item is struck through, as on lists.
-                customStyleBuilder: (attribute) => attribute == Attribute.checked
-                    ? const TextStyle(
-                        color: PnColors.muted,
-                        decoration: TextDecoration.lineThrough,
-                        decorationColor: PnColors.terra,
-                        decorationThickness: 2,
-                      )
-                    : const TextStyle(),
+                // A checked item fades, and is struck through above, as on lists.
+                customStyleBuilder: (attribute) =>
+                    attribute == Attribute.checked ? const TextStyle(color: PnColors.muted) : const TextStyle(),
                 // ignore: experimental_member_use, the only way to draw the app's own checkbox.
                 customLeadingBlockBuilder: _leading,
               ),
             ),
             GestureDetector(behavior: HitTestBehavior.opaque, onTap: _tapTail, child: const SizedBox(height: 80)),
           ],
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: CustomPaint(
+              painter: StrikePainter(items: _strikes, repaint: Listenable.merge([controller, _strikeIn])),
+            ),
+          ),
         ),
         if (_hint case final hint?)
           Positioned(
@@ -666,12 +736,21 @@ class NoteEditorState extends State<NoteEditor> {
     final l10n = AppLocalizations.of(context);
     final attribute = config.attribute;
     if (attribute == Attribute.checked || attribute == Attribute.unchecked) {
-      return Align(
+      // Full size, centered on the first line, even where a line is less
+      // tall than the checkbox.
+      final lineHeight = MediaQuery.textScalerOf(context).scale(_bodySize) * _bodyHeight;
+      return OverflowBox(
         alignment: Alignment.topLeft,
-        child: PnCheck(
-          done: config.value,
-          label: config.value ? l10n.markNotDone : l10n.markDone,
-          onTap: () => config.onCheckboxTap(!config.value),
+        minWidth: 0,
+        minHeight: 0,
+        maxHeight: double.infinity,
+        child: Transform.translate(
+          offset: Offset(0, (lineHeight - PnCheck.size) / 2),
+          child: PnCheck(
+            done: config.value,
+            label: config.value ? l10n.markNotDone : l10n.markDone,
+            onTap: () => config.onCheckboxTap(!config.value),
+          ),
         ),
       );
     }
@@ -772,8 +851,16 @@ class _NoteController extends QuillController {
     return line is Line && line.documentOffset == offset && line.length == 1;
   }
 
-  /// Text picked from the keyboard's clipboard arrives as typing, not as a
-  /// paste: several lines typed at once are read as Markdown all the same.
+  /// What the keyboard sends:
+  /// - A word and a line break at once (it commits the word being typed as
+  ///   Enter is pressed) go in one after the other, as typing. In one go,
+  ///   Quill moves the line's style to the new line: Enter at the end of a
+  ///   heading made the heading plain text and the new line a heading.
+  /// - Text picked from the keyboard's clipboard arrives as typing, not as
+  ///   a paste: several lines typed at once are read as Markdown all the
+  ///   same.
+  /// - Text typed on an empty line takes the styles of the line above,
+  ///   which gave it a heading's color. Only headings have a color.
   @override
   void replaceText(
     int index,
@@ -781,22 +868,46 @@ class _NoteController extends QuillController {
     Object? data,
     TextSelection? textSelection, {
     bool ignoreFocus = false,
+    // ignore: experimental_member_use, passed on as is.
     bool shouldNotifyListeners = true,
   }) {
+    void replace(int index, int len, Object? data, TextSelection? selection) => super.replaceText(
+      index,
+      len,
+      data,
+      selection,
+      ignoreFocus: ignoreFocus,
+      // ignore: experimental_member_use
+      shouldNotifyListeners: shouldNotifyListeners,
+    );
+    if (data is String && data.length > 1 && data.indexOf('\n') == data.length - 1) {
+      final word = data.substring(0, data.length - 1);
+      replace(index, len, word, TextSelection.collapsed(offset: index + word.length));
+      replaceText(
+        index + word.length,
+        0,
+        '\n',
+        textSelection,
+        ignoreFocus: ignoreFocus,
+        // ignore: experimental_member_use
+        shouldNotifyListeners: shouldNotifyListeners,
+      );
+      return;
+    }
     if (data is String && data.length > 1 && data.contains('\n')) {
       insertMarkdown(index, len, data);
       return;
     }
     if (_leaveList(index, len, data)) return;
-    super.replaceText(
-      index,
-      len,
-      data,
-      textSelection,
-      ignoreFocus: ignoreFocus,
-      // ignore: experimental_member_use
-      shouldNotifyListeners: shouldNotifyListeners,
-    );
+    replace(index, len, data, textSelection);
+    if (data is String && data.isNotEmpty && !data.contains('\n')) {
+      final line = document.queryChild(index).node;
+      final colored = document.collectStyle(index, data.length).attributes.containsKey(Attribute.color.key);
+      if (line is Line && !line.style.containsKey(Attribute.header.key) && colored) {
+        formatText(index, data.length, const ColorAttribute(null));
+        toggledStyle = const Style();
+      }
+    }
   }
 
   @override

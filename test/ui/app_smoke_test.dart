@@ -10,6 +10,9 @@ import 'package:picnote/data/repositories/live/live_repository.dart';
 import 'package:picnote/data/repositories/note/note_repository.dart';
 import 'package:picnote/domain/models/live.dart';
 import 'package:picnote/domain/models/note.dart';
+import 'package:picnote/ui/home/widgets/home_screen.dart';
+import 'package:picnote/data/repositories/list/list_repository.dart';
+import 'package:picnote/domain/models/task_list.dart';
 import 'package:picnote/main.dart';
 import 'package:picnote/routing/routes.dart';
 import 'package:picnote/ui/core/ui/buttons.dart';
@@ -522,6 +525,37 @@ void main() {
     expect(blocks.last.text, isEmpty);
   });
 
+  testWidgets('Enter at the end of a heading goes on in plain text', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.note('ca'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+
+    final heading = 'Lieux à visiter';
+    final end = editor.controller.document.toPlainText().indexOf(heading) + heading.length;
+    editor.controller.updateSelection(TextSelection.collapsed(offset: end), ChangeSource.local);
+    editor.setHeadingColor(HeadingColor.sage);
+    await settle(tester);
+    // As a keyboard sends it when Enter also commits the word being typed.
+    editor.controller.replaceText(end, 0, 's\n', TextSelection.collapsed(offset: end + 2));
+    await settle(tester);
+    editor.controller.replaceText(end + 2, 0, 'Québec', TextSelection.collapsed(offset: end + 8));
+    await settle(tester);
+
+    final blocks = tester
+        .element(find.byType(NoteEditor))
+        .read<NoteRepository>()
+        .notes
+        .firstWhere((n) => n.id == 'ca')
+        .blocks;
+    final i = blocks.indexWhere((b) => b.text == 'Québec');
+    expect((blocks[i - 1].type, blocks[i - 1].text), (NoteBlockType.heading, '${heading}s'));
+    expect(blocks[i].type, NoteBlockType.text);
+    expect(editor.controller.document.collectStyle(end + 2, 6).attributes, isEmpty, reason: 'not in the heading color');
+  });
+
   testWidgets('"- " at the start of a line makes it a bullet', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     router.go(Routes.note('mo'));
@@ -670,6 +704,51 @@ void main() {
     await tester.binding.handlePopRoute();
     await settle(tester);
     expect(router.state.uri.path, Routes.home);
+  });
+
+  testWidgets('a long press on a card lets the cards be rearranged on home', (tester) async {
+    await pumpApp(tester, const Size(390, 844));
+    List<String> order() =>
+        pinnedInOrder(tester.element(find.byType(HomeScreen)).read<ListRepository>().lists).map((l) => l.name).toList();
+    expect(order(), ['Courses', 'Maison', 'Dîner', 'Lisbonne']);
+
+    // Courses, held down, then dropped where Lisbonne was: the others move up.
+    final drag = await tester.startGesture(tester.getCenter(find.text('Courses.')));
+    await tester.pump(const Duration(milliseconds: 600));
+    await drag.moveTo(tester.getCenter(find.text('Lisbonne.')));
+    await tester.pump();
+    await drag.moveTo(tester.getCenter(find.text('Lisbonne.')) + const Offset(0, 1));
+    await tester.pump();
+    await drag.up();
+    await settle(tester);
+    expect(order(), ['Maison', 'Dîner', 'Lisbonne', 'Courses']);
+
+    // Still arranging: a tap on a card stops, rather than opening it.
+    await tester.tap(find.text('Maison.'));
+    await settle(tester);
+    expect(find.byType(ListScreen), findsNothing);
+    await tester.tap(find.text('Maison.'));
+    await settle(tester);
+    expect(find.byType(ListScreen), findsOneWidget);
+  });
+
+  testWidgets('checkboxes keep their size and stand by the first line', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final repo = tester.element(find.byType(HomeScreen)).read<ListRepository>();
+    await repo.addTask('c', 'Une tâche assez longue pour tenir sur deux lignes au moins, voire trois', byId: 'me');
+    await settle(tester);
+    router.go(Routes.list('c'));
+    await settle(tester);
+    final long = find.ancestor(of: find.textContaining('Une tâche assez longue'), matching: find.byType(TaskRow));
+    final check = find.descendant(of: long, matching: find.byType(PnCheck));
+    expect(tester.getSize(check), const Size.square(PnCheck.size));
+    expect(tester.getTopLeft(check).dy, tester.getTopLeft(long).dy + 4, reason: 'by the first line, not centered');
+
+    router.go(Routes.note('ca'));
+    await settle(tester);
+    for (final c in tester.widgetList<PnCheck>(find.byType(PnCheck))) {
+      expect(tester.getSize(find.byWidget(c)), const Size.square(PnCheck.size));
+    }
   });
 
   testWidgets('a swipe sideways goes from Lists to Notes and back', (tester) async {

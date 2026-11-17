@@ -13,6 +13,7 @@ import '../../core/ui/date_fields.dart';
 import '../../core/ui/layout.dart';
 import '../../core/ui/rise_in.dart';
 import '../../core/ui/pn_icon.dart';
+import '../../core/ui/task_row.dart';
 import '../../core/ui/toast.dart';
 import '../view_models/all_lists_viewmodel.dart';
 
@@ -49,7 +50,7 @@ class AllListsScreen extends StatelessWidget {
         final vm = viewModel;
         final pinned = vm.pinned;
         final others = vm.others;
-        Widget row(TaskList list, int i) => RiseIn.staggered(
+        Widget row(TaskList list, int i, {Widget? handle}) => RiseIn.staggered(
           key: ValueKey(list.id),
           index: i,
           child: _Row(
@@ -62,6 +63,7 @@ class AllListsScreen extends StatelessWidget {
             onOpen: () => context.push('${Routes.list(list.id)}?from=all'),
             onPin: () => vm.setPinned(list, !list.pinned),
             onDelete: () => _delete(context, list),
+            handle: handle,
           ),
         );
         return SingleChildScrollView(
@@ -117,7 +119,49 @@ class AllListsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _SectionHead(title: l10n.pinnedTitle, count: '${pinned.length}/$maxPinnedLists'),
-                      for (final (i, list) in pinned.indexed) row(list, i),
+                      // While editing, the pinned lists can be rearranged:
+                      // their order is home's.
+                      if (vm.editing && pinned.length > 1)
+                        ReorderableList(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemCount: pinned.length,
+                          onReorderItem: vm.reorderPinned,
+                          proxyDecorator: (child, index, animation) => AnimatedBuilder(
+                            animation: animation,
+                            builder: (context, child) => Transform.scale(
+                              scale: 1 + 0.02 * Curves.easeOutBack.transform(animation.value),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: DecoratedBox(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x4D583727),
+                                        blurRadius: 36,
+                                        offset: Offset(0, 18),
+                                        spreadRadius: -14,
+                                      ),
+                                    ],
+                                  ),
+                                  child: child,
+                                ),
+                              ),
+                            ),
+                            child: child,
+                          ),
+                          itemBuilder: (context, i) => row(
+                            pinned[i],
+                            i,
+                            handle: ReorderableDragStartListener(
+                              index: i,
+                              child: Semantics(label: l10n.dragToReorder, child: const Grip()),
+                            ),
+                          ),
+                        )
+                      else
+                        for (final (i, list) in pinned.indexed) row(list, i),
                       if (pinned.isEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -181,6 +225,7 @@ class _Row extends StatelessWidget {
     required this.onOpen,
     required this.onPin,
     required this.onDelete,
+    this.handle,
   });
 
   final TaskList list;
@@ -192,13 +237,17 @@ class _Row extends StatelessWidget {
   final VoidCallback onPin;
   final VoidCallback onDelete;
 
+  /// Drags the row to rearrange the pinned lists.
+  final Widget? handle;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final t = ListTheme.of(list.color);
     return Dismissible(
       key: ValueKey('dismiss-${list.id}'),
-      direction: DismissDirection.endToStart,
+      // While editing, the trash button deletes: no swipe.
+      direction: editing ? DismissDirection.none : DismissDirection.endToStart,
       onDismissed: (_) => onDelete(),
       background: Container(
         color: PnColors.danger,
@@ -268,6 +317,7 @@ class _Row extends StatelessWidget {
                 onTap: onDelete,
                 child: const PnIcon(PnIcons.trash, color: PnColors.danger, size: 20),
               ),
+              if (handle != null) ...[const SizedBox(width: 4), handle!],
             ],
           ],
         ),

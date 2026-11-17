@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../domain/models/household.dart';
 import '../../../domain/models/task.dart';
@@ -89,6 +92,15 @@ class _TaskRowState extends State<TaskRow> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final task = widget.task;
+    // The checkbox, tag and handle stand by the first line of the title, as
+    // in notes, however many lines it takes.
+    final lineHeight = MediaQuery.textScalerOf(context).scale(PnText.body.fontSize!) * PnText.body.height!;
+    final firstLine = math.max(PnCheck.size, lineHeight);
+    final titleTop = (firstLine - lineHeight) / 2;
+    Widget atFirstLine(Widget child) => SizedBox(
+      height: firstLine,
+      child: OverflowBox(fit: OverflowBoxFit.deferToChild, minHeight: 0, maxHeight: double.infinity, child: child),
+    );
     return Dismissible(
       key: ValueKey('dismiss-${task.id}'),
       direction: DismissDirection.endToStart,
@@ -104,23 +116,30 @@ class _TaskRowState extends State<TaskRow> {
         constraints: const BoxConstraints(minHeight: 36),
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            PnCheck(done: task.done, onTap: widget.onToggle, label: task.done ? l10n.markNotDone : l10n.markDone),
+            atFirstLine(
+              PnCheck(done: task.done, onTap: widget.onToggle, label: task.done ? l10n.markNotDone : l10n.markDone),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: _editing
-                  ? TextField(
-                      controller: _controller,
-                      focusNode: _focus,
-                      style: PnText.body,
-                      textCapitalization: TextCapitalization.sentences,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _focus.unfocus(),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 4),
-                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: PnColors.terra, width: 2)),
-                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: PnColors.terra, width: 2)),
+                  ? Padding(
+                      // The field's own padding already lowers the text.
+                      padding: EdgeInsets.only(top: math.max(0, titleTop - 4)),
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focus,
+                        style: PnText.body,
+                        textCapitalization: TextCapitalization.sentences,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _focus.unfocus(),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 4),
+                          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: PnColors.terra, width: 2)),
+                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: PnColors.terra, width: 2)),
+                        ),
                       ),
                     )
                   : GestureDetector(
@@ -128,18 +147,21 @@ class _TaskRowState extends State<TaskRow> {
                       onTap: widget.onRename == null
                           ? () => checkTapped(done: task.done, onTap: widget.onToggle)
                           : _startEditing,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: StrikeTitle(text: task.title, done: task.done),
+                      child: Padding(
+                        padding: EdgeInsets.only(top: titleTop),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: StrikeTitle(text: task.title, done: task.done),
+                        ),
                       ),
                     ),
             ),
-            if (widget.tag != null) ...[const SizedBox(width: 12), widget.tag!],
+            if (widget.tag != null) ...[const SizedBox(width: 12), atFirstLine(widget.tag!)],
             if (widget.tag == null && widget.author != null) ...[
               const SizedBox(width: 12),
-              Avatar.of(widget.author!, size: 18),
+              atFirstLine(Avatar.of(widget.author!, size: 18)),
             ],
-            if (widget.handle != null) ...[const SizedBox(width: 12), widget.handle!],
+            if (widget.handle != null) ...[const SizedBox(width: 12), atFirstLine(widget.handle!)],
           ],
         ),
       ),

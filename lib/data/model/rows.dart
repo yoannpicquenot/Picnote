@@ -48,6 +48,7 @@ TaskList listFromRow(Row r) => TaskList(
   icon: ListIcon.values.asNameMap()[r['icon']] ?? ListIcon.heart,
   isShared: r['is_shared'] as bool,
   pinned: r['pinned'] as bool? ?? false,
+  pinOrder: r['pin_order'] as int?,
   day: _date(r['day']),
   reminder: _reminder(r),
   ownerId: r['owner_id'] as String?,
@@ -64,6 +65,7 @@ Row listToRow(TaskList l) => {
   'icon': l.icon.name,
   'is_shared': l.isShared,
   'pinned': l.pinned,
+  'pin_order': l.pinOrder,
   'day': _dateString(l.day),
   ..._reminderRow(l.reminder),
 };

@@ -41,9 +41,12 @@ class HomeViewModel extends ChangeNotifier {
   bool get isSolo => _householdRepository.household?.isSolo ?? true;
 
   /// The pinned lists.
-  List<TaskList> get visibleLists => _listRepository.lists.where((l) => l.pinned).take(maxPinnedLists).toList();
+  List<TaskList> get visibleLists => pinnedInOrder(_listRepository.lists).take(maxPinnedLists).toList();
 
   int get listCount => _listRepository.lists.length;
+
+  /// From the cards, rearranged on home.
+  Future<void> reorderPinned(List<String> ids) => _listRepository.reorderPinned(ids);
 
   /// Nothing yet: right after onboarding.
   bool get isEmpty => _listRepository.lists.isEmpty && _noteRepository.notes.isEmpty;
