@@ -546,6 +546,123 @@ void main() {
     expect((blocks.last.type, blocks.last.text), (NoteBlockType.bullet, 'Pain'));
   });
 
+  testWidgets('Markdown from the keyboard clipboard is read like a paste', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.note('mo'));
+    await settle(tester);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    await tester.tap(find.byType(QuillEditor));
+    await settle(tester);
+
+    // Gboard's clipboard chip sends the whole text as one typed insert.
+    final end = editor.controller.document.length - 1;
+    const markdown = '# Bergen\n\nDu **10** au 18.\n\n| Jour | Étapes |\n|---|---|\n| **Mer. 10** | Train |\n';
+    editor.controller.replaceText(end, 0, '\n$markdown', TextSelection.collapsed(offset: end + markdown.length + 1));
+    await settle(tester);
+    final blocks = tester
+        .element(find.byType(NoteEditor))
+        .read<NoteRepository>()
+        .notes
+        .firstWhere((n) => n.id == 'mo')
+        .blocks;
+    final pasted = blocks.skipWhile((b) => b.text != 'Bergen').toList();
+    expect(pasted.map((b) => (b.type, b.text)).take(2), [
+      (NoteBlockType.heading, 'Bergen'),
+      (NoteBlockType.text, 'Du 10 au 18.'),
+    ]);
+    expect(pasted[2].type, NoteBlockType.table);
+    expect(pasted[2].cells, [
+      ['Jour', 'Étapes'],
+      ['Mer. 10', 'Train'],
+    ]);
+  });
+
+  group('bullet lists', () {
+    /// A note ending with the bullets "Pain" and "Lait", the caret at the
+    /// end of "Pain"; returns the editor and where "Pain" starts.
+    Future<(NoteEditorState, int)> twoBullets(WidgetTester tester) async {
+      final router = await pumpApp(tester, const Size(390, 844));
+      router.go(Routes.note('mo'));
+      await settle(tester);
+      final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+      await tester.tap(find.byType(QuillEditor));
+      await settle(tester);
+      final c = editor.controller;
+      final end = c.document.length - 1;
+      c.replaceText(end, 0, '\n', TextSelection.collapsed(offset: end + 1));
+      editor.pickBlock(NoteBlockType.bullet);
+      c.replaceText(end + 1, 0, 'Pain', TextSelection.collapsed(offset: end + 5));
+      c.replaceText(end + 5, 0, '\n', TextSelection.collapsed(offset: end + 6));
+      c.replaceText(end + 6, 0, 'Lait', TextSelection.collapsed(offset: end + 10));
+      c.updateSelection(TextSelection.collapsed(offset: end + 5), ChangeSource.local);
+      await settle(tester);
+      return (editor, end + 1);
+    }
+
+    List<(NoteBlockType, String)> tail(WidgetTester tester, int n) {
+      final blocks = tester
+          .element(find.byType(NoteEditor))
+          .read<NoteRepository>()
+          .notes
+          .firstWhere((n) => n.id == 'mo')
+          .blocks;
+      return [for (final b in blocks.skip(blocks.length - n)) (b.type, b.text)];
+    }
+
+    testWidgets('Enter twice, even mid-list, ends the item on a plain line', (tester) async {
+      final (editor, pain) = await twoBullets(tester);
+      final c = editor.controller;
+      c.replaceText(pain + 4, 0, '\n', TextSelection.collapsed(offset: pain + 5));
+      await settle(tester);
+      c.replaceText(pain + 5, 0, '\n', TextSelection.collapsed(offset: pain + 6));
+      await settle(tester);
+      expect(tail(tester, 3), [
+        (NoteBlockType.bullet, 'Pain'),
+        (NoteBlockType.text, ''),
+        (NoteBlockType.bullet, 'Lait'),
+      ]);
+      expect(c.selection.baseOffset, pain + 5, reason: 'the caret stays on that line');
+    });
+
+    for (final named in [0, 1]) {
+      testWidgets('erasing a new empty item makes it a plain line, as the keyboard sends it ($named)', (tester) async {
+        final (editor, pain) = await twoBullets(tester);
+        final c = editor.controller;
+        c.replaceText(pain + 4, 0, '\n', TextSelection.collapsed(offset: pain + 5));
+        await settle(tester);
+        // The line break before the caret, or (from Android's keyboard) the
+        // empty line's own: the text is the same either way.
+        c.replaceText(pain + 4 + named, 1, '', TextSelection.collapsed(offset: pain + 4));
+        await settle(tester);
+        expect(tail(tester, 3), [
+          (NoteBlockType.bullet, 'Pain'),
+          (NoteBlockType.text, ''),
+          (NoteBlockType.bullet, 'Lait'),
+        ]);
+      });
+    }
+
+    testWidgets('selected lines turn into checkboxes, bullets, or text', (tester) async {
+      final (editor, pain) = await twoBullets(tester);
+      final c = editor.controller;
+      c.updateSelection(TextSelection(baseOffset: pain + 1, extentOffset: pain + 7), ChangeSource.local);
+      expect(editor.isList(NoteBlockType.bullet), isTrue);
+
+      editor.toggleList(NoteBlockType.todo);
+      await settle(tester);
+      expect(tail(tester, 2), [(NoteBlockType.todo, 'Pain'), (NoteBlockType.todo, 'Lait')]);
+
+      editor.toggleList(NoteBlockType.todo);
+      await settle(tester);
+      expect(tail(tester, 2), [(NoteBlockType.text, 'Pain'), (NoteBlockType.text, 'Lait')]);
+
+      editor.toggleList(NoteBlockType.bullet);
+      await settle(tester);
+      expect(tail(tester, 2), [(NoteBlockType.bullet, 'Pain'), (NoteBlockType.bullet, 'Lait')]);
+      expect(c.selection, TextSelection(baseOffset: pain + 1, extentOffset: pain + 7));
+    });
+  });
+
   testWidgets('Android back on the notes tab goes home instead of leaving', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     router.go(Routes.notes);

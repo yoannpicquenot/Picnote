@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 // ignore: implementation_imports, not exported, and the only way to keep undo to this user's own changes.
 import 'package:flutter_quill/src/document/history.dart';
 
@@ -25,8 +26,9 @@ typedef EditorBars = ({bool format, String? slash});
 
 /// The body of a note, one document so that a selection can span lines.
 /// Each line is a block: text, heading, bullet, checkbox or table. Enter
-/// keeps a list going, Enter on an empty item ends it, "- " starts a
-/// bullet list, and "/" at the start of a line opens the block menu.
+/// keeps a list going, Enter on an empty item (or erasing at the start of
+/// an item) makes it plain text, "- " starts a bullet list, and "/" at the
+/// start of a line opens the block menu.
 class NoteEditor extends StatefulWidget {
   const NoteEditor({super.key, required this.viewModel, required this.blocks, required this.bars});
 
@@ -378,6 +380,51 @@ class NoteEditorState extends State<NoteEditor> {
     _updateBars();
   }
 
+  /// Where the selected lines start, tables left out.
+  List<int> get _selectedLineStarts {
+    final (start, end) = _selectedLines;
+    final starts = <int>[];
+    var offset = start;
+    while (offset <= end && offset < controller.document.length) {
+      final line = controller.document.queryChild(offset).node;
+      if (line is! Line) break;
+      if (!line.hasEmbed) starts.add(line.documentOffset);
+      offset = line.documentOffset + line.length;
+    }
+    return starts;
+  }
+
+  static NoteBlockType _kindOf(Line line) => switch (line.style.attributes[Attribute.list.key]?.value) {
+    'bullet' => NoteBlockType.bullet,
+    'checked' || 'unchecked' => NoteBlockType.todo,
+    _ => NoteBlockType.text,
+  };
+
+  /// Whether every selected line (or the one typed in) is a [type] item.
+  bool isList(NoteBlockType type) {
+    final starts = _selectedLineStarts;
+    return starts.isNotEmpty && starts.every((s) => _kindOf(controller.document.queryChild(s).node! as Line) == type);
+  }
+
+  /// From the formatting bar: the selected lines become [type] items
+  /// (bullets or checkboxes, headings included), or plain text when they
+  /// all are already.
+  void toggleList(NoteBlockType type) {
+    final starts = _selectedLineStarts;
+    if (starts.isEmpty) return;
+    final to = isList(type) ? NoteBlockType.text : type;
+    final sel = controller.selection;
+    for (final start in starts) {
+      // Ticked boxes stay ticked when they are boxes already.
+      if (to == NoteBlockType.todo && _kindOf(controller.document.queryChild(start).node! as Line) == to) continue;
+      for (final attribute in lineAttributes(to)) {
+        controller.formatText(start, 0, attribute);
+      }
+    }
+    controller.updateSelection(sel, ChangeSource.local);
+    _updateBars();
+  }
+
   /// Colors the selected headings, whole lines.
   void setHeadingColor(HeadingColor color) {
     final (start, end) = _selectedLines;
@@ -436,25 +483,11 @@ class NoteEditorState extends State<NoteEditor> {
   /// checkboxes and tables.
   Future<bool> _paste() async {
     final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
-    if (text == null || !_looksLikeMarkdown(text)) return false;
-    final blocks = markdownToBlocks(text, vm.newBlockId);
-    var delta = blocksToDelta(blocks);
-    // The last line, plain, goes on in the line pasted into.
-    if (blocks.isNotEmpty && blocks.last.type == NoteBlockType.text) delta = delta.slice(0, delta.length - 1);
+    if (text == null || !_NoteController.looksLikeMarkdown(text)) return false;
     final sel = controller.selection;
-    controller.replaceText(
-      sel.start,
-      sel.end - sel.start,
-      delta,
-      TextSelection.collapsed(offset: sel.start + delta.length),
-    );
+    controller.insertMarkdown(sel.start, sel.end - sel.start, text);
     return true;
   }
-
-  static final _markdownLine = RegExp(r'^\s*(#{1,6}\s|[-*+•]\s|\|.*\|\s*$)', multiLine: true);
-
-  static bool _looksLikeMarkdown(String text) =>
-      text.contains('\n') || _markdownLine.hasMatch(text) || text.contains('**') || text.contains('<u>');
 
   /// Tapping below the note continues it, on a new text line unless the
   /// last one is already an empty one.
@@ -462,9 +495,12 @@ class NoteEditorState extends State<NoteEditor> {
     final doc = controller.document;
     final end = doc.length - 1;
     final last = doc.queryChild(end).node;
-    final lastIsEmptyText = last is Line && last.length == 1 && last.style.isEmpty;
     _focus.requestFocus();
-    if (lastIsEmptyText) {
+    // An empty last line, plain or an empty item (which becomes plain).
+    if (last is Line && last.length == 1) {
+      for (final attribute in lineAttributes(NoteBlockType.text)) {
+        controller.formatText(end, 0, attribute);
+      }
       controller.updateSelection(TextSelection.collapsed(offset: end), ChangeSource.local);
       return;
     }
@@ -680,6 +716,88 @@ class _NoteController extends QuillController {
        );
 
   final String Function() newId;
+
+  static final _markdownLine = RegExp(r'^\s*(#{1,6}\s|[-*+•]\s|\|.*\|\s*$)', multiLine: true);
+
+  static bool looksLikeMarkdown(String text) =>
+      text.contains('\n') || _markdownLine.hasMatch(text) || text.contains('**') || text.contains('<u>');
+
+  /// Replaces [len] characters at [index] with the blocks in [markdown].
+  void insertMarkdown(int index, int len, String markdown) {
+    final blocks = markdownToBlocks(markdown, newId);
+    // Line breaks before the text (Enter, then the clipboard) stay.
+    final lead = RegExp(r'^\n*').firstMatch(markdown)![0]!;
+    var delta = Delta();
+    if (lead.isNotEmpty) delta.insert(lead);
+    delta = delta.concat(blocksToDelta(blocks));
+    int length(Delta d) => d.operations.fold(0, (sum, op) => sum + op.length!);
+    // The last line, plain, goes on in the line pasted into.
+    if (blocks.isNotEmpty && blocks.last.type == NoteBlockType.text) delta = delta.slice(0, length(delta) - 1);
+    if (delta.isEmpty) return;
+    super.replaceText(index, len, delta, TextSelection.collapsed(offset: index + length(delta)));
+  }
+
+  /// Enter on an empty list item (bullet or checkbox), or erasing at the
+  /// start of one, makes it plain text where it is, instead of adding an
+  /// item or joining the line above. Whether it comes from a key or from
+  /// the keyboard's edit, and wherever the item is in its list.
+  bool _leaveList(int index, int len, Object? data) {
+    final sel = selection;
+    if (!sel.isCollapsed) return false;
+    final int start;
+    if (data == '\n' && len == 0) {
+      start = index;
+    } else if ((data == null || data == '') && len == 1 && document.getPlainText(index, 1) == '\n') {
+      // Erasing the line break before the caret. The keyboard may name the
+      // one after it instead when the line is empty: same two characters.
+      start = sel.baseOffset;
+      if (index != start - 1 && index != start) return false;
+      if (index == start && !_isEmptyLine(start)) return false;
+    } else {
+      return false;
+    }
+    if (start >= document.length) return false;
+    final line = document.queryChild(start).node;
+    if (line is! Line || line.documentOffset != start || line.style.attributes[Attribute.list.key] == null) {
+      return false;
+    }
+    if (data == '\n' && line.length != 1) return false;
+    formatText(start, 0, Attribute.clone(Attribute.list, null));
+    updateSelection(TextSelection.collapsed(offset: start), ChangeSource.local);
+    return true;
+  }
+
+  bool _isEmptyLine(int offset) {
+    final line = document.queryChild(offset).node;
+    return line is Line && line.documentOffset == offset && line.length == 1;
+  }
+
+  /// Text picked from the keyboard's clipboard arrives as typing, not as a
+  /// paste: several lines typed at once are read as Markdown all the same.
+  @override
+  void replaceText(
+    int index,
+    int len,
+    Object? data,
+    TextSelection? textSelection, {
+    bool ignoreFocus = false,
+    bool shouldNotifyListeners = true,
+  }) {
+    if (data is String && data.length > 1 && data.contains('\n')) {
+      insertMarkdown(index, len, data);
+      return;
+    }
+    if (_leaveList(index, len, data)) return;
+    super.replaceText(
+      index,
+      len,
+      data,
+      textSelection,
+      ignoreFocus: ignoreFocus,
+      // ignore: experimental_member_use
+      shouldNotifyListeners: shouldNotifyListeners,
+    );
+  }
 
   @override
   // ignore: experimental_member_use, the only way to change what is copied.

@@ -77,6 +77,8 @@ class _FormatBarState extends State<FormatBar> {
           onTap: () => _show(_Panel.colors),
           child: _Dot(headingColor(editor.headingColorNow)),
         ),
+      _list(NoteBlockType.bullet, l10n.blockBullet, Icons.format_list_bulleted_rounded),
+      _list(NoteBlockType.todo, l10n.blockCheckbox, Icons.checklist_rounded),
       const _Divider(),
       _button(
         label: l10n.formatUndo,
@@ -141,6 +143,10 @@ class _FormatBarState extends State<FormatBar> {
     onTap: () => _show(_Panel.buttons),
     child: const Icon(Icons.chevron_left_rounded, size: 24),
   );
+
+  /// On: the selected lines are [type] items, and a tap makes them text.
+  Widget _list(NoteBlockType type, String label, IconData icon) =>
+      _button(label: label, on: editor.isList(type), onTap: () => editor.toggleList(type), child: Icon(icon, size: 24));
 
   Widget _style(InlineStyle style, String label, Widget glyph) =>
       _button(label: label, on: editor.isActive(style), onTap: () => editor.toggleStyle(style), child: glyph);
