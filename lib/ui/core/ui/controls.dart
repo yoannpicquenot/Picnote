@@ -316,6 +316,7 @@ class InfoPill extends StatelessWidget {
           Flexible(
             child: Text(
               text,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: PnText.tiny.copyWith(color: color),
             ),

@@ -185,10 +185,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// The task's list: opens it. Long names are cut short, so the task's
+  /// title keeps the room.
   Widget? _tag(TaskList? list) {
     if (list == null) return null;
     final theme = ListTheme.of(list.color);
-    return InfoPill(text: list.name, color: theme.fg, background: theme.bg);
+    return Pressable(
+      // Pushed, as from its card: going back comes here.
+      onTap: () => context.push(Routes.list(list.id)),
+      semanticLabel: list.name,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 120),
+        child: InfoPill(text: list.name, color: theme.fg, background: theme.bg),
+      ),
+    );
   }
 }
 

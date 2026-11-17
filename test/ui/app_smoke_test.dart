@@ -779,6 +779,21 @@ void main() {
     }
   });
 
+  testWidgets('the list tag of a task in Today is cut short, and opens its list', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final repo = tester.element(find.byType(HomeScreen)).read<ListRepository>();
+    final courses = repo.lists.firstWhere((l) => l.id == 'c');
+    await repo.updateList(courses.copyWith(name: 'Courses pour le grand repas de famille du dimanche'));
+    await settle(tester);
+
+    final tag = find.widgetWithText(InfoPill, 'Courses pour le grand repas de famille du dimanche').first;
+    expect(tester.getSize(tag).width, lessThanOrEqualTo(120));
+    expect(tester.getSize(tag).height, lessThan(30), reason: 'on one line');
+    await tester.tap(tag);
+    await settle(tester);
+    expect(router.state.uri.path, Routes.list('c'));
+  });
+
   testWidgets('a swipe on a task of Today goes to Notes, and deletes nothing', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     final repo = tester.element(find.byType(HomeScreen)).read<ListRepository>();
