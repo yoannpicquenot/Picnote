@@ -31,11 +31,15 @@ void main() {
   test('a note is copied as Markdown', () {
     expect(blocksToMarkdown(blocks), '''
 ## Voyage
+
 **Très** *important* demain
+
 - Montréal
 - [x] Passeports
 - [ ] Adaptateur
+
 https://airbnb.com/rooms/1
+
 | Quoi | Prix |
 | --- | --- |
 | Train | 120 € |''');
@@ -43,6 +47,61 @@ https://airbnb.com/rooms/1
 
   test('and pasted back as it was', () {
     expect(sameBlocks(markdownToBlocks(blocksToMarkdown(blocks), newId), blocks), isTrue);
+  });
+
+  test('an empty line of the note survives copy and paste', () {
+    const withGap = [
+      NoteBlock(id: 'a', text: 'Avant'),
+      NoteBlock(id: 'b'),
+      NoteBlock(id: 'c', type: NoteBlockType.bullet, text: 'Après'),
+    ];
+    expect(sameBlocks(markdownToBlocks(blocksToMarkdown(withGap), newId), withGap), isTrue);
+  });
+
+  test('a page copied from Notion', () {
+    const notion = '''
+# Week-end à Lyon
+
+Réserver **vite**, c'est ~~cher~~ `complet` le 3\\*.
+
+- Train
+    - Aller vendredi
+- [ ] Hôtel
+- [x] Billets
+
+> Penser aux bouchons
+
+---
+
+```
+code gardé tel quel
+```
+
+<aside>
+💡 Prendre le parapluie
+</aside>
+
+![](https://img.fr/a.png)
+
+
+Fin''';
+    final back = markdownToBlocks(notion, newId);
+    expect(back.map((b) => (b.type, b.text)), [
+      (NoteBlockType.heading, 'Week-end à Lyon'),
+      (NoteBlockType.text, "Réserver vite, c'est cher complet le 3*."),
+      (NoteBlockType.bullet, 'Train'),
+      (NoteBlockType.bullet, 'Aller vendredi'),
+      (NoteBlockType.todo, 'Hôtel'),
+      (NoteBlockType.todo, 'Billets'),
+      (NoteBlockType.text, 'Penser aux bouchons'),
+      (NoteBlockType.text, 'code gardé tel quel'),
+      (NoteBlockType.text, '💡 Prendre le parapluie'),
+      (NoteBlockType.link, 'https://img.fr/a.png'),
+      (NoteBlockType.text, ''),
+      (NoteBlockType.text, 'Fin'),
+    ]);
+    expect(back[1].styles, [const StyleRange(9, 13, InlineStyle.bold)]);
+    expect(back[5].done, isTrue);
   });
 
   test('Markdown from elsewhere: "*" bullets, "####" headings, links keep their text', () {

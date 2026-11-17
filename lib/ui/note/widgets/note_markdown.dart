@@ -5,11 +5,30 @@ import '../../../utils/inline_styles.dart';
 /// understand; pasting reads it back. Underline has no Markdown of its
 /// own, so it goes as `<u>…</u>`.
 
+///
+/// Blocks are separated by a blank line, as Markdown wants paragraphs, except
+/// list items that follow each other. Each empty line of the note adds one
+/// more blank line, so it comes back on paste.
 String blocksToMarkdown(List<NoteBlock> blocks) {
-  final lines = <String>[];
-  for (final b in blocks) {
+  bool isEmpty(NoteBlock b) => b.type == NoteBlockType.text && b.text.isEmpty;
+  bool isList(NoteBlock b) => b.type == NoteBlockType.bullet || b.type == NoteBlockType.todo;
+  final first = blocks.indexWhere((b) => !isEmpty(b));
+  if (first < 0) return '';
+  final last = blocks.lastIndexWhere((b) => !isEmpty(b));
+  final out = StringBuffer();
+  NoteBlock? prev;
+  var empties = 0;
+  for (final b in blocks.sublist(first, last + 1)) {
+    if (isEmpty(b)) {
+      empties++;
+      continue;
+    }
+    if (prev != null) {
+      out.write(isList(prev) && isList(b) && empties == 0 ? '\n' : '\n\n');
+      out.write('\n' * empties);
+    }
     final text = _inlineMarkdown(b);
-    lines.add(switch (b.type) {
+    out.write(switch (b.type) {
       NoteBlockType.heading => '${'#' * b.level.clamp(1, NoteBlock.maxLevel)} $text',
       NoteBlockType.bullet => '- $text',
       NoteBlockType.todo => '- [${b.done ? 'x' : ' '}] $text',
@@ -17,8 +36,10 @@ String blocksToMarkdown(List<NoteBlock> blocks) {
       NoteBlockType.table => _tableMarkdown(b.cells),
       NoteBlockType.text => text,
     });
+    prev = b;
+    empties = 0;
   }
-  return lines.join('\n');
+  return out.toString();
 }
 
 const _marks = {InlineStyle.bold: ('**', '**'), InlineStyle.italic: ('*', '*'), InlineStyle.underline: ('<u>', '</u>')};
@@ -71,12 +92,56 @@ final _mdLink = RegExp(r'^\[([^\]]*)\]\((\S+)\)$');
 final _tableRow = RegExp(r'^\s*\|.*\|\s*$');
 final _tableRule = RegExp(r'^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$');
 
+final _quote = RegExp(r'^\s*>\s?(.*)$');
+final _divider = RegExp(r'^\s*([-*_])(\s*\1){2,}\s*$');
+final _fence = RegExp(r'^\s*(```|~~~)');
+final _image = RegExp(r'^!\[[^\]]*\]\((\S+?)\)$');
+// Notion's callouts and toggles come wrapped in these.
+final _htmlTag = RegExp(r'^\s*</?(aside|details|summary|div|p|br)\b[^>]*/?>\s*$', caseSensitive: false);
+
 /// The blocks in [markdown], with ids from [newId].
+///
+/// One blank line only separates blocks, as in Markdown; each further one
+/// is an empty line of the note.
 List<NoteBlock> markdownToBlocks(String markdown, String Function() newId) {
-  final lines = markdown.replaceAll('\r\n', '\n').split('\n');
+  final lines = markdown.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
   final blocks = <NoteBlock>[];
+  var blanks = 0;
+  // Blank lines around a skipped line (divider, fence, HTML tag) count once.
+  var carried = 0;
+  void skip() {
+    carried = blanks > carried ? blanks : carried;
+    blanks = 0;
+  }
+
+  var inCode = false;
   for (var i = 0; i < lines.length; i++) {
     final line = lines[i];
+    if (_fence.hasMatch(line)) {
+      inCode = !inCode;
+      skip();
+      continue;
+    }
+    if (inCode) {
+      blocks.add(NoteBlock(id: newId(), text: line));
+      continue;
+    }
+    if (line.trim().isEmpty) {
+      blanks++;
+      continue;
+    }
+    if (_divider.hasMatch(line) || _htmlTag.hasMatch(line)) {
+      skip();
+      continue;
+    }
+    if (blocks.isNotEmpty) {
+      final gap = blanks > carried ? blanks : carried;
+      for (var k = 1; k < gap; k++) {
+        blocks.add(NoteBlock(id: newId()));
+      }
+    }
+    blanks = 0;
+    carried = 0;
     // A table: a header row, the "---" rule, then its rows.
     if (_tableRow.hasMatch(line) && i + 1 < lines.length && _tableRule.hasMatch(lines[i + 1])) {
       final rows = [_cells(line)];
@@ -98,39 +163,50 @@ List<NoteBlock> markdownToBlocks(String markdown, String Function() newId) {
       );
       continue;
     }
-    if (_heading.firstMatch(line) case final m?) {
-      final (text, styles) = _parseInline(m[2]!);
-      final level = m[1]!.length.clamp(1, NoteBlock.maxLevel);
-      blocks.add(NoteBlock(id: newId(), type: NoteBlockType.heading, text: text, styles: styles, level: level));
-    } else if (_todo.firstMatch(line) case final m?) {
-      final (text, styles) = _parseInline(m[2]!);
-      blocks.add(NoteBlock(id: newId(), type: NoteBlockType.todo, text: text, styles: styles, done: m[1] != ' '));
-    } else if (_bullet.firstMatch(line) case final m?) {
-      final (text, styles) = _parseInline(m[1]!);
-      blocks.add(NoteBlock(id: newId(), type: NoteBlockType.bullet, text: text, styles: styles));
-    } else if (_mdLink.firstMatch(line.trim()) case final m?) {
-      blocks.add(NoteBlock(id: newId(), type: NoteBlockType.link, text: m[2]!));
-    } else if (_url.hasMatch(line.trim())) {
-      blocks.add(NoteBlock(id: newId(), type: NoteBlockType.link, text: line.trim()));
-    } else {
-      final (text, styles) = _parseInline(line);
-      blocks.add(NoteBlock(id: newId(), text: text, styles: styles));
-    }
+    blocks.add(_lineBlock(line, newId));
   }
   return blocks;
+}
+
+NoteBlock _lineBlock(String line, String Function() newId) {
+  // A quote has no block of its own: its content stays.
+  if (_quote.firstMatch(line) case final m?) return _lineBlock(m[1]!, newId);
+  if (_heading.firstMatch(line.trimLeft()) case final m?) {
+    final (text, styles) = _parseInline(m[2]!);
+    final level = m[1]!.length.clamp(1, NoteBlock.maxLevel);
+    return NoteBlock(id: newId(), type: NoteBlockType.heading, text: text, styles: styles, level: level);
+  }
+  if (_todo.firstMatch(line) case final m?) {
+    final (text, styles) = _parseInline(m[2]!);
+    return NoteBlock(id: newId(), type: NoteBlockType.todo, text: text, styles: styles, done: m[1] != ' ');
+  }
+  if (_bullet.firstMatch(line) case final m?) {
+    final (text, styles) = _parseInline(m[1]!);
+    return NoteBlock(id: newId(), type: NoteBlockType.bullet, text: text, styles: styles);
+  }
+  final trimmed = line.trim();
+  if (_mdLink.firstMatch(trimmed) ?? _image.firstMatch(trimmed) case final m?) {
+    return NoteBlock(id: newId(), type: NoteBlockType.link, text: m[m.groupCount]!);
+  }
+  if (_url.hasMatch(trimmed)) return NoteBlock(id: newId(), type: NoteBlockType.link, text: trimmed);
+  final (text, styles) = _parseInline(trimmed);
+  return NoteBlock(id: newId(), text: text, styles: styles);
 }
 
 List<String> _cells(String row) {
   var r = row.trim();
   if (r.startsWith('|')) r = r.substring(1);
   if (r.endsWith('|') && !r.endsWith(r'\|')) r = r.substring(0, r.length - 1);
-  return [for (final c in r.split(RegExp(r'(?<!\\)\|'))) c.trim().replaceAll(r'\|', '|')];
+  // Cells hold plain text: "**Mer. 10**" keeps only its words.
+  return [for (final c in r.split(RegExp(r'(?<!\\)\|'))) _parseInline(c.trim().replaceAll(r'\|', '|')).$1];
 }
 
 /// `**bold**`, `*italic*` or `_italic_`, `<u>underline</u>`, and links
-/// (their text stays).
+/// (their text stays). Strikethrough and `code`, which notes do not have,
+/// keep their text too, and `\*` is a plain `*`.
 final _token = RegExp(
-  r'\*\*(.+?)\*\*|__(.+?)__|<u>(.+?)</u>|(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)|(?<!\w)_(?!\s)(.+?)(?<!\s)_(?!\w)|\[([^\]]+)\]\([^)\s]+\)',
+  r'\*\*(.+?)\*\*|__(.+?)__|<u>(.+?)</u>|(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)|(?<!\w)_(?!\s)(.+?)(?<!\s)_(?!\w)|\[([^\]]+)\]\([^)\s]+\)'
+  r'|~~(.+?)~~|`([^`]+)`|\\([\\`*_{}\[\]()#+\-.!|~>])',
 );
 
 (String, List<StyleRange>) _parseInline(String source, [int mask = 0]) {
@@ -144,19 +220,25 @@ final _token = RegExp(
   var at = 0;
   for (final m in _token.allMatches(source)) {
     plain(source.substring(at, m.start), mask);
+    at = m.end;
+    // Code and escaped characters are taken as they are.
+    if ((m[8] ?? m[9]) case final literal?) {
+      plain(literal, mask);
+      continue;
+    }
     final (inner, style) = switch (m) {
       _ when m[1] != null => (m[1]!, InlineStyle.bold),
       _ when m[2] != null => (m[2]!, InlineStyle.bold),
       _ when m[3] != null => (m[3]!, InlineStyle.underline),
       _ when m[4] != null => (m[4]!, InlineStyle.italic),
       _ when m[5] != null => (m[5]!, InlineStyle.italic),
-      _ => (m[6]!, null),
+      _ when m[6] != null => (m[6]!, null),
+      _ => (m[7]!, null),
     };
     final (innerText, innerStyles) = _parseInline(inner, style == null ? mask : mask | (1 << style.index));
     final innerMasks = masksOf(innerStyles, innerText.length);
     text.write(innerText);
     masks.addAll(innerMasks);
-    at = m.end;
   }
   plain(source.substring(at), mask);
   return (text.toString(), rangesOf(masks));
