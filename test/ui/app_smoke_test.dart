@@ -14,6 +14,7 @@ import 'package:picnote/ui/home/widgets/home_screen.dart';
 import 'package:picnote/data/repositories/list/list_repository.dart';
 import 'package:picnote/domain/models/task_list.dart';
 import 'package:picnote/main.dart';
+import 'package:picnote/ui/core/themes/colors.dart';
 import 'package:picnote/routing/routes.dart';
 import 'package:picnote/ui/core/ui/buttons.dart';
 import 'package:picnote/ui/core/ui/controls.dart';
@@ -732,6 +733,33 @@ void main() {
     expect(find.byType(ListScreen), findsOneWidget);
   });
 
+  testWidgets('all lists, editing: pinned lists move by their dots or a long press', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.lists);
+    await settle(tester);
+    await tester.tap(find.text('Modifier'));
+    await settle(tester);
+    final repo = tester.element(find.byType(AllListsScreen)).read<ListRepository>();
+    List<String> order() => pinnedInOrder(repo.lists).map((l) => l.name).toList();
+    Future<void> dragFrom(Offset start, {Duration hold = Duration.zero}) async {
+      final g = await tester.startGesture(start);
+      await tester.pump(hold);
+      for (var i = 0; i < 10; i++) {
+        await g.moveBy(const Offset(0, 20));
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await g.up();
+      await settle(tester);
+    }
+
+    // Near the dots, not right on them.
+    await dragFrom(tester.getCenter(find.byType(Grip).first) + const Offset(-12, 14));
+    expect(order(), ['Maison', 'Dîner', 'Lisbonne', 'Courses']);
+
+    await dragFrom(tester.getCenter(find.text('Maison')), hold: const Duration(milliseconds: 600));
+    expect(order(), ['Dîner', 'Lisbonne', 'Courses', 'Maison']);
+  });
+
   testWidgets('checkboxes keep their size and stand by the first line', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     final repo = tester.element(find.byType(HomeScreen)).read<ListRepository>();
@@ -762,6 +790,10 @@ void main() {
     expect(tester.getTopLeft(find.text('PICNOTE.')).dx, 20, reason: 'the header stays in place');
     expect(find.text('Notes.'), findsOneWidget);
     expect(tester.getTopLeft(find.text('Notes.')).dx, lessThan(390));
+    // The tabs follow the finger: Lists fading, Notes not yet selected.
+    final lists = tester.widget<Text>(find.text('Listes')).style!.color!;
+    expect(lists, isNot(PnColors.terraDark));
+    expect(lists, isNot(PnColors.muted));
     // Let go before halfway: back to Lists.
     await drag.up();
     await settle(tester);

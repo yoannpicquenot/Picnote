@@ -14,6 +14,7 @@ import '../../core/ui/pn_icon.dart';
 import '../../core/ui/sheet.dart';
 import '../../core/ui/toast.dart';
 import '../view_models/shell_viewmodel.dart';
+import 'tab_pager.dart';
 
 /// "New list" sheet, then opens the created list.
 Future<void> startNewList(BuildContext context, ShellViewModel viewModel) async {
@@ -264,16 +265,22 @@ class _AppShellState extends State<AppShell> {
                           constraints: const BoxConstraints(maxWidth: 484),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: _BottomBar(
-                              tab: _tab,
-                              tabs: [(PnIcons.list, l10n.tabLists), (PnIcons.document, l10n.tabNotes)],
-                              onTab: (i) {
-                                _setAdd(false);
-                                context.go(i == 0 ? Routes.home : Routes.notes);
-                              },
-                              addOpen: _addOpen,
-                              onAdd: () => _setAdd(!_addOpen),
-                              addLabel: l10n.add,
+                            child: ValueListenableBuilder(
+                              valueListenable: tabsPosition,
+                              builder: (context, position, _) => _BottomBar(
+                                tab: _tab,
+                                // On Lists or Notes, the tabs follow the pager as
+                                // it is swiped, not just once it has settled.
+                                position: _location == Routes.home || _location == Routes.notes ? position : null,
+                                tabs: [(PnIcons.list, l10n.tabLists), (PnIcons.document, l10n.tabNotes)],
+                                onTab: (i) {
+                                  _setAdd(false);
+                                  context.go(i == 0 ? Routes.home : Routes.notes);
+                                },
+                                addOpen: _addOpen,
+                                onAdd: () => _setAdd(!_addOpen),
+                                addLabel: l10n.add,
+                              ),
                             ),
                           ),
                         ),
@@ -293,6 +300,7 @@ class _AppShellState extends State<AppShell> {
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.tab,
+    this.position,
     required this.tabs,
     required this.onTab,
     required this.addOpen,
@@ -302,6 +310,10 @@ class _BottomBar extends StatelessWidget {
 
   /// -1 when no tab is selected (settings).
   final int tab;
+
+  /// The pager's position between the two tabs, when it shows: each tab is
+  /// then as selected as the pager is close to its page.
+  final double? position;
   final List<(String, String)> tabs;
   final ValueChanged<int> onTab;
   final bool addOpen;
@@ -317,44 +329,54 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget tabButton(int i) {
       final (icon, label) = tabs[i];
-      final on = tab == i;
-      final color = on ? PnColors.terraDark : PnColors.muted;
+      final p = position;
+      final target = p == null ? (tab == i ? 1.0 : 0.0) : (1 - (p - i).abs()).clamp(0.0, 1.0);
       return Expanded(
         child: Semantics(
-          selected: on,
+          selected: target > 0.5,
           button: true,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => onTab(i),
-            child: SizedBox(
-              height: 56,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  PnIcon(icon, color: color, size: 22),
-                  const SizedBox(height: 4),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 200),
-                    style: TextStyle(
-                      fontFamily: DefaultTextStyle.of(context).style.fontFamily,
-                      fontWeight: on ? FontWeight.w600 : FontWeight.w500,
-                      fontSize: 12,
-                      color: color,
-                    ),
-                    child: Text(label),
+            // Follows the pager as is; eases in when it changes otherwise
+            // (to or from settings).
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: target),
+              duration: p == null ? const Duration(milliseconds: 200) : Duration.zero,
+              builder: (context, on, _) {
+                final color = Color.lerp(PnColors.muted, PnColors.terraDark, on)!;
+                return SizedBox(
+                  height: 56,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      PnIcon(icon, color: color, size: 22),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontFamily: DefaultTextStyle.of(context).style.fontFamily,
+                          fontWeight: on > 0.5 ? FontWeight.w600 : FontWeight.w500,
+                          fontSize: 12,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Opacity(
+                        opacity: on,
+                        child: Transform.scale(
+                          scale: on,
+                          child: Container(
+                            width: 4,
+                            height: 4,
+                            decoration: const BoxDecoration(color: PnColors.terraDark, shape: BoxShape.circle),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: on ? PnColors.terraDark : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ),

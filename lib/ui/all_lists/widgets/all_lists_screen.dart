@@ -151,12 +151,25 @@ class AllListsScreen extends StatelessWidget {
                             ),
                             child: child,
                           ),
-                          itemBuilder: (context, i) => row(
-                            pinned[i],
-                            i,
-                            handle: ReorderableDragStartListener(
-                              index: i,
-                              child: Semantics(label: l10n.dragToReorder, child: const Grip()),
+                          // A long press anywhere on the row, or a drag
+                          // on the dots, moves it.
+                          itemBuilder: (context, i) => ReorderableDelayedDragStartListener(
+                            key: ValueKey('reorder-${pinned[i].id}'),
+                            index: i,
+                            child: row(
+                              pinned[i],
+                              i,
+                              handle: ReorderableDragStartListener(
+                                index: i,
+                                child: Semantics(
+                                  label: l10n.dragToReorder,
+                                  // A finger-sized target around the dots.
+                                  child: const ColoredBox(
+                                    color: Colors.transparent,
+                                    child: SizedBox(width: 44, height: 48, child: Center(child: Grip())),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         )
@@ -244,83 +257,72 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final t = ListTheme.of(list.color);
-    return Dismissible(
-      key: ValueKey('dismiss-${list.id}'),
-      // While editing, the trash button deletes: no swipe.
-      direction: editing ? DismissDirection.none : DismissDirection.endToStart,
-      onDismissed: (_) => onDelete(),
-      background: Container(
-        color: PnColors.danger,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: Text(l10n.delete, style: PnText.pill.copyWith(color: PnColors.snow)),
+    // Deleted with the trash button, in edit mode: no swipe.
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        color: PnColors.cream,
+        border: Border(bottom: BorderSide(color: PnColors.snow, width: 4)),
       ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: const BoxDecoration(
-          color: PnColors.cream,
-          border: Border(bottom: BorderSide(color: PnColors.snow, width: 4)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Pressable(
-                onTap: editing ? null : onOpen,
-                scale: 0.99,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(color: t.bg, borderRadius: BorderRadius.circular(16)),
-                      child: PnIcon.list(list.icon, color: t.fg, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            list.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: PnColors.ink),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(subtitle, overflow: TextOverflow.ellipsis, style: PnText.meta),
-                        ],
-                      ),
-                    ),
-                    if (!editing) ...[
-                      if (!list.isShared && showPerso) ...[
-                        PersoMark(label: l10n.listPersonal, color: PnColors.muted),
-                        const SizedBox(width: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Pressable(
+              onTap: editing ? null : onOpen,
+              scale: 0.99,
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(color: t.bg, borderRadius: BorderRadius.circular(16)),
+                    child: PnIcon.list(list.icon, color: t.fg, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          list.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: PnColors.ink),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(subtitle, overflow: TextOverflow.ellipsis, style: PnText.meta),
                       ],
-                      const PnIcon(PnIcons.chevronRight, color: PnColors.muted, size: 18),
+                    ),
+                  ),
+                  if (!editing) ...[
+                    if (!list.isShared && showPerso) ...[
+                      PersoMark(label: l10n.listPersonal, color: PnColors.muted),
+                      const SizedBox(width: 8),
                     ],
+                    const PnIcon(PnIcons.chevronRight, color: PnColors.muted, size: 18),
                   ],
-                ),
+                ],
               ),
             ),
-            if (editing) ...[
-              const SizedBox(width: 12),
-              _EditButton(
-                label: list.pinned ? l10n.unpinNamed(list.name) : l10n.pinNamed(list.name),
-                filled: !list.pinned,
-                onTap: canPin ? onPin : null,
-                child: PnIcon(list.pinned ? PnIcons.pinOff : PnIcons.pin, color: PnColors.terraDark, size: 20),
-              ),
-              const SizedBox(width: 8),
-              _EditButton(
-                label: l10n.deleteNamed(list.name),
-                filled: false,
-                onTap: onDelete,
-                child: const PnIcon(PnIcons.trash, color: PnColors.danger, size: 20),
-              ),
-              if (handle != null) ...[const SizedBox(width: 4), handle!],
-            ],
+          ),
+          if (editing) ...[
+            const SizedBox(width: 12),
+            _EditButton(
+              label: list.pinned ? l10n.unpinNamed(list.name) : l10n.pinNamed(list.name),
+              filled: !list.pinned,
+              onTap: canPin ? onPin : null,
+              child: PnIcon(list.pinned ? PnIcons.pinOff : PnIcons.pin, color: PnColors.terraDark, size: 20),
+            ),
+            const SizedBox(width: 8),
+            _EditButton(
+              label: l10n.deleteNamed(list.name),
+              filled: false,
+              onTap: onDelete,
+              child: const PnIcon(PnIcons.trash, color: PnColors.danger, size: 20),
+            ),
+            if (handle != null) handle!,
           ],
-        ),
+        ],
       ),
     );
   }

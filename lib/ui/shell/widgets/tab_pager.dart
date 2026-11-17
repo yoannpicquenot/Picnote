@@ -1,9 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../core/ui/home_header.dart';
 import '../../core/ui/layout.dart';
+
+/// Where the Lists / Notes pager stands: 0 on Lists, 1 on Notes, in
+/// between while swiping. The bottom bar's tabs follow it.
+final tabsPosition = ValueNotifier<double>(0);
 
 /// Lists and Notes side by side: a swipe drags both along with the
 /// finger, and they snap into place when it lets go. [onSettled] tells
@@ -40,7 +45,28 @@ class TabPager extends StatefulWidget {
 }
 
 class _TabPagerState extends State<TabPager> {
-  late final _controller = PageController(initialPage: widget.index);
+  late final _controller = PageController(initialPage: widget.index)..addListener(_moved);
+
+  @override
+  void initState() {
+    super.initState();
+    _publish(widget.index.toDouble());
+  }
+
+  void _moved() {
+    if (_controller.position.haveDimensions) _publish(_controller.page ?? widget.index.toDouble());
+  }
+
+  /// Tells the bottom bar where the pager is: after the frame when that
+  /// comes while building or laying out (the page opening, the screen
+  /// turning), where the bar may not be rebuilt.
+  void _publish(double page) {
+    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => tabsPosition.value = page);
+    } else {
+      tabsPosition.value = page;
+    }
+  }
 
   /// Each page's vertical scroll.
   late final _scrolls = List<double>.filled(widget.pages.length, 0);
