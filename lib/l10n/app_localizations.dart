@@ -1604,17 +1604,17 @@ abstract class AppLocalizations {
   /// **'Contact et bugs'**
   String get contactAndBugs;
 
-  /// No description provided for @opensInBrowser.
+  /// No description provided for @linkFailed.
   ///
   /// In fr, this message translates to:
-  /// **'S’ouvre dans ton navigateur'**
-  String get opensInBrowser;
+  /// **'Impossible d’ouvrir la page. Elle est sur picnote.cc.'**
+  String get linkFailed;
 
-  /// No description provided for @opensMailApp.
+  /// No description provided for @mailFailed.
   ///
   /// In fr, this message translates to:
-  /// **'Ouvre ton app e-mail'**
-  String get opensMailApp;
+  /// **'Aucune app e-mail trouvée. Écris-nous à hello@picnote.cc.'**
+  String get mailFailed;
 
   /// No description provided for @aboutFooter.
   ///

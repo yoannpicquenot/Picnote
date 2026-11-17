@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../domain/models/household.dart';
 import '../../../l10n/app_localizations.dart';
@@ -17,6 +18,25 @@ import '../../core/ui/toast.dart';
 import '../../invite/widgets/invite_sheet.dart';
 import '../view_models/settings_viewmodel.dart';
 import 'settings_parts.dart';
+
+const _contact = 'hello@picnote.cc';
+
+/// A page of picnote.cc (privacy, terms), in the app's language.
+Uri _sitePage(BuildContext context, String page) {
+  final french = Localizations.localeOf(context).languageCode == 'fr';
+  return Uri.https('picnote.cc', french ? '/fr/$page' : '/$page');
+}
+
+/// Opens [uri] in the browser or the mail app, or says why it could not.
+Future<void> _open(BuildContext context, Uri uri, String failure) async {
+  var opened = false;
+  try {
+    opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } on Exception {
+    opened = false;
+  }
+  if (!opened && context.mounted) showToast(context, failure);
+}
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, required this.viewModel});
@@ -210,18 +230,18 @@ class SettingsScreen extends StatelessWidget {
                 SettingsRow(
                   icon: PnIcons.document,
                   title: l10n.termsOfUse,
-                  onTap: () => showToast(context, l10n.opensInBrowser),
+                  onTap: () => _open(context, _sitePage(context, 'terms'), l10n.linkFailed),
                 ),
                 SettingsRow(
                   icon: PnIcons.lock,
                   title: l10n.privacyPolicy,
-                  onTap: () => showToast(context, l10n.opensInBrowser),
+                  onTap: () => _open(context, _sitePage(context, 'privacy'), l10n.linkFailed),
                 ),
                 SettingsRow(
                   icon: PnIcons.mail,
                   title: l10n.contactAndBugs,
-                  subtitle: 'hello@picnote.cc',
-                  onTap: () => showToast(context, l10n.opensMailApp),
+                  subtitle: _contact,
+                  onTap: () => _open(context, Uri(scheme: 'mailto', path: _contact), l10n.mailFailed),
                 ),
               ],
             ),

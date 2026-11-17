@@ -864,10 +864,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactAndBugs => 'Contact and bugs';
 
   @override
-  String get opensInBrowser => 'Opens in your browser';
+  String get linkFailed => 'Couldn’t open the page. It’s on picnote.cc.';
 
   @override
-  String get opensMailApp => 'Opens your mail app';
+  String get mailFailed =>
+      'No mail app found. Write to us at hello@picnote.cc.';
 
   @override
   String get aboutFooter =>
