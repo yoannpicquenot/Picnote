@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:picnote/ui/core/ui/auth_shell.dart';
 
@@ -32,6 +33,21 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), '12654321');
     expect(values.last, '654321');
+  });
+
+  testWidgets('a long press offers Paste, which fills the code from the clipboard', (tester) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.getData') return {'text': 'Ton code : 482913'};
+      return null;
+    });
+    addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+    final values = await enter(tester, '');
+    await tester.longPress(find.byType(CodeBoxes));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Paste'));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(values.last, '482913');
+    expect(find.text('Paste'), findsNothing);
   });
 
   testWidgets('an invite code, in capitals, without words around it', (tester) async {

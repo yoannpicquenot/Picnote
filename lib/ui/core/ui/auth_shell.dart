@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../themes/colors.dart';
 import '../themes/theme.dart';
@@ -132,6 +133,7 @@ class CodeBoxes extends StatefulWidget {
 class _CodeBoxesState extends State<CodeBoxes> {
   late final _controller = TextEditingController(text: widget.value);
   final _focus = FocusNode();
+  final _menu = ContextMenuController();
 
   @override
   void initState() {
@@ -152,9 +154,45 @@ class _CodeBoxesState extends State<CodeBoxes> {
 
   @override
   void dispose() {
+    _menu.remove();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
+  }
+
+  /// A long press offers Paste, for a code copied from the e-mail.
+  void _showPasteMenu(Offset at) {
+    Feedback.forLongPress(context);
+    _focus.requestFocus();
+    _menu.show(
+      context: context,
+      contextMenuBuilder: (_) => TapRegion(
+        onTapOutside: (_) => _menu.remove(),
+        child: AdaptiveTextSelectionToolbar.buttonItems(
+          anchors: TextSelectionToolbarAnchors(primaryAnchor: at),
+          buttonItems: [
+            ContextMenuButtonItem(
+              type: ContextMenuButtonType.paste,
+              onPressed: () {
+                _menu.remove();
+                _paste();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _paste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final v = _clean(data?.text ?? '');
+    if (!mounted || v.isEmpty) return;
+    _controller.value = TextEditingValue(
+      text: v,
+      selection: TextSelection.collapsed(offset: v.length),
+    );
+    widget.onChanged(v);
   }
 
   /// The code in [raw]. Pasted over what was there, or with words around
@@ -175,7 +213,12 @@ class _CodeBoxesState extends State<CodeBoxes> {
     final locked = s == CodeBoxesState.locked;
     final busy = s == CodeBoxesState.loading;
     return GestureDetector(
-      onTap: () => _focus.requestFocus(),
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        _menu.remove();
+        _focus.requestFocus();
+      },
+      onLongPressStart: busy || locked ? null : (d) => _showPasteMenu(d.globalPosition),
       child: Stack(
         children: [
           Row(
@@ -188,40 +231,37 @@ class _CodeBoxesState extends State<CodeBoxes> {
               ],
             ],
           ),
+          // The hidden field takes keyboard input and one-time-code autofill;
+          // taps and long presses go to the boxes, which own the Paste menu.
           Positioned.fill(
-            child: Opacity(
-              opacity: 0,
-              child: TextField(
-                controller: _controller,
-                focusNode: _focus,
-                autofocus: widget.autofocus,
-                readOnly: busy || locked,
-                showCursor: false,
-                // A long press offers Paste, for a code copied from the e-mail.
-                enableInteractiveSelection: true,
-                contextMenuBuilder: (context, state) => AdaptiveTextSelectionToolbar.buttonItems(
-                  anchors: state.contextMenuAnchors,
-                  buttonItems: state.contextMenuButtonItems
-                      .where((b) => b.type == ContextMenuButtonType.paste)
-                      .toList(),
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0,
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focus,
+                  autofocus: widget.autofocus,
+                  readOnly: busy || locked,
+                  showCursor: false,
+                  enableInteractiveSelection: false,
+                  keyboardType: widget.alphanumeric ? TextInputType.visiblePassword : TextInputType.number,
+                  textCapitalization: widget.alphanumeric ? TextCapitalization.characters : TextCapitalization.none,
+                  autofillHints: widget.alphanumeric ? null : const [AutofillHints.oneTimeCode],
+                  decoration: InputDecoration(border: InputBorder.none, labelText: widget.label),
+                  onChanged: (raw) {
+                    // A whole code pasted after a started one replaces it.
+                    final added = raw.startsWith(widget.value) ? raw.substring(widget.value.length) : '';
+                    final pasted = _clean(added);
+                    final v = pasted.length == 6 ? pasted : _clean(raw);
+                    if (v != raw) {
+                      _controller.value = TextEditingValue(
+                        text: v,
+                        selection: TextSelection.collapsed(offset: v.length),
+                      );
+                    }
+                    widget.onChanged(v);
+                  },
                 ),
-                keyboardType: widget.alphanumeric ? TextInputType.visiblePassword : TextInputType.number,
-                textCapitalization: widget.alphanumeric ? TextCapitalization.characters : TextCapitalization.none,
-                autofillHints: widget.alphanumeric ? null : const [AutofillHints.oneTimeCode],
-                decoration: InputDecoration(border: InputBorder.none, labelText: widget.label),
-                onChanged: (raw) {
-                  // A whole code pasted after a started one replaces it.
-                  final added = raw.startsWith(widget.value) ? raw.substring(widget.value.length) : '';
-                  final pasted = _clean(added);
-                  final v = pasted.length == 6 ? pasted : _clean(raw);
-                  if (v != raw) {
-                    _controller.value = TextEditingValue(
-                      text: v,
-                      selection: TextSelection.collapsed(offset: v.length),
-                    );
-                  }
-                  widget.onChanged(v);
-                },
               ),
             ),
           ),
