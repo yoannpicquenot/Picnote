@@ -50,6 +50,32 @@ void main() {
     expect(find.text('Paste'), findsNothing);
   });
 
+  testWidgets('a tap brings the keyboard back after the system hid it, focus kept', (tester) async {
+    await enter(tester, '12');
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isTrue);
+    // The notification shade or another app hides the keyboard; the field keeps focus.
+    tester.testTextInput.hide();
+    expect(tester.testTextInput.isVisible, isFalse);
+    await tester.tap(find.byType(CodeBoxes));
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isTrue);
+  });
+
+  testWidgets('the keyboard comes back when the app resumes', (tester) async {
+    await enter(tester, '12');
+    await tester.pump();
+    tester.testTextInput.hide();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isTrue);
+  });
+
   testWidgets('an invite code, in capitals, without words around it', (tester) async {
     expect((await enter(tester, 'Code : ab3k7r', alphanumeric: true)).last, 'AB3K7R');
   });

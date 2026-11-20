@@ -134,11 +134,30 @@ class _CodeBoxesState extends State<CodeBoxes> {
   late final _controller = TextEditingController(text: widget.value);
   final _focus = FocusNode();
   final _menu = ContextMenuController();
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
     _focus.addListener(() => setState(() {}));
+    // Back from the e-mail app or the notification shade, the field still has
+    // focus but Android has hidden the keyboard: bring it back.
+    _lifecycle = AppLifecycleListener(onResume: () {
+      if (_focus.hasFocus) _showKeyboard();
+    });
+  }
+
+  /// Focuses the hidden field and shows the keyboard. [FocusNode.requestFocus]
+  /// alone does nothing when the field already has focus but the keyboard was
+  /// dismissed, and the field never gets taps itself (it sits under
+  /// [IgnorePointer]), so ask its [EditableTextState] directly.
+  void _showKeyboard() {
+    final editable = _focus.context?.findAncestorStateOfType<EditableTextState>();
+    if (editable != null) {
+      editable.requestKeyboard();
+    } else {
+      _focus.requestFocus();
+    }
   }
 
   @override
@@ -154,6 +173,7 @@ class _CodeBoxesState extends State<CodeBoxes> {
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     _menu.remove();
     _controller.dispose();
     _focus.dispose();
@@ -163,7 +183,7 @@ class _CodeBoxesState extends State<CodeBoxes> {
   /// A long press offers Paste, for a code copied from the e-mail.
   void _showPasteMenu(Offset at) {
     Feedback.forLongPress(context);
-    _focus.requestFocus();
+    _showKeyboard();
     _menu.show(
       context: context,
       contextMenuBuilder: (_) => TapRegion(
@@ -216,7 +236,7 @@ class _CodeBoxesState extends State<CodeBoxes> {
       behavior: HitTestBehavior.opaque,
       onTap: () {
         _menu.remove();
-        _focus.requestFocus();
+        _showKeyboard();
       },
       onLongPressStart: busy || locked ? null : (d) => _showPasteMenu(d.globalPosition),
       child: Stack(
