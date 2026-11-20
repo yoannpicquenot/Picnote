@@ -86,7 +86,7 @@
   "theirEmail": "Their email",
   "inviteSomeoneTitle": "Invite someone.",
   "inviteSentSub": "They have 7 days to join {household}.",
-  "inviteSub": "Enter their email. We’ll send a link to join {household}.",
+  "inviteSub": "Enter their email. We’ll send them a code to join {household}.",
   "sendInvitation": "Send the invitation",
   "inviteSomeone": "Invite someone",
   "invite": "Invite",

@@ -11,8 +11,7 @@ import 'auth_repository.dart';
 /// Email + 6-digit code sign-in with Supabase Auth. The profile (name,
 /// color) lives in the `profiles` table.
 ///
-/// The Supabase "Magic Link" and "Confirm signup" email templates must show
-/// `{{ .Token }}` for the code to reach the user.
+/// The code email is sent by the auth-email function (Send Email hook).
 class AuthRepositorySupabase extends AuthRepository {
   AuthRepositorySupabase(this._client);
 
@@ -65,7 +64,9 @@ class AuthRepositorySupabase extends AuthRepository {
   @override
   Future<Result<void>> requestCode(String email) async {
     try {
-      await _client.auth.signInWithOtp(email: email, shouldCreateUser: true);
+      // The language of the code email, kept on the account when it is created.
+      final locale = PlatformDispatcher.instance.locale.languageCode == 'fr' ? 'fr' : 'en';
+      await _client.auth.signInWithOtp(email: email, shouldCreateUser: true, data: {'locale': locale});
       _email = email;
       return const Result.ok(null);
     } on Exception catch (e) {

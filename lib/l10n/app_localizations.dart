@@ -575,7 +575,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteSub.
   ///
   /// In fr, this message translates to:
-  /// **'Saisis son adresse e-mail. On lui envoie un lien pour rejoindre {household}.'**
+  /// **'Saisis son adresse e-mail. On lui envoie un code pour rejoindre {household}.'**
   String inviteSub(String household);
 
   /// No description provided for @sendInvitation.

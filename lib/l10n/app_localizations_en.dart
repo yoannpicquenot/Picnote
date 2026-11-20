@@ -276,7 +276,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inviteSub(String household) {
-    return 'Enter their email. We’ll send a link to join $household.';
+    return 'Enter their email. We’ll send them a code to join $household.';
   }
 
   @override

@@ -421,3 +421,14 @@ enabled = true
 # changes nothing.
 [functions.notify]
 verify_jwt = false
+
+# Invitation emails. Called by the email_invite trigger, which sends no
+# key: the function claims the invite first, so calling it again sends
+# nothing more.
+[functions.invite-email]
+verify_jwt = false
+
+# Sign-in code emails, called by Supabase Auth's Send Email hook, which
+# signs each call with the hook's secret instead of a JWT.
+[functions.auth-email]
+verify_jwt = false

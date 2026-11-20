@@ -158,7 +158,7 @@
       }
     }
   },
-  "inviteSub": "Saisis son adresse e-mail. On lui envoie un lien pour rejoindre {household}.",
+  "inviteSub": "Saisis son adresse e-mail. On lui envoie un code pour rejoindre {household}.",
   "@inviteSub": {
     "placeholders": {
       "household": {
