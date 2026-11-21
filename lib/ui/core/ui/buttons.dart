@@ -116,11 +116,12 @@ class PnButton extends StatelessWidget {
   }
 }
 
-/// Square back button of the onboarding screens.
+/// Square back button of the onboarding screens. Faded while [onPressed] is
+/// null.
 class BackSquare extends StatelessWidget {
   const BackSquare({super.key, required this.onPressed, required this.label});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String label;
 
   @override
@@ -129,12 +130,17 @@ class BackSquare extends StatelessWidget {
       onTap: onPressed,
       scale: 0.94,
       semanticLabel: label,
-      child: Container(
-        width: 52,
-        height: 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(18)),
-        child: const PnIcon(PnIcons.chevronRight, color: PnColors.terraDark, size: 22, turns: 2),
+      child: AnimatedOpacity(
+        opacity: onPressed == null ? 0.45 : 1,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOut,
+        child: Container(
+          width: 52,
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(18)),
+          child: const PnIcon(PnIcons.chevronRight, color: PnColors.terraDark, size: 22, turns: 2),
+        ),
       ),
     );
   }

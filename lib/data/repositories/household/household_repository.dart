@@ -28,6 +28,10 @@ abstract class HouseholdRepository extends ChangeNotifier {
 
   Future<Result<void>> sendInvite(String email);
 
+  /// The code of the pending invitation, or a new invitation without an
+  /// email, for the inviter to share by hand.
+  Future<Result<String>> createInviteCode();
+
   /// Restarts the 7 days.
   Future<Result<void>> resendInvite();
 

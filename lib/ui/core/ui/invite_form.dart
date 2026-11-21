@@ -11,7 +11,7 @@ import 'controls.dart';
 import 'pn_icon.dart';
 import 'toast.dart';
 
-/// Pending invitation: address, status, Resend / Cancel.
+/// Pending invitation: address (or "by code"), status, Resend / Cancel.
 class InviteRow extends StatelessWidget {
   const InviteRow({super.key, required this.invite, required this.onResend, required this.onCancel, this.flat = false});
 
@@ -64,7 +64,7 @@ class InviteRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      invite.email,
+                      invite.byCode ? l10n.inviteByCodeRow : invite.email,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: PnColors.ink),
                     ),
@@ -118,8 +118,8 @@ class InviteRow extends StatelessWidget {
             padding: const EdgeInsets.only(left: 36),
             child: Row(
               children: [
-                action(l10n.resend, onResend, filled: true),
-                const SizedBox(width: 8),
+                // Nothing to send again without an address.
+                if (!invite.byCode) ...[action(l10n.resend, onResend, filled: true), const SizedBox(width: 8)],
                 action(l10n.cancel, onCancel, filled: false),
               ],
             ),

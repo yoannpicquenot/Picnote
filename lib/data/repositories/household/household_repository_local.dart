@@ -84,6 +84,22 @@ class HouseholdRepositoryLocal extends HouseholdRepository {
   }
 
   @override
+  Future<Result<String>> createInviteCode() async {
+    final h = _household;
+    if (h == null) return Result.error(Exception('No household'));
+    if (h.isFull) return Result.error(HouseholdFullException());
+    final invite = h.invite;
+    if (invite != null) return Result.ok(invite.code);
+    _set(
+      h.copyWith(
+        invite: () => const Invite(email: '', code: demoCode),
+      ),
+    );
+    _scheduleJoin();
+    return const Result.ok(demoCode);
+  }
+
+  @override
   Future<Result<void>> resendInvite() async {
     final h = _household;
     final invite = h?.invite;

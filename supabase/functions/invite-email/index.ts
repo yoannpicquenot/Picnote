@@ -30,7 +30,8 @@ Deno.serve(async (request) => {
   const { data, error } = await supabase.rpc("claim_invite_email", { hid: householdId });
   if (error) return Response.json({ error: error.message }, { status: 500 });
   const invite = ((data ?? []) as Invite[])[0];
-  if (invite == null) return Response.json({ sent: 0 });
+  // An invite given by hand, as a code, has no address to mail.
+  if (invite == null || !invite.email.trim()) return Response.json({ sent: 0 });
 
   const words = invite.locale === "fr" ? fr : en;
   const inviter = invite.inviter_name.trim() || words.someone;
@@ -66,7 +67,7 @@ const fr: Words = {
     code,
     steps: [
       "Installe Picnote et connecte-toi avec cette adresse e-mail.",
-      "Choisis « J’ai une invitation ».",
+      "Choisis « Rejoindre un foyer ».",
       "Saisis le code ci-dessus.",
     ],
     note: "Ce code est valable 7 jours.",
@@ -84,7 +85,7 @@ const en: Words = {
     code,
     steps: [
       "Install Picnote and sign in with this email address.",
-      "Choose “I have an invitation”.",
+      "Choose “Join a household”.",
       "Enter the code above.",
     ],
     note: "This code is valid for 7 days.",

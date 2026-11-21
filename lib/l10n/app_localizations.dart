@@ -356,12 +356,6 @@ abstract class AppLocalizations {
   /// **'Continuer'**
   String get continueLabel;
 
-  /// No description provided for @create.
-  ///
-  /// In fr, this message translates to:
-  /// **'Créer'**
-  String get create;
-
   /// No description provided for @later.
   ///
   /// In fr, this message translates to:
@@ -551,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteEmailHelp.
   ///
   /// In fr, this message translates to:
-  /// **'Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « J’ai une invitation ».'**
+  /// **'Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « Rejoindre un foyer ».'**
   String get inviteEmailHelp;
 
   /// No description provided for @theirEmail.
@@ -740,35 +734,119 @@ abstract class AppLocalizations {
   /// **'Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.'**
   String get householdSub;
 
+  /// No description provided for @householdStartTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton foyer.'**
+  String get householdStartTitle;
+
+  /// No description provided for @householdStartSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le foyer regroupe tes listes et tes notes. Crée le tien, ou rejoins celui de l’autre.'**
+  String get householdStartSub;
+
+  /// No description provided for @createAHousehold.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer un foyer'**
+  String get createAHousehold;
+
+  /// No description provided for @joinAHousehold.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre un foyer'**
+  String get joinAHousehold;
+
+  /// No description provided for @colorTakenBy.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name} a déjà {color, select, terra{le terracotta} sage{le vert} mustard{le moutarde} rose{le rouge} other{le marron}}.'**
+  String colorTakenBy(String name, String color);
+
+  /// No description provided for @inviteHowTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment l’inviter ?'**
+  String get inviteHowTitle;
+
+  /// No description provided for @inviteHowSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoie-lui un e-mail, ou donne-lui le code toi-même.'**
+  String get inviteHowSub;
+
+  /// No description provided for @byEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par e-mail'**
+  String get byEmail;
+
+  /// No description provided for @byCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par code'**
+  String get byCode;
+
+  /// No description provided for @invitationSentTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'À {email}'**
+  String invitationSentTo(String email);
+
+  /// No description provided for @inviteCodeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Donne-lui ce code.'**
+  String get inviteCodeTitle;
+
+  /// No description provided for @inviteCodeSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ta moitié le saisit dans Picnote, via « Rejoindre un foyer ». Il marche pendant 7 jours.'**
+  String get inviteCodeSub;
+
+  /// No description provided for @inviteCodeGroupLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code d’invitation {code}'**
+  String inviteCodeGroupLabel(String code);
+
+  /// No description provided for @shareCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partager le code'**
+  String get shareCode;
+
+  /// No description provided for @shareCodeText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoins mon foyer sur Picnote avec ce code : {code}'**
+  String shareCodeText(String code);
+
+  /// No description provided for @inviteByCodeRow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Invitation par code'**
+  String get inviteByCodeRow;
+
+  /// No description provided for @openGmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir Gmail'**
+  String get openGmail;
+
   /// No description provided for @justMe.
   ///
   /// In fr, this message translates to:
   /// **'Pour moi'**
   String get justMe;
 
-  /// No description provided for @justMeSub.
-  ///
-  /// In fr, this message translates to:
-  /// **'Tes listes et notes, rien qu’à toi'**
-  String get justMeSub;
-
   /// No description provided for @twoOfUs.
   ///
   /// In fr, this message translates to:
   /// **'À deux'**
   String get twoOfUs;
-
-  /// No description provided for @twoOfUsSub.
-  ///
-  /// In fr, this message translates to:
-  /// **'Crée le foyer et invite l’autre'**
-  String get twoOfUsSub;
-
-  /// No description provided for @haveInvitation.
-  ///
-  /// In fr, this message translates to:
-  /// **'J’ai une invitation'**
-  String get haveInvitation;
 
   /// No description provided for @createTitle.
   ///
@@ -794,18 +872,6 @@ abstract class AppLocalizations {
   /// **'ex. L’appart'**
   String get householdNameHint;
 
-  /// No description provided for @youAreTwo.
-  ///
-  /// In fr, this message translates to:
-  /// **'Vous êtes deux.'**
-  String get youAreTwo;
-
-  /// No description provided for @partnerJoinedHousehold.
-  ///
-  /// In fr, this message translates to:
-  /// **'{name} a rejoint ton foyer.'**
-  String partnerJoinedHousehold(String name);
-
   /// No description provided for @seeMyLists.
   ///
   /// In fr, this message translates to:
@@ -821,7 +887,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteTheOther.
   ///
   /// In fr, this message translates to:
-  /// **'Invite l’autre.'**
+  /// **'Invite ta moitié.'**
   String get inviteTheOther;
 
   /// No description provided for @joinCodeTitle.
@@ -901,12 +967,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{name}, et toi en rejoignant'**
   String joinWho(String name);
-
-  /// No description provided for @colorTaken.
-  ///
-  /// In fr, this message translates to:
-  /// **'{name} a déjà ta couleur. Choisis-en une autre :'**
-  String colorTaken(String name);
 
   /// No description provided for @colorTakenShort.
   ///

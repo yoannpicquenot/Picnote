@@ -30,6 +30,9 @@ abstract final class PnIcons {
   static const link = 'Link';
   static const pin = 'InterfacePin';
   static const pinOff = 'InterfacePinOff';
+  static const share = 'CommunicationShareIOSExport';
+  static const code = 'InterfaceCode';
+  static const paperPlane = 'CommunicationPaperPlane';
 }
 
 /// A design-system icon tinted with [color].

@@ -136,6 +136,9 @@ class HouseholdRepositorySupabase extends HouseholdRepository with SyncedReposit
   Future<Result<void>> sendInvite(String email) => _call<String>('send_invite', {'invite_email': email});
 
   @override
+  Future<Result<String>> createInviteCode() => _call<String>('create_invite_code');
+
+  @override
   Future<Result<void>> resendInvite() => _call<void>('resend_invite');
 
   @override

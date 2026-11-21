@@ -14,9 +14,12 @@ class Member {
 class Invite {
   const Invite({required this.email, required this.code, this.resent = false});
 
+  /// Empty when the code was given by hand rather than emailed.
   final String email;
   final String code;
   final bool resent;
+
+  bool get byCode => email.isEmpty;
 }
 
 /// The household shares lists and notes between its members (2 at most).

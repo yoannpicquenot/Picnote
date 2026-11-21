@@ -88,7 +88,6 @@
   "ok": "OK",
   "back": "Retour",
   "continueLabel": "Continuer",
-  "create": "Créer",
   "later": "Plus tard",
   "edit": "Modifier",
   "you": "toi",
@@ -147,7 +146,7 @@
   "codeCopied": "Code copié",
   "resend": "Renvoyer",
   "invalidEmail": "Cette adresse ne semble pas valide",
-  "inviteEmailHelp": "Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « J’ai une invitation ».",
+  "inviteEmailHelp": "Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « Rejoindre un foyer ».",
   "theirEmail": "Son adresse e-mail",
   "inviteSomeoneTitle": "Inviter quelqu’un.",
   "inviteSentSub": "L’autre a 7 jours pour rejoindre {household}.",
@@ -200,27 +199,63 @@
   "avatarSub": "Elle s’affiche à côté de tout ce que tu ajoutes ou coches.",
   "householdTitle": "C’est pour qui ?",
   "householdSub": "Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.",
-  "justMe": "Pour moi",
-  "justMeSub": "Tes listes et notes, rien qu’à toi",
-  "twoOfUs": "À deux",
-  "twoOfUsSub": "Crée le foyer et invite l’autre",
-  "haveInvitation": "J’ai une invitation",
-  "createTitle": "Nomme ton foyer.",
-  "createSubSolo": "Il sera prêt le jour où tu invites quelqu’un.",
-  "createSubDuo": "L’autre verra ce nom dans l’invitation.",
-  "householdNameHint": "ex. L’appart",
-  "youAreTwo": "Vous êtes deux.",
-  "partnerJoinedHousehold": "{name} a rejoint ton foyer.",
-  "@partnerJoinedHousehold": {
+  "householdStartTitle": "Ton foyer.",
+  "householdStartSub": "Le foyer regroupe tes listes et tes notes. Crée le tien, ou rejoins celui de l’autre.",
+  "createAHousehold": "Créer un foyer",
+  "joinAHousehold": "Rejoindre un foyer",
+  "colorTakenBy": "{name} a déjà {color, select, terra{le terracotta} sage{le vert} mustard{le moutarde} rose{le rouge} other{le marron}}.",
+  "@colorTakenBy": {
     "placeholders": {
       "name": {
+        "type": "String"
+      },
+      "color": {
         "type": "String"
       }
     }
   },
+  "inviteHowTitle": "Comment l’inviter ?",
+  "inviteHowSub": "Envoie-lui un e-mail, ou donne-lui le code toi-même.",
+  "byEmail": "Par e-mail",
+  "byCode": "Par code",
+  "invitationSentTo": "À {email}",
+  "@invitationSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCodeTitle": "Donne-lui ce code.",
+  "inviteCodeSub": "Ta moitié le saisit dans Picnote, via « Rejoindre un foyer ». Il marche pendant 7 jours.",
+  "inviteCodeGroupLabel": "Code d’invitation {code}",
+  "@inviteCodeGroupLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "shareCode": "Partager le code",
+  "shareCodeText": "Rejoins mon foyer sur Picnote avec ce code : {code}",
+  "@shareCodeText": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteByCodeRow": "Invitation par code",
+  "openGmail": "Ouvrir Gmail",
+  "justMe": "Pour moi",
+  "twoOfUs": "À deux",
+  "createTitle": "Nomme ton foyer.",
+  "createSubSolo": "Il sera prêt le jour où tu invites quelqu’un.",
+  "createSubDuo": "L’autre verra ce nom dans l’invitation.",
+  "householdNameHint": "ex. L’appart",
   "seeMyLists": "Voir mes listes",
   "invitationSent": "Invitation envoyée.",
-  "inviteTheOther": "Invite l’autre.",
+  "inviteTheOther": "Invite ta moitié.",
   "joinCodeTitle": "Ton code d’invitation.",
   "joinCodeSub": "Les 6 caractères du code que l’autre personne t’a envoyé.",
   "inviteCodeFieldLabel": "Code d’invitation à 6 caractères",
@@ -256,14 +291,6 @@
   },
   "joinWho": "{name}, et toi en rejoignant",
   "@joinWho": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "colorTaken": "{name} a déjà ta couleur. Choisis-en une autre :",
-  "@colorTaken": {
     "placeholders": {
       "name": {
         "type": "String"

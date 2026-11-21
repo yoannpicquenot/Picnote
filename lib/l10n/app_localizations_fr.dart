@@ -158,9 +158,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get continueLabel => 'Continuer';
 
   @override
-  String get create => 'Créer';
-
-  @override
   String get later => 'Plus tard';
 
   @override
@@ -261,7 +258,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get inviteEmailHelp =>
-      'Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « J’ai une invitation ».';
+      'Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « Rejoindre un foyer ».';
 
   @override
   String get theirEmail => 'Son adresse e-mail';
@@ -367,19 +364,79 @@ class AppLocalizationsFr extends AppLocalizations {
       'Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.';
 
   @override
+  String get householdStartTitle => 'Ton foyer.';
+
+  @override
+  String get householdStartSub =>
+      'Le foyer regroupe tes listes et tes notes. Crée le tien, ou rejoins celui de l’autre.';
+
+  @override
+  String get createAHousehold => 'Créer un foyer';
+
+  @override
+  String get joinAHousehold => 'Rejoindre un foyer';
+
+  @override
+  String colorTakenBy(String name, String color) {
+    String _temp0 = intl.Intl.selectLogic(color, {
+      'terra': 'le terracotta',
+      'sage': 'le vert',
+      'mustard': 'le moutarde',
+      'rose': 'le rouge',
+      'other': 'le marron',
+    });
+    return '$name a déjà $_temp0.';
+  }
+
+  @override
+  String get inviteHowTitle => 'Comment l’inviter ?';
+
+  @override
+  String get inviteHowSub =>
+      'Envoie-lui un e-mail, ou donne-lui le code toi-même.';
+
+  @override
+  String get byEmail => 'Par e-mail';
+
+  @override
+  String get byCode => 'Par code';
+
+  @override
+  String invitationSentTo(String email) {
+    return 'À $email';
+  }
+
+  @override
+  String get inviteCodeTitle => 'Donne-lui ce code.';
+
+  @override
+  String get inviteCodeSub =>
+      'Ta moitié le saisit dans Picnote, via « Rejoindre un foyer ». Il marche pendant 7 jours.';
+
+  @override
+  String inviteCodeGroupLabel(String code) {
+    return 'Code d’invitation $code';
+  }
+
+  @override
+  String get shareCode => 'Partager le code';
+
+  @override
+  String shareCodeText(String code) {
+    return 'Rejoins mon foyer sur Picnote avec ce code : $code';
+  }
+
+  @override
+  String get inviteByCodeRow => 'Invitation par code';
+
+  @override
+  String get openGmail => 'Ouvrir Gmail';
+
+  @override
   String get justMe => 'Pour moi';
 
   @override
-  String get justMeSub => 'Tes listes et notes, rien qu’à toi';
-
-  @override
   String get twoOfUs => 'À deux';
-
-  @override
-  String get twoOfUsSub => 'Crée le foyer et invite l’autre';
-
-  @override
-  String get haveInvitation => 'J’ai une invitation';
 
   @override
   String get createTitle => 'Nomme ton foyer.';
@@ -394,21 +451,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get householdNameHint => 'ex. L’appart';
 
   @override
-  String get youAreTwo => 'Vous êtes deux.';
-
-  @override
-  String partnerJoinedHousehold(String name) {
-    return '$name a rejoint ton foyer.';
-  }
-
-  @override
   String get seeMyLists => 'Voir mes listes';
 
   @override
   String get invitationSent => 'Invitation envoyée.';
 
   @override
-  String get inviteTheOther => 'Invite l’autre.';
+  String get inviteTheOther => 'Invite ta moitié.';
 
   @override
   String get joinCodeTitle => 'Ton code d’invitation.';
@@ -458,11 +507,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String joinWho(String name) {
     return '$name, et toi en rejoignant';
-  }
-
-  @override
-  String colorTaken(String name) {
-    return '$name a déjà ta couleur. Choisis-en une autre :';
   }
 
   @override
