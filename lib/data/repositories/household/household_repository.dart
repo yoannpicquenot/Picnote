@@ -21,6 +21,11 @@ abstract class HouseholdRepository extends ChangeNotifier {
 
   Future<Result<void>> join(String code, Member me);
 
+  /// Joins the household behind [code] while alone in another one, all at
+  /// once: the shared lists and notes come along as personal, then the old
+  /// household (and its invitation) is left. Nothing moves if it fails.
+  Future<Result<void>> switchHousehold(String code, Member me);
+
   Future<Result<void>> rename(String name);
 
   /// Keeps [me] in sync when the profile name or color changes.

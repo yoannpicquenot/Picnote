@@ -41,7 +41,8 @@ class SettingsViewModel extends ChangeNotifier {
 
   Member? get partner => _householdRepository.household?.partnerOf(_meId);
 
-  Invite? get invite => _householdRepository.household?.invite;
+  /// Sent by email and not accepted yet (a code given by hand does not count).
+  Invite? get invite => _householdRepository.household?.pendingInvite;
 
   DateTime? get deletionDate => _authRepository.deletionDate;
 

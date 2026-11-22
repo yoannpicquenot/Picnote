@@ -28,7 +28,6 @@ void main() {
         householdRepository: households,
         listRepository: lists,
         noteRepository: NoteRepositoryLocal(),
-        sentAnimation: Duration.zero,
       );
       viewModel.setName('Mel');
       viewModel.setColor(sage);
@@ -36,80 +35,40 @@ void main() {
 
     tearDown(() => viewModel.dispose());
 
-    Future<void> createUntilColor({required bool solo}) async {
+    Future<void> createUntilColor() async {
       viewModel.goTo(OnboardingStep.householdStart);
-      viewModel.goTo(OnboardingStep.household);
-      viewModel.choose(solo: solo);
+      viewModel.startCreating();
       viewModel.setHouseholdName('L’appart');
       viewModel.submitHouseholdName();
     }
 
-    test('the color comes after the household name', () async {
-      await createUntilColor(solo: true);
+    test('create: household name, then the color', () async {
+      await createUntilColor();
 
       expect(viewModel.step, OnboardingStep.avatar);
       expect(households.household, isNull);
       expect(viewModel.back, OnboardingStep.create);
     });
 
-    test('"Just me" creates the household from the color screen and finishes', () async {
-      await createUntilColor(solo: true);
+    test('the color screen creates the household and goes home', () async {
+      await createUntilColor();
       await viewModel.confirmAvatar();
 
       expect(viewModel.finished, isTrue);
       expect(households.household?.name, 'L’appart');
       expect(households.household?.members.single.color, sage);
+      // Nobody invited yet: that happens from home.
+      expect(households.household?.invite, isNull);
       expect(auth.user?.name, 'Mel');
       expect(auth.user?.color, sage);
-    });
-
-    test('"The two of us" goes on to how to invite, by email', () async {
-      await createUntilColor(solo: false);
-      await viewModel.confirmAvatar();
-
-      expect(viewModel.finished, isFalse);
-      expect(viewModel.step, OnboardingStep.inviteHow);
-
-      viewModel.inviteByEmail();
-      expect(viewModel.back, OnboardingStep.inviteHow);
-      await viewModel.sendInvite('yoann@picnote.cc');
-      expect(viewModel.sentTo, 'yoann@picnote.cc');
-      expect(households.household?.invite?.email, 'yoann@picnote.cc');
-
-      // "Invitation sent." for a moment, then home.
-      await Future<void>.delayed(Duration.zero);
-      expect(viewModel.finished, isTrue);
-    });
-
-    test('inviting by code shows a code without sending an email', () async {
-      await createUntilColor(solo: false);
-      await viewModel.confirmAvatar();
-      await viewModel.inviteByCode();
-
-      expect(viewModel.step, OnboardingStep.inviteCode);
-      expect(viewModel.inviteCode, HouseholdRepositoryLocal.demoCode);
-      expect(households.household?.invite?.byCode, isTrue);
-    });
-
-    test('going back to the color after inviting updates the household', () async {
-      await createUntilColor(solo: false);
-      await viewModel.confirmAvatar();
-      viewModel.goBack();
-      expect(viewModel.step, OnboardingStep.avatar);
-
-      viewModel.setColor(terra);
-      await viewModel.confirmAvatar();
-      expect(households.household?.members.single.color, terra);
-      expect(viewModel.step, OnboardingStep.inviteHow);
     });
 
     test('back buttons follow the new order', () {
       final expected = {
         OnboardingStep.householdStart: OnboardingStep.name,
-        OnboardingStep.household: OnboardingStep.householdStart,
+        OnboardingStep.create: OnboardingStep.householdStart,
         OnboardingStep.joinCode: OnboardingStep.householdStart,
-        OnboardingStep.inviteHow: OnboardingStep.avatar,
-        OnboardingStep.inviteCode: OnboardingStep.inviteHow,
+        OnboardingStep.join: OnboardingStep.joinCode,
       };
       for (final MapEntry(key: step, value: back) in expected.entries) {
         viewModel.goTo(step);

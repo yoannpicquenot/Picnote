@@ -11,11 +11,16 @@ import '../../core/themes/theme.dart';
 import '../../core/ui/buttons.dart';
 import '../../core/ui/controls.dart';
 import '../../core/ui/home_header.dart';
+import '../../core/ui/invite_form.dart';
 import '../../core/ui/layout.dart';
 import '../../core/ui/pn_icon.dart';
+import '../../core/ui/rise_in.dart';
 import '../../core/ui/tab_stagger.dart';
+import '../../core/ui/toast.dart';
 import '../../core/ui/task_row.dart';
+import '../../invite/widgets/invite_sheet.dart';
 import '../view_models/home_viewmodel.dart';
+import 'invite_card.dart';
 import 'list_card.dart';
 import 'pinned_grid.dart';
 
@@ -138,7 +143,31 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        if (vm.listCount == 0) FirstListCard(onCreate: widget.onCreateList),
+        // The invite card first, then "Your first list." 120 ms later.
+        if (vm.showInviteCard)
+          RiseIn(
+            child: InviteCard(me: vm.me, onInvite: () => showInviteSheet(context), onLater: vm.dismissInviteCard),
+          )
+        // Sent by email: the pending invitation instead, until they join.
+        else if (vm.pendingInvite case final invite?)
+          RiseIn(
+            child: InviteRow(
+              invite: invite,
+              onResend: () {
+                vm.resendInvite();
+                showToast(context, l10n.invitationResent);
+              },
+              onCancel: () {
+                vm.cancelInvite();
+                showToast(context, l10n.invitationCancelled);
+              },
+            ),
+          ),
+        if (vm.listCount == 0)
+          RiseIn(
+            delay: Duration(milliseconds: vm.showInviteCard ? 120 : 0),
+            child: FirstListCard(onCreate: widget.onCreateList),
+          ),
       ],
     );
   }

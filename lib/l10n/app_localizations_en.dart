@@ -240,11 +240,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitePendingStatus => 'Pending';
 
   @override
-  String inviteCode(String code) {
-    return 'Code to share: $code';
-  }
-
-  @override
   String get copyCode => 'Copy code';
 
   @override
@@ -257,19 +252,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidEmail => 'This address doesn’t look valid';
 
   @override
-  String get inviteEmailHelp =>
-      'Send them the code above: they type it in Picnote via “Join a household”.';
-
-  @override
   String get theirEmail => 'Their email';
-
-  @override
-  String get inviteSomeoneTitle => 'Invite someone.';
-
-  @override
-  String inviteSentSub(String household) {
-    return 'They have 7 days to join $household.';
-  }
 
   @override
   String inviteSub(String household) {
@@ -355,13 +338,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get avatarSub => 'It shows next to everything you add or check.';
 
   @override
-  String get householdTitle => 'Who is it for?';
-
-  @override
-  String get householdSub =>
-      'Start on your own or as a pair. You can invite someone later.';
-
-  @override
   String get householdStartTitle => 'Your household.';
 
   @override
@@ -387,22 +363,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get inviteHowTitle => 'How do you invite them?';
-
-  @override
-  String get inviteHowSub =>
-      'Send them an email, or give them the code yourself.';
-
-  @override
   String get byEmail => 'By email';
 
   @override
   String get byCode => 'By code';
-
-  @override
-  String invitationSentTo(String email) {
-    return 'To $email';
-  }
 
   @override
   String get inviteCodeTitle => 'Give them this code.';
@@ -425,34 +389,56 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get inviteByCodeRow => 'Invitation by code';
-
-  @override
   String get openGmail => 'Open Gmail';
-
-  @override
-  String get justMe => 'Just me';
-
-  @override
-  String get twoOfUs => 'The two of us';
 
   @override
   String get createTitle => 'Name your household.';
 
   @override
-  String get createSubSolo => 'It’s ready for whenever you invite someone.';
+  String get createSub => 'You can change it later.';
 
   @override
-  String get createSubDuo => 'The other will see this name in the invitation.';
+  String get goToMyHousehold => 'Go to my household';
 
   @override
-  String get householdNameHint => 'e.g. The flat';
+  String get inviteCardSub =>
+      'Share your lists and notes, and see what the other adds.';
 
   @override
-  String get seeMyLists => 'Go to my lists';
+  String get inviteHowSub =>
+      'Send them an email, or give them the code yourself.';
 
   @override
   String get invitationSent => 'Invitation sent.';
+
+  @override
+  String invitationSentTo(String email) {
+    return 'To $email';
+  }
+
+  @override
+  String get closeLabel => 'Close';
+
+  @override
+  String get codeToShare => 'Code to share';
+
+  @override
+  String get invitationPending => 'Invitation pending';
+
+  @override
+  String get joinHouseholdTitle => 'Join a household.';
+
+  @override
+  String get joinHouseholdSub =>
+      'The 6 characters of the code the other person sent you. Your lists and notes come with you.';
+
+  @override
+  String joinedHousehold(String household) {
+    return 'You joined $household';
+  }
+
+  @override
+  String get householdNameHint => 'e.g. The flat';
 
   @override
   String get inviteTheOther => 'Invite your other half.';

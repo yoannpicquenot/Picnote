@@ -116,6 +116,10 @@ class HouseholdRepositorySupabase extends HouseholdRepository with SyncedReposit
   Future<Result<void>> join(String code, Member me) => _call<void>('join_household', {'invite_code': code});
 
   @override
+  Future<Result<void>> switchHousehold(String code, Member me) =>
+      _call<void>('switch_household', {'invite_code': code});
+
+  @override
   Future<Result<void>> rename(String name) async {
     final id = _id;
     if (id == null) return Result.error(Exception('No household'));

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/repositories/activity/activity_repository_supabase.dart';
 import '../data/repositories/auth/auth_repository_supabase.dart';
 import '../data/repositories/household/household_repository_supabase.dart';
+import '../data/repositories/invite_prompt/invite_prompt_repository_device.dart';
 import '../data/repositories/list/list_repository_supabase.dart';
 import '../data/repositories/live/live_repository_supabase.dart';
 import '../data/repositories/note/note_repository_supabase.dart';
@@ -70,6 +71,7 @@ Future<Repositories> supabaseRepositories() async {
     settings: settings,
     activity: activity,
     live: live,
+    invitePrompt: await InvitePromptRepositoryDevice.create(),
     push: push,
   );
 }

@@ -60,7 +60,7 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
             state,
             _Motion.fade,
             _Owned(
-              create: () => AuthViewModel(authRepository: authRepository),
+              create: () => AuthViewModel(authRepository: authRepository, invitePromptRepository: context.read()),
               builder: (vm) => AuthScreen(viewModel: vm),
             ),
           ),
@@ -253,6 +253,7 @@ Page<void> _tabs(
             authRepository: authRepository,
             householdRepository: householdRepository,
             noteRepository: context.read(),
+            invitePromptRepository: context.read(),
           ),
           builder: (vm) =>
               HomeScreen(viewModel: vm, onCreateList: () => startNewList(context, context.read<ShellViewModel>())),

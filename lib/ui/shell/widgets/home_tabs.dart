@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../routing/routes.dart';
 import '../../core/ui/home_header.dart';
 import '../../invite/widgets/invite_sheet.dart';
+import '../../join_household/widgets/join_household_sheet.dart';
 import '../view_models/header_viewmodel.dart';
 import 'tab_pager.dart';
 
@@ -69,6 +70,7 @@ class _HomeTabsState extends State<HomeTabs> {
           whoIsHere: widget.viewModel.whoIsHere,
           onWordmark: _winkWatermark,
           onInvite: () => showInviteSheet(context),
+          onJoin: () => showJoinHouseholdSheet(context),
           onSettings: () => context.go(Routes.settings),
         ),
       ),

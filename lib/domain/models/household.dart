@@ -34,6 +34,10 @@ class Household {
 
   bool get isFull => members.length >= maxMembers;
 
+  /// The invitation sent by email and not accepted yet. A code given by hand
+  /// does not count: it still works, but nobody is shown as invited.
+  Invite? get pendingInvite => invite == null || invite!.byCode ? null : invite;
+
   /// Alone in the household: sharing switches become "Invite".
   bool get isSolo => members.length < 2;
 

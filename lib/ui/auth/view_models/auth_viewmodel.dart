@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
+import '../../../data/repositories/invite_prompt/invite_prompt_repository.dart';
 import '../../../utils/result.dart';
 import '../../../utils/validation.dart';
 
@@ -14,9 +15,12 @@ enum CodeError { wrong, expired, locked }
 /// checked as soon as the 6th digit is typed. The router takes over once the
 /// person is signed in.
 class AuthViewModel extends ChangeNotifier {
-  AuthViewModel({required this._authRepository, this.resendDelay = 30});
+  AuthViewModel({required this._authRepository, this._invitePromptRepository, this.resendDelay = 30});
 
   final AuthRepository _authRepository;
+
+  /// Signing in brings back "Invite your other half." if it was put away.
+  final InvitePromptRepository? _invitePromptRepository;
 
   /// Seconds before "Resend code" is available.
   final int resendDelay;
@@ -78,6 +82,8 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> _check() async {
     checking = true;
     notifyListeners();
+    // Before signing in: the router leaves this screen as soon as it succeeds.
+    await _invitePromptRepository?.reset();
     final result = await _authRepository.verifyCode(code);
     checking = false;
     if (result case Error(:final error)) {

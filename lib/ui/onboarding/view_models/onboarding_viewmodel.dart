@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
@@ -12,36 +10,23 @@ import '../../../utils/result.dart';
 /// The onboarding screens, in order:
 ///
 /// - [name] (04), then [householdStart] (06): create or join.
-/// - Create: [household] (06c, just me or the two of us), [create] (07,
-///   household name), [avatar] (05). Just me then goes home; the two of us go
-///   on to [inviteHow] (05a), then [inviteEmail] (08) or [inviteCode] (08b).
+/// - Create: [create] (07, household name), then [avatar] (05), then home.
+///   Inviting someone happens from home.
 /// - Join: [joinCode] (06a), [join] (09, the household's preview), [avatar]
-///   (09c).
-enum OnboardingStep {
-  name,
-  householdStart,
-  household,
-  create,
-  avatar,
-  inviteHow,
-  inviteEmail,
-  inviteCode,
-  joinCode,
-  join,
-}
+///   (09c), then home.
+enum OnboardingStep { name, householdStart, create, avatar, joinCode, join }
 
 enum JoinCodeState { idle, loading, error }
 
-/// After sign-in: first name, then create a household (and invite someone)
-/// or join one with an invite code. The avatar color comes last, once the
-/// household is known.
+/// After sign-in: first name, then create a household or join one with an
+/// invite code. The avatar color comes last, once the household is known.
+/// A new household has one member until someone joins it.
 class OnboardingViewModel extends ChangeNotifier {
   OnboardingViewModel({
     required this._authRepository,
     required this._householdRepository,
     required this._listRepository,
     required this._noteRepository,
-    this.sentAnimation = const Duration(milliseconds: 1900),
   }) {
     final user = _authRepository.user;
     name = user?.name ?? '';
@@ -56,13 +41,9 @@ class OnboardingViewModel extends ChangeNotifier {
   final ListRepository _listRepository;
   final NoteRepository _noteRepository;
 
-  /// How long "Invitation sent." shows before home.
-  final Duration sentAnimation;
-
   OnboardingStep step = OnboardingStep.name;
   String name = '';
   late int color;
-  bool solo = false;
   String householdName = '';
   bool busy = false;
 
@@ -77,27 +58,12 @@ class OnboardingViewModel extends ChangeNotifier {
   JoinCodeState joinState = JoinCodeState.idle;
   HouseholdPreview? preview;
 
-  /// The address the invitation just went to, while "Invitation sent." shows.
-  String? sentTo;
-  bool inviteFailed = false;
-  Timer? _sentTimer;
-
-  /// The code to give by hand (08b), once fetched.
-  String? inviteCode;
-  bool inviteCodeFailed = false;
-
-  /// "Code copied" shows for 2 s when the share sheet is not available.
-  bool codeCopied = false;
-  Timer? _copiedTimer;
-
   /// Set once onboarding is complete; the screen then leaves for home.
   bool finished = false;
 
   String get initial => name.trim().isEmpty ? 'M' : name.trim().substring(0, 1).toUpperCase();
 
   Member get me => Member(id: _authRepository.user?.id ?? 'me', name: name.trim(), color: color);
-
-  String get currentHouseholdName => _householdRepository.household?.name ?? householdName.trim();
 
   /// Members of the household being joined who already wear a color.
   List<Member> get colorOwners => joining ? [...?preview?.members] : const [];
@@ -120,11 +86,8 @@ class OnboardingViewModel extends ChangeNotifier {
   OnboardingStep? get back => switch (step) {
     OnboardingStep.name => null,
     OnboardingStep.householdStart => OnboardingStep.name,
-    OnboardingStep.household => OnboardingStep.householdStart,
-    OnboardingStep.create => OnboardingStep.household,
+    OnboardingStep.create => OnboardingStep.householdStart,
     OnboardingStep.avatar => joining ? OnboardingStep.join : OnboardingStep.create,
-    OnboardingStep.inviteHow => OnboardingStep.avatar,
-    OnboardingStep.inviteEmail || OnboardingStep.inviteCode => OnboardingStep.inviteHow,
     OnboardingStep.joinCode => OnboardingStep.householdStart,
     OnboardingStep.join => OnboardingStep.joinCode,
   };
@@ -154,8 +117,9 @@ class OnboardingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void choose({required bool solo}) {
-    this.solo = solo;
+  /// "Create a household" on 06, or "Create my household" when the one to
+  /// join is full.
+  void startCreating() {
     joining = false;
     goTo(OnboardingStep.create);
   }
@@ -171,81 +135,17 @@ class OnboardingViewModel extends ChangeNotifier {
     goTo(OnboardingStep.avatar);
   }
 
-  /// The main button of the color screen: joins, or creates the household
-  /// then goes home (just me) or on to the invitation (the two of us).
+  /// "Go to my household" on the color screen: joins, or creates the
+  /// household, then home.
   Future<void> confirmAvatar() async {
     if (busy) return;
     if (joining) return _join();
     busy = true;
     notifyListeners();
     await _authRepository.updateProfile(name: name.trim(), color: color);
-    if (_householdRepository.household == null) {
-      await _householdRepository.create(householdName.trim(), me);
-    } else {
-      // Back here from the invitation: the name or color may have changed.
-      await _householdRepository.rename(householdName.trim());
-      await _householdRepository.updateMember(me);
-    }
+    final result = await _householdRepository.create(householdName.trim(), me);
     busy = false;
-    if (solo) {
-      finished = true;
-    } else {
-      step = OnboardingStep.inviteHow;
-    }
-    notifyListeners();
-  }
-
-  void inviteByEmail() {
-    inviteFailed = false;
-    goTo(OnboardingStep.inviteEmail);
-  }
-
-  /// Sends the invitation, shows "Invitation sent." for a moment, then home.
-  /// The invitation stays pending in the household settings.
-  Future<void> sendInvite(String email) async {
-    if (busy) return;
-    busy = true;
-    inviteFailed = false;
-    notifyListeners();
-    final result = await _householdRepository.sendInvite(email);
-    busy = false;
-    switch (result) {
-      case Ok():
-        sentTo = email;
-        _sentTimer?.cancel();
-        _sentTimer = Timer(sentAnimation, finish);
-      case Error():
-        inviteFailed = true;
-    }
-    notifyListeners();
-  }
-
-  Future<void> inviteByCode() async {
-    inviteCodeFailed = false;
-    goTo(OnboardingStep.inviteCode);
-    if (inviteCode != null) return;
-    final result = await _householdRepository.createInviteCode();
-    switch (result) {
-      case Ok():
-        inviteCode = result.value;
-      case Error():
-        inviteCodeFailed = true;
-    }
-    notifyListeners();
-  }
-
-  void showCodeCopied() {
-    codeCopied = true;
-    _copiedTimer?.cancel();
-    _copiedTimer = Timer(const Duration(seconds: 2), () {
-      codeCopied = false;
-      notifyListeners();
-    });
-    notifyListeners();
-  }
-
-  void finish() {
-    finished = true;
+    if (result is Ok) finished = true;
     notifyListeners();
   }
 
@@ -288,8 +188,6 @@ class OnboardingViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _sentTimer?.cancel();
-    _copiedTimer?.cancel();
     _householdRepository.removeListener(notifyListeners);
     super.dispose();
   }

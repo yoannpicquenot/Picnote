@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/household/household_repository.dart';
+import '../../../data/repositories/invite_prompt/invite_prompt_repository.dart';
 import '../../../data/repositories/list/list_repository.dart';
 import '../../../data/repositories/note/note_repository.dart';
 import '../../../domain/models/household.dart';
@@ -18,10 +19,12 @@ class HomeViewModel extends ChangeNotifier {
     required this._authRepository,
     required this._householdRepository,
     required this._noteRepository,
+    required this._invitePromptRepository,
   }) {
     _listRepository.addListener(notifyListeners);
     _householdRepository.addListener(notifyListeners);
     _noteRepository.addListener(notifyListeners);
+    _invitePromptRepository.addListener(notifyListeners);
     load = Command0(_load)..execute();
   }
 
@@ -29,6 +32,7 @@ class HomeViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;
   final HouseholdRepository _householdRepository;
   final NoteRepository _noteRepository;
+  final InvitePromptRepository _invitePromptRepository;
 
   late final Command0<void> load;
 
@@ -39,6 +43,33 @@ class HomeViewModel extends ChangeNotifier {
   List<Member> get members => _householdRepository.household?.members ?? const [];
 
   bool get isSolo => _householdRepository.household?.isSolo ?? true;
+
+  /// "Invite your other half.": alone in the household, nobody invited by
+  /// email (a code given by hand does not count), and not put away since
+  /// signing in.
+  bool get showInviteCard {
+    final household = _householdRepository.household;
+    return household != null &&
+        household.isSolo &&
+        household.pendingInvite == null &&
+        !_invitePromptRepository.dismissed;
+  }
+
+  /// Shown instead of the invite card until the other person joins.
+  Invite? get pendingInvite {
+    final household = _householdRepository.household;
+    return household != null && household.isSolo ? household.pendingInvite : null;
+  }
+
+  Future<void> resendInvite() => _householdRepository.resendInvite();
+
+  Future<void> cancelInvite() => _householdRepository.cancelInvite();
+
+  /// "Later" on the card.
+  Future<void> dismissInviteCard() => _invitePromptRepository.dismiss();
+
+  /// This user, for the avatar on the invite card.
+  Member get me => Member(id: _meId, name: name, color: _authRepository.user?.color ?? 0xFFAF5C3C);
 
   /// The pinned lists.
   List<TaskList> get visibleLists => pinnedInOrder(_listRepository.lists).take(maxPinnedLists).toList();
@@ -94,6 +125,7 @@ class HomeViewModel extends ChangeNotifier {
     _listRepository.removeListener(notifyListeners);
     _householdRepository.removeListener(notifyListeners);
     _noteRepository.removeListener(notifyListeners);
+    _invitePromptRepository.removeListener(notifyListeners);
     super.dispose();
   }
 }

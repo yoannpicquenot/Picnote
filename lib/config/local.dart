@@ -1,6 +1,7 @@
 import '../data/repositories/activity/activity_repository_local.dart';
 import '../data/repositories/auth/auth_repository_local.dart';
 import '../data/repositories/household/household_repository_local.dart';
+import '../data/repositories/invite_prompt/invite_prompt_repository.dart';
 import '../data/repositories/list/list_repository_local.dart';
 import '../data/repositories/live/live_repository.dart';
 import '../data/repositories/note/note_repository_local.dart';
@@ -24,6 +25,7 @@ Repositories localRepositories() => Repositories(
   settings: SettingsRepositoryLocal(),
   activity: ActivityRepositoryLocal(),
   live: LiveRepositoryLocal(),
+  invitePrompt: InvitePromptRepositoryLocal(),
 );
 
 /// Mel, signed in, sharing "Maison Saint-Rambert" with Yoann, with the demo
@@ -44,6 +46,7 @@ Repositories demoRepositories({bool french = true}) {
     ),
     settings: SettingsRepositoryLocal(),
     live: LiveRepositoryLocal(),
+    invitePrompt: InvitePromptRepositoryLocal(),
     activity: ActivityRepositoryLocal(
       online: {'me', yoann.id},
       entries: [

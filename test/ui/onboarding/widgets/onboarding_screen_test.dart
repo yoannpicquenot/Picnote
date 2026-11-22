@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:picnote/data/repositories/household/household_repository_local.dart';
 import 'package:picnote/data/repositories/note/note_repository_local.dart';
 import 'package:picnote/domain/models/user.dart';
 import 'package:picnote/l10n/app_localizations.dart';
@@ -18,7 +16,6 @@ void main() {
   late OnboardingViewModel viewModel;
   late FakeHouseholdRepository households;
   late bool finished;
-  String? clipboard;
 
   Future<void> pump(WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -36,16 +33,6 @@ void main() {
     addTearDown(viewModel.dispose);
     viewModel.setName('Mel');
     finished = false;
-    // No share sheet in tests: sharing falls back to the clipboard.
-    clipboard = null;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'Clipboard.setData') clipboard = (call.arguments as Map)['text'] as String;
-      return null;
-    });
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      const MethodChannel('dev.fluttercommunity.plus/share'),
-      (call) async => throw PlatformException(code: 'unavailable'),
-    );
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('fr'),
@@ -75,71 +62,33 @@ void main() {
     expect(backButton(tester).onPressed, isNotNull);
     expect(viewModel.householdIntroPlayed, isTrue);
 
-    // Back on 06 from 06c: everything is there at once.
+    // Back on 06 from the household name: everything is there at once.
     await tester.tap(find.text('Créer un foyer'));
     await tester.pumpAndSettle();
-    expect(find.text('C’est pour qui ?'), findsOneWidget);
+    expect(find.text('Nomme ton foyer.'), findsOneWidget);
+    expect(find.text('Tu pourras le changer plus tard.'), findsOneWidget);
     await tester.tap(find.byType(BackSquare));
     await tester.pumpAndSettle();
     expect(backButton(tester).onPressed, isNotNull);
     expect(find.text('Rejoindre un foyer').hitTestable(), findsOneWidget);
   });
 
-  Future<void> reachInviteHow(WidgetTester tester) async {
+  testWidgets('create: name, color, then home, with no invitation step', (tester) async {
+    await pump(tester);
     viewModel.householdIntroDone();
-    viewModel.goTo(OnboardingStep.household);
+    viewModel.goTo(OnboardingStep.householdStart);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('À deux'));
+    await tester.tap(find.text('Créer un foyer'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(EditableText), 'L’appart');
     await tester.pump();
     await tester.tap(find.text('Continuer'));
     await tester.pumpAndSettle();
+
     expect(find.text('Choisis ta couleur.'), findsOneWidget);
-    await tester.tap(find.text('Continuer'));
+    await tester.tap(find.text('Aller dans mon foyer'));
     await tester.pumpAndSettle();
-    expect(find.text('Comment l’inviter ?'), findsOneWidget);
-  }
-
-  testWidgets('by code: the code, shared or copied when there is no share sheet', (tester) async {
-    await pump(tester);
-    await reachInviteHow(tester);
-
-    await tester.tap(find.text('Par code'));
-    await tester.pumpAndSettle();
-    expect(find.text('Donne-lui ce code.'), findsOneWidget);
-    for (final ch in HouseholdRepositoryLocal.demoCode.split('')) {
-      expect(find.text(ch), findsWidgets);
-    }
-
-    await tester.tap(find.text('Partager le code'));
-    await tester.pumpAndSettle();
-    expect(clipboard, HouseholdRepositoryLocal.demoCode);
-    expect(find.text('Code copié'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 2));
-    await tester.pumpAndSettle();
-    expect(find.text('Partager le code'), findsOneWidget);
-
-    await tester.tap(find.text('Voir mes listes'));
     expect(finished, isTrue);
-  });
-
-  testWidgets('by email: "Invitation sent." then home', (tester) async {
-    await pump(tester);
-    await reachInviteHow(tester);
-
-    await tester.tap(find.text('Par e-mail'));
-    await tester.pumpAndSettle();
-    expect(find.text('Invite ta moitié.'), findsOneWidget);
-    await tester.enterText(find.byType(EditableText), 'yoann@picnote.cc');
-    await tester.pump();
-    await tester.tap(find.text('Envoyer l’invitation'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1000));
-    expect(find.text('Invitation envoyée.'), findsOneWidget);
-    expect(finished, isFalse);
-
-    await tester.pump(const Duration(milliseconds: 1000));
-    expect(finished, isTrue);
+    expect(households.household?.name, 'L’appart');
   });
 }

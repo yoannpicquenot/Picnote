@@ -29,6 +29,14 @@ class WhoIsHere {
 
   List<Member> get members => _householdRepository.household?.members ?? const [];
 
+  /// Nobody else in the household yet: the menu offers to invite someone
+  /// and to join another household.
+  bool get alone => members.length < Household.maxMembers;
+
+  /// Sent by email and not accepted yet, shown in the place of the other
+  /// member.
+  Invite? get pendingInvite => alone ? _householdRepository.household?.pendingInvite : null;
+
   /// The user is always here; the others when their app is open.
   bool isHere(Member m) => m.id == meId || _activityRepository.online.contains(m.id);
 

@@ -9,9 +9,9 @@ import '../themes/theme.dart';
 import 'buttons.dart';
 import 'controls.dart';
 import 'pn_icon.dart';
-import 'toast.dart';
 
-/// Pending invitation: address (or "by code"), status, Resend / Cancel.
+/// Invitation sent by email and not accepted yet: address, status, Resend /
+/// Cancel. The code has its own card ([CodeCard]), in the invite panel only.
 class InviteRow extends StatelessWidget {
   const InviteRow({super.key, required this.invite, required this.onResend, required this.onCancel, this.flat = false});
 
@@ -64,7 +64,7 @@ class InviteRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      invite.byCode ? l10n.inviteByCodeRow : invite.email,
+                      invite.email,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: PnColors.ink),
                     ),
@@ -85,41 +85,13 @@ class InviteRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 36),
-            child: Row(
-              children: [
-                Flexible(
-                  child: SelectableText(
-                    l10n.inviteCode(invite.code),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: PnColors.ink,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: l10n.copyCode,
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.copy_rounded, size: 18, color: PnColors.terra),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: invite.code));
-                    showToast(context, l10n.codeCopied);
-                  },
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.only(left: 36),
             child: Row(
               children: [
-                // Nothing to send again without an address.
-                if (!invite.byCode) ...[action(l10n.resend, onResend, filled: true), const SizedBox(width: 8)],
+                action(l10n.resend, onResend, filled: true),
+                const SizedBox(width: 8),
                 action(l10n.cancel, onCancel, filled: false),
               ],
             ),
@@ -130,33 +102,74 @@ class InviteRow extends StatelessWidget {
   }
 }
 
-/// Email field to invite the other person, or the pending invitation once
-/// sent. [sendButton] receives the send callback so callers can lay it out
-/// (with a back button during onboarding).
-class InviteForm extends StatefulWidget {
-  const InviteForm({
-    super.key,
-    required this.invite,
-    required this.onSend,
-    required this.onResend,
-    required this.onCancel,
-    required this.sendButton,
-    required this.after,
-  });
+/// "Code to share" on peach, the code large, and a copy button.
+class CodeCard extends StatelessWidget {
+  const CodeCard({super.key, required this.code, required this.onCopied});
 
-  final Invite? invite;
-  final ValueChanged<String> onSend;
-  final VoidCallback onResend;
-  final VoidCallback onCancel;
-  final Widget Function(VoidCallback send) sendButton;
-  final Widget after;
+  final String code;
+
+  /// After copying: "Code copied".
+  final VoidCallback onCopied;
 
   @override
-  State<InviteForm> createState() => _InviteFormState();
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.codeToShare, style: PnText.meta.copyWith(color: PnColors.terraDark)),
+                const SizedBox(height: 4),
+                SelectableText(
+                  code,
+                  style: const TextStyle(
+                    fontFamily: PnFonts.display,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 24,
+                    letterSpacing: 3,
+                    color: PnColors.terraDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: l10n.copyCode,
+            icon: const Icon(Icons.copy_rounded, size: 20, color: PnColors.terraDark),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: code));
+              onCopied();
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _InviteFormState extends State<InviteForm> {
-  final _email = TextEditingController();
+/// The email field of the invite panel. [sendButton] receives the send
+/// callback, called with a valid address only, so the caller lays it out
+/// (next to a back button).
+class InviteEmailForm extends StatefulWidget {
+  const InviteEmailForm({super.key, required this.onSend, required this.sendButton, this.initialEmail = ''});
+
+  final ValueChanged<String> onSend;
+  final Widget Function(VoidCallback send) sendButton;
+
+  /// The address of a cancelled invitation, to fix and send again.
+  final String initialEmail;
+
+  @override
+  State<InviteEmailForm> createState() => _InviteEmailFormState();
+}
+
+class _InviteEmailFormState extends State<InviteEmailForm> {
+  late final _email = TextEditingController(text: widget.initialEmail);
   String? _error;
 
   @override
@@ -177,29 +190,6 @@ class _InviteFormState extends State<InviteForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final invite = widget.invite;
-    if (invite != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          InviteRow(
-            invite: invite,
-            onResend: () {
-              widget.onResend();
-              showTopToast(context, l10n.invitationResent);
-            },
-            onCancel: () {
-              _email.text = invite.email;
-              widget.onCancel();
-            },
-          ),
-          const SizedBox(height: 18),
-          Text(l10n.inviteEmailHelp, style: PnText.sub),
-          const SizedBox(height: 18),
-          widget.after,
-        ],
-      );
-    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:picnote/data/repositories/invite_prompt/invite_prompt_repository.dart';
 import 'package:picnote/data/repositories/note/note_repository_local.dart';
+import 'package:picnote/domain/models/household.dart';
 import 'package:picnote/domain/models/task.dart';
 import 'package:picnote/domain/models/task_list.dart';
 import 'package:picnote/ui/home/view_models/home_viewmodel.dart';
@@ -11,14 +13,52 @@ import '../../../../testing/fakes/repositories/fake_list_repository.dart';
 import '../../../../testing/models/task_list.dart';
 
 void main() {
-  HomeViewModel build(FakeListRepository lists) => HomeViewModel(
-    listRepository: lists,
-    authRepository: FakeAuthRepository(),
-    householdRepository: FakeHouseholdRepository(household: kDuo),
-    noteRepository: NoteRepositoryLocal(),
-  );
+  HomeViewModel build(FakeListRepository lists, {Household household = kDuo, InvitePromptRepository? invitePrompt}) =>
+      HomeViewModel(
+        listRepository: lists,
+        authRepository: FakeAuthRepository(),
+        householdRepository: FakeHouseholdRepository(household: household),
+        noteRepository: NoteRepositoryLocal(),
+        invitePromptRepository: invitePrompt ?? InvitePromptRepositoryLocal(),
+      );
 
   group('HomeViewModel', () {
+    test('offers to invite someone while alone, until put away', () async {
+      final prompt = InvitePromptRepositoryLocal();
+      final viewModel = build(FakeListRepository(), household: kSolo, invitePrompt: prompt);
+      expect(viewModel.showInviteCard, isTrue);
+
+      await viewModel.dismissInviteCard();
+      expect(viewModel.showInviteCard, isFalse);
+
+      // A new sign-in brings it back.
+      await prompt.reset();
+      expect(viewModel.showInviteCard, isTrue);
+    });
+
+    test('no invite card with a partner, the pending invitation instead of it', () {
+      expect(build(FakeListRepository()).showInviteCard, isFalse);
+      const pending = Household(
+        name: 'Maison',
+        members: [kMe],
+        invite: Invite(email: 'yoann@picnote.cc', code: 'K7H2M9'),
+      );
+      final viewModel = build(FakeListRepository(), household: pending);
+      expect(viewModel.showInviteCard, isFalse);
+      expect(viewModel.pendingInvite?.email, 'yoann@picnote.cc');
+    });
+
+    test('a code given by hand is no invitation: the card stays', () {
+      const byCode = Household(
+        name: 'Maison',
+        members: [kMe],
+        invite: Invite(email: '', code: 'K7H2M9'),
+      );
+      final viewModel = build(FakeListRepository(), household: byCode);
+      expect(viewModel.showInviteCard, isTrue);
+      expect(viewModel.pendingInvite, isNull);
+    });
+
     test('loads lists', () async {
       final viewModel = build(FakeListRepository(lists: [kSharedList, kPersonalList]));
       await Future<void>.delayed(Duration.zero);

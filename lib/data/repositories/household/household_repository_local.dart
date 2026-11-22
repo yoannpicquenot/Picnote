@@ -54,6 +54,21 @@ class HouseholdRepositoryLocal extends HouseholdRepository {
   }
 
   @override
+  Future<Result<void>> switchHousehold(String code, Member me) async {
+    final preview = await lookUpInvite(code);
+    switch (preview) {
+      case Error():
+        return Result.error(preview.error);
+      case Ok():
+        if (preview.value.isFull) return Result.error(HouseholdFullException());
+        if (!(_household?.isSolo ?? true)) return Result.error(Exception('Not alone in the household'));
+        _joinTimer?.cancel();
+        _set(Household(name: preview.value.name, members: [...preview.value.members, me]));
+        return const Result.ok(null);
+    }
+  }
+
+  @override
   Future<Result<void>> rename(String name) async {
     final h = _household;
     if (h == null) return Result.error(Exception('No household'));

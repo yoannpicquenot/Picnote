@@ -512,12 +512,6 @@ abstract class AppLocalizations {
   /// **'En attente'**
   String get invitePendingStatus;
 
-  /// No description provided for @inviteCode.
-  ///
-  /// In fr, this message translates to:
-  /// **'Code à partager : {code}'**
-  String inviteCode(String code);
-
   /// No description provided for @copyCode.
   ///
   /// In fr, this message translates to:
@@ -542,29 +536,11 @@ abstract class AppLocalizations {
   /// **'Cette adresse ne semble pas valide'**
   String get invalidEmail;
 
-  /// No description provided for @inviteEmailHelp.
-  ///
-  /// In fr, this message translates to:
-  /// **'Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « Rejoindre un foyer ».'**
-  String get inviteEmailHelp;
-
   /// No description provided for @theirEmail.
   ///
   /// In fr, this message translates to:
   /// **'Son adresse e-mail'**
   String get theirEmail;
-
-  /// No description provided for @inviteSomeoneTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Inviter quelqu’un.'**
-  String get inviteSomeoneTitle;
-
-  /// No description provided for @inviteSentSub.
-  ///
-  /// In fr, this message translates to:
-  /// **'L’autre a 7 jours pour rejoindre {household}.'**
-  String inviteSentSub(String household);
 
   /// No description provided for @inviteSub.
   ///
@@ -722,18 +698,6 @@ abstract class AppLocalizations {
   /// **'Elle s’affiche à côté de tout ce que tu ajoutes ou coches.'**
   String get avatarSub;
 
-  /// No description provided for @householdTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'C’est pour qui ?'**
-  String get householdTitle;
-
-  /// No description provided for @householdSub.
-  ///
-  /// In fr, this message translates to:
-  /// **'Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.'**
-  String get householdSub;
-
   /// No description provided for @householdStartTitle.
   ///
   /// In fr, this message translates to:
@@ -764,18 +728,6 @@ abstract class AppLocalizations {
   /// **'{name} a déjà {color, select, terra{le terracotta} sage{le vert} mustard{le moutarde} rose{le rouge} other{le marron}}.'**
   String colorTakenBy(String name, String color);
 
-  /// No description provided for @inviteHowTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Comment l’inviter ?'**
-  String get inviteHowTitle;
-
-  /// No description provided for @inviteHowSub.
-  ///
-  /// In fr, this message translates to:
-  /// **'Envoie-lui un e-mail, ou donne-lui le code toi-même.'**
-  String get inviteHowSub;
-
   /// No description provided for @byEmail.
   ///
   /// In fr, this message translates to:
@@ -787,12 +739,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Par code'**
   String get byCode;
-
-  /// No description provided for @invitationSentTo.
-  ///
-  /// In fr, this message translates to:
-  /// **'À {email}'**
-  String invitationSentTo(String email);
 
   /// No description provided for @inviteCodeTitle.
   ///
@@ -824,29 +770,11 @@ abstract class AppLocalizations {
   /// **'Rejoins mon foyer sur Picnote avec ce code : {code}'**
   String shareCodeText(String code);
 
-  /// No description provided for @inviteByCodeRow.
-  ///
-  /// In fr, this message translates to:
-  /// **'Invitation par code'**
-  String get inviteByCodeRow;
-
   /// No description provided for @openGmail.
   ///
   /// In fr, this message translates to:
   /// **'Ouvrir Gmail'**
   String get openGmail;
-
-  /// No description provided for @justMe.
-  ///
-  /// In fr, this message translates to:
-  /// **'Pour moi'**
-  String get justMe;
-
-  /// No description provided for @twoOfUs.
-  ///
-  /// In fr, this message translates to:
-  /// **'À deux'**
-  String get twoOfUs;
 
   /// No description provided for @createTitle.
   ///
@@ -854,35 +782,83 @@ abstract class AppLocalizations {
   /// **'Nomme ton foyer.'**
   String get createTitle;
 
-  /// No description provided for @createSubSolo.
+  /// No description provided for @createSub.
   ///
   /// In fr, this message translates to:
-  /// **'Il sera prêt le jour où tu invites quelqu’un.'**
-  String get createSubSolo;
+  /// **'Tu pourras le changer plus tard.'**
+  String get createSub;
 
-  /// No description provided for @createSubDuo.
+  /// No description provided for @goToMyHousehold.
   ///
   /// In fr, this message translates to:
-  /// **'L’autre verra ce nom dans l’invitation.'**
-  String get createSubDuo;
+  /// **'Aller dans mon foyer'**
+  String get goToMyHousehold;
 
-  /// No description provided for @householdNameHint.
+  /// No description provided for @inviteCardSub.
   ///
   /// In fr, this message translates to:
-  /// **'ex. L’appart'**
-  String get householdNameHint;
+  /// **'Partagez vos listes et vos notes, et voyez ce que l’autre ajoute.'**
+  String get inviteCardSub;
 
-  /// No description provided for @seeMyLists.
+  /// No description provided for @inviteHowSub.
   ///
   /// In fr, this message translates to:
-  /// **'Voir mes listes'**
-  String get seeMyLists;
+  /// **'Envoie-lui un e-mail, ou donne-lui le code toi-même.'**
+  String get inviteHowSub;
 
   /// No description provided for @invitationSent.
   ///
   /// In fr, this message translates to:
   /// **'Invitation envoyée.'**
   String get invitationSent;
+
+  /// No description provided for @invitationSentTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'À {email}'**
+  String invitationSentTo(String email);
+
+  /// No description provided for @closeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer'**
+  String get closeLabel;
+
+  /// No description provided for @codeToShare.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code à partager'**
+  String get codeToShare;
+
+  /// No description provided for @invitationPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'Invitation en attente'**
+  String get invitationPending;
+
+  /// No description provided for @joinHouseholdTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre un foyer.'**
+  String get joinHouseholdTitle;
+
+  /// No description provided for @joinHouseholdSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les 6 caractères du code que l’autre t’a envoyé. Tes listes et notes viennent avec toi.'**
+  String get joinHouseholdSub;
+
+  /// No description provided for @joinedHousehold.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu as rejoint {household}'**
+  String joinedHousehold(String household);
+
+  /// No description provided for @householdNameHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'ex. L’appart'**
+  String get householdNameHint;
 
   /// No description provided for @inviteTheOther.
   ///

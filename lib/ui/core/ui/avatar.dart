@@ -84,12 +84,16 @@ class DashedPlus extends StatelessWidget {
     this.background = PnColors.snow,
     this.color = PnColors.terra,
     this.strokeWidth = 2,
+    this.child,
   });
 
   final double size;
   final Color background;
   final Color color;
   final double strokeWidth;
+
+  /// Instead of the "+": the pending invitation's dots.
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +104,7 @@ class DashedPlus extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-        child: PnIcon(PnIcons.plus, color: color, size: size * (size < 24 ? 0.56 : 0.45)),
+        child: child ?? PnIcon(PnIcons.plus, color: color, size: size * (size < 24 ? 0.56 : 0.45)),
       ),
     );
   }

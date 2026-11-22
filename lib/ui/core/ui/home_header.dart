@@ -100,21 +100,27 @@ class _WatermarkState extends State<Watermark> with SingleTickerProviderStateMix
 }
 
 /// "PICNOTE." wordmark, offline badge and the household's avatars. The
-/// avatars are a single button opening the "who's here" panel (with a
-/// dashed "+" while alone).
+/// avatars and a chevron are a single button opening the "who's here" panel
+/// (with a dashed "+" while alone).
 class HomeHeader extends StatefulWidget {
   const HomeHeader({
     super.key,
     required this.whoIsHere,
     required this.onWordmark,
     required this.onInvite,
+    required this.onJoin,
     required this.onSettings,
     this.offline = false,
   });
 
   final WhoIsHere whoIsHere;
   final VoidCallback onWordmark;
+
+  /// The invite panel: the choice, or the pending invitation.
   final VoidCallback onInvite;
+
+  /// "Join a household", while alone.
+  final VoidCallback onJoin;
   final VoidCallback onSettings;
   final bool offline;
 
@@ -155,6 +161,7 @@ class _HomeHeaderState extends State<HomeHeader> {
               child: _WhoIsHerePanel(
                 whoIsHere: who,
                 onInvite: () => _close(widget.onInvite),
+                onJoin: () => _close(widget.onJoin),
                 onSettings: () => _close(widget.onSettings),
               ),
             ),
@@ -181,7 +188,21 @@ class _HomeHeaderState extends State<HomeHeader> {
                       color: _panel.isShowing ? PnColors.peach : Colors.transparent,
                       borderRadius: BorderRadius.circular(22),
                     ),
-                    child: _AvatarGroup(whoIsHere: who, members: members),
+                    // The chevron says the avatars open something; it
+                    // points up while the panel is open.
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _AvatarGroup(whoIsHere: who, members: members),
+                        const SizedBox(width: 4),
+                        AnimatedRotation(
+                          turns: _panel.isShowing ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 220),
+                          curve: const Cubic(.22, 1, .36, 1),
+                          child: const PnIcon(PnIcons.chevronRight, color: PnColors.terra, size: 16, turns: 1),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -273,13 +294,20 @@ class _OfflineBadge extends StatelessWidget {
   }
 }
 
-/// Each member with their latest change, then "Invite someone" (while
-/// alone) and "Settings".
+/// Each member with their latest change. While alone, under this user:
+/// "Invite someone", or the invitation sent and not accepted yet. Then
+/// "Join a household" (while alone) and "Settings".
 class _WhoIsHerePanel extends StatefulWidget {
-  const _WhoIsHerePanel({required this.whoIsHere, required this.onInvite, required this.onSettings});
+  const _WhoIsHerePanel({
+    required this.whoIsHere,
+    required this.onInvite,
+    required this.onJoin,
+    required this.onSettings,
+  });
 
   final WhoIsHere whoIsHere;
   final VoidCallback onInvite;
+  final VoidCallback onJoin;
   final VoidCallback onSettings;
 
   @override
@@ -352,16 +380,17 @@ class _WhoIsHerePanelState extends State<_WhoIsHerePanel> {
                       ],
                     ),
                   ),
+                if (who.alone) _invitee(l10n, who.pendingInvite),
                 Container(
                   height: 1,
                   margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   color: PnColors.line,
                 ),
-                if (members.length < Household.maxMembers)
+                if (who.alone)
                   link(
-                    const DashedPlus(size: 18, background: PnColors.snow, color: PnColors.terraDark, strokeWidth: 1.5),
-                    l10n.inviteSomeone,
-                    widget.onInvite,
+                    const PnIcon(PnIcons.mail, color: PnColors.terraDark, size: 18),
+                    l10n.joinAHousehold,
+                    widget.onJoin,
                   ),
                 link(const PnIcon(PnIcons.user, color: PnColors.terraDark, size: 18), l10n.settings, widget.onSettings),
               ],
@@ -371,6 +400,45 @@ class _WhoIsHerePanelState extends State<_WhoIsHerePanel> {
       ),
     );
   }
+
+  /// In the other member's place: "Invite someone", or the person invited
+  /// by email while they have not joined. Both open the invite panel.
+  Widget _invitee(AppLocalizations l10n, Invite? pending) => Pressable(
+    onTap: widget.onInvite,
+    scale: 0.98,
+    child: Padding(
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        children: [
+          DashedPlus(
+            size: 30,
+            background: PnColors.snow,
+            color: PnColors.terraDark,
+            child: pending == null ? null : const _PulsingDots(color: PnColors.terraDark),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: pending == null
+                ? Text(l10n.inviteSomeone, style: PnText.pill.copyWith(fontSize: 14, color: PnColors.terraDark))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pending.email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: PnColors.ink),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(l10n.invitationPending, style: PnText.meta),
+                    ],
+                  ),
+          ),
+          const PnIcon(PnIcons.chevronRight, color: PnColors.terraDark, size: 16),
+        ],
+      ),
+    ),
+  );
 
   /// "You edited “Groceries”, 5 h ago", "Edited a note, 45 min ago".
   String _line(BuildContext context, AppLocalizations l10n, Member m, MemberActivity? latest) {
@@ -382,5 +450,63 @@ class _WhoIsHerePanelState extends State<_WhoIsHerePanel> {
         : l10n.quoted(name.isEmpty ? l10n.untitled : name);
     final ago = editedLabel(context, a.at);
     return m.id == widget.whoIsHere.meId ? l10n.youEditedAgo(what, ago) : l10n.theyEditedAgo(what, ago);
+  }
+}
+
+/// Three dots pulsing one after the other: someone is on their way.
+class _PulsingDots extends StatefulWidget {
+  const _PulsingDots({required this.color});
+
+  final Color color;
+
+  @override
+  State<_PulsingDots> createState() => _PulsingDotsState();
+}
+
+class _PulsingDotsState extends State<_PulsingDots> with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(vsync: this, duration: const Duration(seconds: 1));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Still when the phone asks for less motion.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _c.value = 0.5;
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < 3; i++) ...[
+            if (i > 0) const SizedBox(width: 2),
+            Opacity(
+              // 0.25 → 1 → 0.25, each dot 0.15 s after the previous one.
+              opacity: () {
+                final t = (_c.value - i * 0.15) % 1;
+                return 0.25 + 0.75 * (1 - (2 * t - 1).abs());
+              }(),
+              child: Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

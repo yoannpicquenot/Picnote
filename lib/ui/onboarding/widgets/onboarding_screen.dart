@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../domain/models/household.dart';
 import '../../../l10n/app_localizations.dart';
@@ -9,13 +7,12 @@ import '../../core/themes/theme.dart';
 import '../../core/ui/auth_shell.dart';
 import '../../core/ui/avatar.dart';
 import '../../core/ui/buttons.dart';
+import '../../core/ui/choice_card.dart';
 import '../../core/ui/controls.dart';
-import '../../core/ui/invite_form.dart';
 import '../../core/ui/mascot.dart';
 import '../../core/ui/pn_icon.dart';
 import '../view_models/onboarding_viewmodel.dart';
 import 'household_start.dart';
-import 'invite_animations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, required this.viewModel, required this.onFinished});
@@ -28,8 +25,6 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final _shareKey = GlobalKey();
-
   @override
   void initState() {
     super.initState();
@@ -56,12 +51,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         final (mood, children) = switch (vm.step) {
           OnboardingStep.name => (MascotMood.cheerful, _name(vm, l10n)),
           OnboardingStep.householdStart => (MascotMood.happy, _householdStart(vm, l10n)),
-          OnboardingStep.household => (MascotMood.cheerful, _household(vm, l10n)),
           OnboardingStep.create => (MascotMood.joy, _create(vm, l10n)),
           OnboardingStep.avatar => (MascotMood.love, _avatar(vm, l10n)),
-          OnboardingStep.inviteHow => (MascotMood.wink, _inviteHow(vm, l10n)),
-          OnboardingStep.inviteEmail => (vm.sentTo != null ? MascotMood.joy : MascotMood.wink, _inviteEmail(vm, l10n)),
-          OnboardingStep.inviteCode => (vm.codeCopied ? MascotMood.joy : MascotMood.cheerful, _inviteCode(vm, l10n)),
           OnboardingStep.joinCode => (
             vm.joinState == JoinCodeState.error ? MascotMood.surprised : MascotMood.peek,
             _joinCode(vm, l10n),
@@ -71,9 +62,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             _join(vm, l10n),
           ),
         };
-        // "Invitation sent." slides in over the email form.
-        final stepKey = (vm.step, vm.step == OnboardingStep.inviteEmail && vm.sentTo != null);
-        return AuthShell(mood: mood, stepKey: stepKey, children: children);
+        return AuthShell(mood: mood, stepKey: vm.step, children: children);
       },
     );
   }
@@ -88,18 +77,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: PnButton(label: cta, onPressed: onPressed),
       ),
     ],
-  );
-
-  /// Two cards side by side, as tall as the taller one.
-  Widget _choices(Widget a, Widget b) => IntrinsicHeight(
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(child: a),
-        const SizedBox(width: 10),
-        Expanded(child: b),
-      ],
-    ),
   );
 
   Widget _me(OnboardingViewModel vm) =>
@@ -137,10 +114,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       onBack: vm.goBack,
       playIntro: !vm.householdIntroPlayed,
       onIntroDone: vm.householdIntroDone,
-      choices: _choices(
-        _Choice(visual: _meAndPlus(vm), title: l10n.createAHousehold, onTap: () => vm.goTo(OnboardingStep.household)),
-        _Choice(
-          visual: const _IconDisc(PnIcons.mail),
+      choices: ChoiceRow(
+        ChoiceCard(visual: _meAndPlus(vm), title: l10n.createAHousehold, onTap: vm.startCreating),
+        ChoiceCard(
+          visual: const IconDisc(PnIcons.mail),
           title: l10n.joinAHousehold,
           onTap: () => vm.goTo(OnboardingStep.joinCode),
         ),
@@ -148,19 +125,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
-  List<Widget> _household(OnboardingViewModel vm, AppLocalizations l10n) => [
-    StepHeader(l10n.householdTitle, sub: Text(l10n.householdSub)),
-    _choices(
-      _Choice(visual: _me(vm), title: l10n.justMe, onTap: () => vm.choose(solo: true)),
-      _Choice(visual: _meAndPlus(vm), title: l10n.twoOfUs, onTap: () => vm.choose(solo: false)),
-    ),
-    Row(children: [_back(vm, l10n)]),
-  ];
-
   List<Widget> _create(OnboardingViewModel vm, AppLocalizations l10n) {
     final ok = vm.householdName.trim().isNotEmpty;
     return [
-      StepHeader(l10n.createTitle, sub: Text(vm.solo ? l10n.createSubSolo : l10n.createSubDuo)),
+      StepHeader(l10n.createTitle, sub: Text(l10n.createSub)),
       _Field(
         initial: vm.householdName,
         hint: l10n.householdNameHint,
@@ -173,7 +141,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   List<Widget> _avatar(OnboardingViewModel vm, AppLocalizations l10n) {
     final owners = vm.colorOwners;
-    final goesHome = vm.joining || vm.solo;
     return [
       StepHeader(l10n.avatarTitle, sub: Text(l10n.avatarSub)),
       Row(
@@ -199,92 +166,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       for (final m in owners)
         if (_colorKey(m.color) case final key?) Text(l10n.colorTakenBy(m.name, key), style: PnText.sub),
-      _row(vm, l10n, goesHome ? l10n.seeMyLists : l10n.continueLabel, vm.busy ? null : vm.confirmAvatar),
+      _row(vm, l10n, l10n.goToMyHousehold, vm.busy ? null : vm.confirmAvatar),
     ];
-  }
-
-  List<Widget> _inviteHow(OnboardingViewModel vm, AppLocalizations l10n) => [
-    StepHeader(l10n.inviteHowTitle, sub: Text(l10n.inviteHowSub)),
-    _choices(
-      _Choice(visual: const _IconDisc(PnIcons.mail), title: l10n.byEmail, onTap: vm.inviteByEmail),
-      _Choice(visual: const _IconDisc(PnIcons.code, size: 24), title: l10n.byCode, onTap: vm.inviteByCode),
-    ),
-    Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _back(vm, l10n),
-        LinkButton(label: l10n.later, onPressed: vm.finish),
-      ],
-    ),
-  ];
-
-  List<Widget> _inviteEmail(OnboardingViewModel vm, AppLocalizations l10n) {
-    final sentTo = vm.sentTo;
-    if (sentTo != null) {
-      return [InviteSent(title: l10n.invitationSent, to: l10n.invitationSentTo(sentTo), email: sentTo)];
-    }
-    return [
-      StepHeader(l10n.inviteTheOther, sub: Text(l10n.inviteSub(vm.currentHouseholdName))),
-      if (vm.inviteFailed) Notice(text: l10n.offlineTryAgain),
-      // Always the email field here: a code given by hand may already be
-      // pending, and sending by email keeps it.
-      InviteForm(
-        invite: null,
-        onSend: vm.sendInvite,
-        onResend: () {},
-        onCancel: () {},
-        sendButton: (send) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _row(vm, l10n, l10n.sendInvitation, vm.busy ? null : send),
-            const SizedBox(height: 4),
-            Center(
-              child: LinkButton(label: l10n.later, onPressed: vm.finish),
-            ),
-          ],
-        ),
-        after: const SizedBox.shrink(),
-      ),
-    ];
-  }
-
-  List<Widget> _inviteCode(OnboardingViewModel vm, AppLocalizations l10n) {
-    final code = vm.inviteCode;
-    return [
-      StepHeader(l10n.inviteCodeTitle, sub: Text(l10n.inviteCodeSub)),
-      InviteCodeBoxes(code: code, label: l10n.inviteCodeGroupLabel(code?.split('').join(' ') ?? '')),
-      if (vm.inviteCodeFailed) Notice(text: l10n.offlineTryAgain),
-      Semantics(
-        liveRegion: true,
-        child: PnButton(
-          key: _shareKey,
-          label: vm.codeCopied ? l10n.codeCopied : l10n.shareCode,
-          icon: vm.codeCopied ? PnIcons.check : PnIcons.share,
-          background: PnColors.peach,
-          foreground: PnColors.terraDark,
-          onPressed: code == null ? null : () => _shareCode(vm, l10n, code),
-        ),
-      ),
-      _row(vm, l10n, l10n.seeMyLists, vm.finish),
-    ];
-  }
-
-  /// Opens the device's share sheet. Closing it without choosing does
-  /// nothing; without a share sheet, the code is copied instead.
-  Future<void> _shareCode(OnboardingViewModel vm, AppLocalizations l10n, String code) async {
-    final box = _shareKey.currentContext?.findRenderObject() as RenderBox?;
-    try {
-      await SharePlus.instance.share(
-        ShareParams(
-          text: l10n.shareCodeText(code),
-          // Where the sheet points from on iPad.
-          sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
-        ),
-      );
-    } on Object {
-      await Clipboard.setData(ClipboardData(text: code));
-      vm.showCodeCopied();
-    }
   }
 
   List<Widget> _joinCode(OnboardingViewModel vm, AppLocalizations l10n) {
@@ -330,7 +213,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           members: preview.members,
           who: l10n.householdFullWho(preview.members.map((m) => m.name).join(l10n.and)),
         ),
-        _row(vm, l10n, l10n.createMyHousehold, () => vm.goTo(OnboardingStep.household)),
+        _row(vm, l10n, l10n.createMyHousehold, vm.startCreating),
       ];
     }
     return [
@@ -461,60 +344,6 @@ class _ColorDots extends StatelessWidget {
               ),
             ),
       ],
-    );
-  }
-}
-
-/// A 44 px peach disc holding an icon, for the choice cards.
-class _IconDisc extends StatelessWidget {
-  const _IconDisc(this.icon, {this.size = 22});
-
-  final String icon;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(color: PnColors.peach, shape: BoxShape.circle),
-      child: PnIcon(icon, color: PnColors.terraDark, size: size),
-    );
-  }
-}
-
-/// A card with a visual and a title, side by side with another.
-class _Choice extends StatelessWidget {
-  const _Choice({required this.visual, required this.title, required this.onTap});
-
-  final Widget visual;
-  final String title;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Pressable(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: PnColors.snow,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: PnColors.peachLine, width: 2),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 44,
-              child: Align(alignment: Alignment.centerLeft, child: visual),
-            ),
-            const SizedBox(height: 14),
-            Text(title, style: PnText.cardTitle.copyWith(fontSize: 19, color: PnColors.terraDark)),
-          ],
-        ),
-      ),
     );
   }
 }

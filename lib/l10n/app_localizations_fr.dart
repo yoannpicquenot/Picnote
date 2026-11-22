@@ -240,11 +240,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get invitePendingStatus => 'En attente';
 
   @override
-  String inviteCode(String code) {
-    return 'Code à partager : $code';
-  }
-
-  @override
   String get copyCode => 'Copier le code';
 
   @override
@@ -257,19 +252,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get invalidEmail => 'Cette adresse ne semble pas valide';
 
   @override
-  String get inviteEmailHelp =>
-      'Envoie-lui le code ci-dessus : il suffit de le saisir dans Picnote, via « Rejoindre un foyer ».';
-
-  @override
   String get theirEmail => 'Son adresse e-mail';
-
-  @override
-  String get inviteSomeoneTitle => 'Inviter quelqu’un.';
-
-  @override
-  String inviteSentSub(String household) {
-    return 'L’autre a 7 jours pour rejoindre $household.';
-  }
 
   @override
   String inviteSub(String household) {
@@ -357,13 +340,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Elle s’affiche à côté de tout ce que tu ajoutes ou coches.';
 
   @override
-  String get householdTitle => 'C’est pour qui ?';
-
-  @override
-  String get householdSub =>
-      'Commence de ton côté ou à deux. Tu pourras inviter quelqu’un plus tard.';
-
-  @override
   String get householdStartTitle => 'Ton foyer.';
 
   @override
@@ -389,22 +365,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get inviteHowTitle => 'Comment l’inviter ?';
-
-  @override
-  String get inviteHowSub =>
-      'Envoie-lui un e-mail, ou donne-lui le code toi-même.';
-
-  @override
   String get byEmail => 'Par e-mail';
 
   @override
   String get byCode => 'Par code';
-
-  @override
-  String invitationSentTo(String email) {
-    return 'À $email';
-  }
 
   @override
   String get inviteCodeTitle => 'Donne-lui ce code.';
@@ -427,34 +391,56 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get inviteByCodeRow => 'Invitation par code';
-
-  @override
   String get openGmail => 'Ouvrir Gmail';
-
-  @override
-  String get justMe => 'Pour moi';
-
-  @override
-  String get twoOfUs => 'À deux';
 
   @override
   String get createTitle => 'Nomme ton foyer.';
 
   @override
-  String get createSubSolo => 'Il sera prêt le jour où tu invites quelqu’un.';
+  String get createSub => 'Tu pourras le changer plus tard.';
 
   @override
-  String get createSubDuo => 'L’autre verra ce nom dans l’invitation.';
+  String get goToMyHousehold => 'Aller dans mon foyer';
 
   @override
-  String get householdNameHint => 'ex. L’appart';
+  String get inviteCardSub =>
+      'Partagez vos listes et vos notes, et voyez ce que l’autre ajoute.';
 
   @override
-  String get seeMyLists => 'Voir mes listes';
+  String get inviteHowSub =>
+      'Envoie-lui un e-mail, ou donne-lui le code toi-même.';
 
   @override
   String get invitationSent => 'Invitation envoyée.';
+
+  @override
+  String invitationSentTo(String email) {
+    return 'À $email';
+  }
+
+  @override
+  String get closeLabel => 'Fermer';
+
+  @override
+  String get codeToShare => 'Code à partager';
+
+  @override
+  String get invitationPending => 'Invitation en attente';
+
+  @override
+  String get joinHouseholdTitle => 'Rejoindre un foyer.';
+
+  @override
+  String get joinHouseholdSub =>
+      'Les 6 caractères du code que l’autre t’a envoyé. Tes listes et notes viennent avec toi.';
+
+  @override
+  String joinedHousehold(String household) {
+    return 'Tu as rejoint $household';
+  }
+
+  @override
+  String get householdNameHint => 'ex. L’appart';
 
   @override
   String get inviteTheOther => 'Invite ta moitié.';
