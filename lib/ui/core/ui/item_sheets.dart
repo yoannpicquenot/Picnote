@@ -4,7 +4,6 @@ import '../../../domain/models/reminder.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../utils/dates.dart';
 import '../themes/colors.dart';
-import '../themes/theme.dart';
 import 'buttons.dart';
 import 'date_fields.dart';
 import 'sheet.dart';
@@ -107,11 +106,8 @@ class _ReminderSheetState extends State<ReminderSheet> {
           ],
         ],
       ),
+      subtitle: widget.partnerName != null ? l10n.reminderBothNotified(widget.partnerName!) : l10n.reminderOnlyYou,
       children: [
-        Text(
-          widget.partnerName != null ? l10n.reminderBothNotified(widget.partnerName!) : l10n.reminderOnlyYou,
-          style: PnText.sub,
-        ),
         DateField(
           title: l10n.remindMeOn,
           allowNone: false,

@@ -15,6 +15,12 @@ class ActivityRepositoryLocal extends ActivityRepository {
   @override
   Set<String> get online => _online;
 
+  /// [memberId] opens or closes the app.
+  void setOnline(String memberId, bool online) {
+    final changed = online ? _online.add(memberId) : _online.remove(memberId);
+    if (changed) notifyListeners();
+  }
+
   @override
   Future<Result<List<Activity>>> latestFor({required bool isNote, required String id, int limit = 3}) async =>
       Result.ok(_entries.where((e) => e.isNote == isNote && e.itemId == id).take(limit).toList());

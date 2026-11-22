@@ -15,17 +15,20 @@ import '../../core/ui/date_fields.dart';
 import '../../core/ui/edited_label.dart';
 import '../../core/ui/home_header.dart';
 import '../../core/ui/layout.dart';
-import '../../core/ui/mascot.dart';
 import '../../core/ui/list_hero.dart';
 import '../../core/ui/pn_icon.dart';
 import '../../core/ui/rise_in.dart';
 import '../../core/ui/tab_stagger.dart';
 import '../view_models/notes_viewmodel.dart';
+import 'first_note_card.dart';
 
 class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key, required this.viewModel});
+  const NotesScreen({super.key, required this.viewModel, this.onCreateNote});
 
   final NotesViewModel viewModel;
+
+  /// Opens a new note (from the empty-state card).
+  final VoidCallback? onCreateNote;
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -49,32 +52,20 @@ class _NotesScreenState extends State<NotesScreen> {
                   gap: 20,
                   children: [
                     const HomeHeaderGap(),
-                    if (vm.notes.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 72),
-                        child: Column(
-                          children: [
-                            const TabStagger(depth: 1, child: Face(MascotMood.peek, height: 48)),
-                            const SizedBox(height: 16),
-                            Text(
-                              l10n.noNotesYet,
-                              textAlign: TextAlign.center,
-                              style: PnText.sub.copyWith(fontSize: 15),
-                            ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      Gap(
-                        gap: 8,
-                        children: [
-                          Text(l10n.notesTitle, style: PnText.greeting),
-                          Text(l10n.notesLede, style: PnText.lede),
-                        ],
-                      ),
-                      // While swiping, the notes trail the title.
-                      TabStagger(depth: 1, child: _grid(context, vm)),
-                    ],
+                    Gap(
+                      gap: 8,
+                      children: [
+                        Text(l10n.notesTitle, style: PnText.greeting),
+                        Text(l10n.notesLede, style: PnText.lede),
+                      ],
+                    ),
+                    // While swiping, the notes trail the title.
+                    TabStagger(
+                      depth: 1,
+                      child: vm.notes.isEmpty
+                          ? RiseIn(child: FirstNoteCard(onCreate: widget.onCreateNote))
+                          : _grid(context, vm),
+                    ),
                   ],
                 ),
               ],

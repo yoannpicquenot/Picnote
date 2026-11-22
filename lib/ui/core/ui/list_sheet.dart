@@ -228,7 +228,7 @@ class IconColorPicker extends StatelessWidget {
             crossAxisSpacing: 4,
             childAspectRatio: 1.2,
             children: [
-              for (final i in ListIcon.values)
+              for (final i in ListIcon.pickable)
                 GestureDetector(
                   onTap: () => onIcon(i),
                   child: AnimatedContainer(

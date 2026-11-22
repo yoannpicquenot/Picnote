@@ -32,8 +32,21 @@ abstract final class PnColors {
   static const translucentSnow = Color(0x8CFFFDFA);
   static const shadow = Color(0x1F583727);
 
-  /// Avatar colors, in picker order.
-  static const avatars = [terra, sage, Color(0xFF7A5412), Color(0xFF8C323E), Color(0xFF5E3E2C)];
+  // Pressed states (picnote-colors-tokens.css, --state-*).
+  /// Peach buttons (back square, "Resend") while pressed.
+  static const tonalPressed = Color(0xFFCB9580);
+
+  /// Red buttons while pressed.
+  static const dangerPressed = Color(0xFF861E1E);
+
+  /// Choice cards ("By email", "Create a household") while pressed: their
+  /// peach outline laid over snow.
+  static const choicePressed = Color(0xFFFDEDDC);
+
+  /// Avatar colors, in picker order: terra, sage, mustard, old rose, cocoa.
+  /// The initial is white on all of them (on mustard, 2.7:1: below AA, on
+  /// purpose).
+  static const avatars = [terra, sage, Color(0xFFCC9214), Color(0xFF944454), Color(0xFF684A3C)];
 }
 
 /// Background + ink pair for a list. Ink is at least 4.5:1 on the background.

@@ -178,6 +178,9 @@ class _ListScreenState extends State<ListScreen> {
         theme: ListTheme.of(list.color),
         creatorId: list.ownerId,
         pinned: list.pinned,
+        // Room on home: the switch pins in place, the menu stays open.
+        homeFull: vm.homeFull,
+        onSetPinned: vm.setPinned,
       ),
     );
     if (!mounted) return;
@@ -195,8 +198,9 @@ class _ListScreenState extends State<ListScreen> {
     }
   }
 
-  /// Home full: all lists, in edit mode, to make room; done there, back
-  /// here.
+  /// From the menu only when pinning with home full (otherwise the menu's
+  /// switch pins in place): all lists, in edit mode, to make room; done
+  /// there, back here.
   Future<void> _togglePin(TaskList list) async {
     final l10n = AppLocalizations.of(context);
     if (list.pinned) {

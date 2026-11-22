@@ -111,20 +111,18 @@ void main() {
 
     expect(find.text('Courses.'), findsOneWidget);
     expect(find.text('Tomates'), findsOneWidget);
-    // Set, so no "No deadline" pill.
-    expect(find.text('Non due'), findsNothing);
+    // Set, so no "Deadline" pill.
+    expect(find.text('Échéance'), findsNothing);
 
-    // The "⋯" menu shows the latest changes and who sees it; the current
-    // option does nothing, the other one asks for confirmation.
+    // The "⋯" menu shows whether it is shared, with a switch, and the
+    // latest changes; the switch asks for confirmation.
     await tester.tap(labeled('Options de la liste'));
     await settle(tester);
     expect(find.text('Dernières modifs'), findsOneWidget);
     expect(find.text('Yoann a ajouté « Café »'), findsOneWidget);
-    await tester.tap(find.text('Le foyer'));
-    await settle(tester);
-    expect(find.text('Dernières modifs'), findsOneWidget);
+    expect(find.text('Yoann la voit et peut la modifier'), findsOneWidget);
 
-    await tester.tap(find.text('Juste moi'));
+    await tester.tap(find.text('Liste partagée'));
     await settle(tester);
     expect(find.text('Passer en perso ?'), findsOneWidget);
 
@@ -317,7 +315,7 @@ void main() {
     router.go(Routes.list('m'));
     await settle(tester);
     // "Maison" has no deadline and no reminder.
-    expect(find.text('Non due'), findsOneWidget);
+    expect(find.text('Échéance'), findsOneWidget);
     expect(find.text('Pas de rappel'), findsOneWidget);
 
     // The name is renamed in place; an empty name falls back to "Liste".
@@ -335,12 +333,12 @@ void main() {
     expect(find.text('Liste.'), findsOneWidget);
 
     // The deadline pill opens "Échéance."
-    await tester.tap(find.text('Non due'));
+    await tester.tap(find.text('Échéance'));
     await settle(tester);
     expect(find.text('Échéance.'), findsOneWidget);
     await tester.tap(find.text('Enregistrer'));
     await settle(tester);
-    expect(find.text('Non due'), findsNothing);
+    expect(find.text('Échéance'), findsNothing);
 
     // The reminder pill opens the reminder sheet; the list is shared.
     await tester.tap(find.text('Pas de rappel'));
@@ -855,7 +853,7 @@ void main() {
     await settle(tester);
     await tester.tap(labeled('Options de la liste'));
     await settle(tester);
-    await tester.tap(find.text('Épingler sur l’accueil'));
+    await tester.tap(find.text('Épinglée sur l’accueil'));
     await settle(tester);
     expect(find.byType(AllListsScreen), findsOneWidget);
     expect(find.text('OK'), findsOneWidget, reason: 'in edit mode');

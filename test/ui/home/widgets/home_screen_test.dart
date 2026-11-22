@@ -89,6 +89,9 @@ void main() {
 
     expect(find.text('Ta première liste.'), findsOneWidget);
     expect(find.text('On commence ?'), findsOneWidget);
+    // Nothing could be planned yet.
+    expect(find.text('Aujourd’hui.'), findsNothing);
+    expect(find.text('Demain.'), findsNothing);
   });
 
   testWidgets('retries after a load error', (tester) async {
@@ -137,7 +140,8 @@ void main() {
       await tester.tap(find.text('Inviter'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Envoie-lui un e-mail, ou donne-lui le code toi-même.'), findsOneWidget);
+      // The choice has no subtitle: the two cards come right under the title.
+      expect(find.text('Par code'), findsOneWidget);
       await tester.tap(find.text('Par e-mail'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(EditableText), 'yoann@picnote.cc');

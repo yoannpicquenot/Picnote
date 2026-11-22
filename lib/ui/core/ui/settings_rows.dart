@@ -23,34 +23,59 @@ class SettingsGroup extends StatelessWidget {
           padding: const EdgeInsets.only(left: 2, bottom: 10),
           child: Text(title, style: PnText.sheetTitle.copyWith(color: PnColors.terra)),
         ),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: PnColors.snow,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: PnColors.peachLine, width: 2),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (i, child) in children.indexed) ...[
-                if (i > 0)
-                  Container(
-                    height: 2,
-                    margin: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(color: PnColors.cream100, borderRadius: BorderRadius.circular(1)),
-                  ),
-                child,
-              ],
-            ],
-          ),
-        ),
+        SettingsCard(children: children),
       ],
     );
   }
 }
 
+/// Snow card of rows, split by the soft cream divider: a settings group, or
+/// the actions of a list's or note's menu.
+class SettingsCard extends StatelessWidget {
+  const SettingsCard({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: PnColors.snow,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: PnColors.peachLine, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, child) in children.indexed) ...[if (i > 0) const SoftDivider(indent: 12), child],
+        ],
+      ),
+    );
+  }
+}
+
+/// 2 px cream line with rounded ends: between the rows of a group, above
+/// "Created by".
+class SoftDivider extends StatelessWidget {
+  const SoftDivider({super.key, this.indent = 0});
+
+  final double indent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 2,
+      margin: EdgeInsets.symmetric(horizontal: indent),
+      decoration: BoxDecoration(color: PnColors.cream100, borderRadius: BorderRadius.circular(1)),
+    );
+  }
+}
+
 /// Icon, title, optional subtitle/value, and a chevron when tappable.
+/// Pressed, it turns peach. [dimmed]: the icon, title, value and trailing
+/// widget fade to 40 % but the subtitle stays, since it says why; a dimmed
+/// row can't be tapped and has no chevron.
 class SettingsRow extends StatelessWidget {
   const SettingsRow({
     super.key,
@@ -79,54 +104,60 @@ class SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final lead =
         leading ?? (icon != null ? PnIcon(icon!, color: danger ? PnColors.danger : PnColors.terra, size: 22) : null);
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 200),
-      opacity: dimmed ? 0.4 : 1,
-      child: Pressable(
-        onTap: onTap,
-        scale: 0.99,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 58),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                if (lead != null) ...[SizedBox(width: 24, child: Center(child: lead)), const SizedBox(width: 12)],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: danger ? PnColors.danger : PnColors.ink,
-                        ),
+    Widget faded(Widget child) =>
+        AnimatedOpacity(duration: const Duration(milliseconds: 200), opacity: dimmed ? 0.4 : 1, child: child);
+    final tap = dimmed ? null : onTap;
+    return Pressable(
+      onTap: tap,
+      scale: 0.99,
+      builder: (context, pressed) => AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        constraints: const BoxConstraints(minHeight: 58),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: pressed ? PnColors.peach : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            if (lead != null) ...[faded(SizedBox(width: 24, child: Center(child: lead))), const SizedBox(width: 12)],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  faded(
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: danger ? PnColors.danger : PnColors.ink,
                       ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 3),
-                        Text(subtitle!, style: PnText.meta.copyWith(height: 1.35)),
-                      ],
-                    ],
-                  ),
-                ),
-                if (value != null)
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 150),
-                    child: Text(
-                      value!,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.terraDark),
                     ),
                   ),
-                ?trailing,
-                if (onTap != null && trailing == null && !danger)
-                  const PnIcon(PnIcons.chevronRight, color: PnColors.terraDark, size: 16),
-              ],
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 3),
+                    Text(subtitle!, style: PnText.meta.copyWith(height: 1.35)),
+                  ],
+                ],
+              ),
             ),
-          ),
+            if (value != null)
+              faded(
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 150),
+                  child: Text(
+                    value!,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.terraDark),
+                  ),
+                ),
+              ),
+            if (trailing != null) faded(trailing!),
+            if (tap != null && trailing == null && !danger)
+              const PnIcon(PnIcons.chevronRight, color: PnColors.terraDark, size: 16),
+          ],
         ),
       ),
     );

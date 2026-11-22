@@ -89,4 +89,41 @@ void main() {
     expect(find.text('Inviter quelqu’un'), findsNothing);
     expect(find.text('Rejoindre un foyer'), findsNothing);
   });
+
+  testWidgets('the other opening the app: a ring around their avatar, twice, then still', (tester) async {
+    final activity = ActivityRepositoryLocal();
+    final who = WhoIsHere(
+      activityRepository: activity,
+      householdRepository: FakeHouseholdRepository(household: kDuo),
+      listRepository: FakeListRepository(),
+      noteRepository: NoteRepositoryLocal(),
+      meId: kMe.id,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListenableBuilder(
+            listenable: activity,
+            builder: (context, _) =>
+                HomeHeader(whoIsHere: who, onWordmark: () {}, onInvite: () {}, onJoin: () {}, onSettings: () {}),
+          ),
+        ),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
+    final ring = find.byWidgetPredicate(
+      (w) => w is DecoratedBox && w.decoration is BoxDecoration && (w.decoration as BoxDecoration).border != null,
+    );
+    expect(ring, findsNothing);
+
+    activity.setOnline(kPartner.id, true);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(ring, findsOneWidget, reason: 'first wave');
+    await tester.pump(const Duration(milliseconds: 900));
+    expect(ring, findsOneWidget, reason: 'second wave');
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(ring, findsNothing, reason: 'stops after two');
+  });
 }

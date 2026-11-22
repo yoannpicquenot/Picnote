@@ -133,13 +133,12 @@
     }
   },
   "inviteResentStatus": "Renvoyée",
-  "invitePendingStatus": "En attente",
   "copyCode": "Copier le code",
   "codeCopied": "Code copié",
   "resend": "Renvoyer",
   "invalidEmail": "Cette adresse ne semble pas valide",
   "theirEmail": "Son adresse e-mail",
-  "inviteSub": "Saisis son adresse e-mail. On lui envoie un code pour rejoindre {household}.",
+  "inviteSub": "Saisis son adresse e-mail : on lui enverra un code pour rejoindre {household}.",
   "@inviteSub": {
     "placeholders": {
       "household": {
@@ -220,7 +219,6 @@
   "createSub": "Tu pourras le changer plus tard.",
   "goToMyHousehold": "Aller dans mon foyer",
   "inviteCardSub": "Partagez vos listes et vos notes, et voyez ce que l’autre ajoute.",
-  "inviteHowSub": "Envoie-lui un e-mail, ou donne-lui le code toi-même.",
   "invitationSent": "Invitation envoyée.",
   "invitationSentTo": "À {email}",
   "@invitationSentTo": {
@@ -234,7 +232,7 @@
   "codeToShare": "Code à partager",
   "invitationPending": "Invitation en attente",
   "joinHouseholdTitle": "Rejoindre un foyer.",
-  "joinHouseholdSub": "Les 6 caractères du code que l’autre t’a envoyé. Tes listes et notes viennent avec toi.",
+  "joinHouseholdSub": "Renseigne le code que ta moitié t’a partagé. Tes listes et notes déjà créées viennent avec toi.",
   "joinedHousehold": "Tu as rejoint {household}",
   "@joinedHousehold": {
     "placeholders": {
@@ -327,6 +325,9 @@
   "firstListTitle": "Ta première liste.",
   "firstListSub": "Courses, maison, idées cadeaux : commence par ce que tu as en tête.",
   "createAList": "Créer une liste",
+  "firstNoteTitle": "Ta première note.",
+  "firstNoteSub": "Une idée, une recette, le code wifi : garde-le ici.",
+  "createANote": "Créer une note",
   "justNow": "à l’instant",
   "minutesAgo": "il y a {n} min",
   "@minutesAgo": {
@@ -345,7 +346,6 @@
     }
   },
   "yesterdayLower": "hier",
-  "noNotesYet": "Pas encore de note. Touche + pour en créer une.",
   "notesTitle": "Notes.",
   "notesLede": "Une idée à garder ?",
   "untitled": "Sans titre",
@@ -653,7 +653,7 @@
   "eachTime": "Une notification à chaque fois",
   "phoneNotificationSettings": "Tu peux aussi gérer Picnote dans les réglages de notifications du téléphone.",
   "visibilityShared": "Partagée",
-  "noDeadline": "Non due",
+  "noDeadline": "Échéance",
   "noReminder": "Pas de rappel",
   "editNoteTitle": "Modifier la note.",
   "editNote": "Modifier la note",
@@ -729,6 +729,34 @@
     }
   },
   "latestChanges": "Dernières modifs",
+  "pinnedOnHome": "Épinglée sur l’accueil",
+  "pinnedToHomeSub": "Visible sur ton accueil",
+  "onlyInAllLists": "Seulement dans « Toutes les listes »",
+  "partnerSeesAndEdits": "{name} la voit et peut la modifier",
+  "@partnerSeesAndEdits": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "onlyYouSeeIt": "Visible par toi uniquement",
+  "reservedToCreatorShare": "Réservé à {name}, qui l’a créée",
+  "@reservedToCreatorShare": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reservedToCreatorDelete": "Réservé à {name}, qui l’a créée",
+  "@reservedToCreatorDelete": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "toShareThisList": "Pour partager cette liste",
   "toShareThisNote": "Pour partager cette note",
   "theListLower": "la liste",
@@ -862,16 +890,6 @@
     }
   },
   "createdByYou": "Créée par toi",
-  "askAuthor": "Pour la passer en perso ou la supprimer, demande à {name}.",
-  "@askAuthor": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "pinToHome": "Épingler sur l’accueil",
-  "unpinFromHome": "Retirer de l’accueil",
   "pinnedToHome": "Liste épinglée sur l’accueil",
   "unpinnedFromHome": "Liste retirée de l’accueil",
   "partnerEditedList": "{who} a modifié la liste « {name} »",

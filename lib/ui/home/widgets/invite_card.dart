@@ -56,7 +56,14 @@ class InviteCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              PnButton(label: l10n.invite, icon: PnIcons.plus, compact: true, onPressed: onInvite),
+              // White: "Create a list" stays the screen's only dark button.
+              PnButton(
+                label: l10n.invite,
+                icon: PnIcons.plus,
+                kind: PnButtonKind.secondary,
+                compact: true,
+                onPressed: onInvite,
+              ),
             ],
           ),
           Positioned(

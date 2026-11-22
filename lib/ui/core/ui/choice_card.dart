@@ -40,10 +40,11 @@ class ChoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Pressable(
       onTap: onTap,
-      child: Container(
+      builder: (context, pressed) => AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: PnColors.snow,
+          color: pressed ? PnColors.choicePressed : PnColors.snow,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: PnColors.peachLine, width: 2),
         ),

@@ -260,7 +260,8 @@ Page<void> _tabs(
         ),
         _Owned(
           create: () => NotesViewModel(noteRepository: context.read(), householdRepository: householdRepository),
-          builder: (vm) => NotesScreen(viewModel: vm),
+          builder: (vm) =>
+              NotesScreen(viewModel: vm, onCreateNote: () => startNewNote(context, context.read<ShellViewModel>())),
         ),
       ],
     ),

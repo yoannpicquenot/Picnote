@@ -13,11 +13,20 @@ enum ListIcon {
   suitcase('InterfaceSuitcase'),
   star('InterfaceStar'),
   calendar('ListCalendar'),
+  apple('FoodApple'),
+
+  /// No longer offered (the apple took its place); lists wearing it keep it.
   sun('EnvironmentSun');
 
   const ListIcon(this.asset);
 
   final String asset;
+
+  /// The icons the picker offers, in order.
+  static List<ListIcon> get pickable => [
+    for (final i in values)
+      if (i != sun) i,
+  ];
 }
 
 /// The five list colors, in picker order: orange, green, yellow, red,

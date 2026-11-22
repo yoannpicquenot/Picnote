@@ -119,7 +119,13 @@ class _PinnedGridState extends State<PinnedGrid> with SingleTickerProviderStateM
           onDragEnd: (_) => _drop(),
           feedback: _Lifted(size: () => _liftedSize, child: widget.cardBuilder(list, index, () {}, rise: false)),
           childWhenDragging: Opacity(opacity: 0.3, child: card),
-          child: _Wiggle(animation: _wiggle, index: index, child: card),
+          // While arranging, the cards not held step back.
+          child: AnimatedOpacity(
+            opacity: _arranging ? 0.6 : 1,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            child: _Wiggle(animation: _wiggle, index: index, child: card),
+          ),
         ),
       ),
     );

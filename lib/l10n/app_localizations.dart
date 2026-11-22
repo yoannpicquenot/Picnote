@@ -506,12 +506,6 @@ abstract class AppLocalizations {
   /// **'Renvoyée'**
   String get inviteResentStatus;
 
-  /// No description provided for @invitePendingStatus.
-  ///
-  /// In fr, this message translates to:
-  /// **'En attente'**
-  String get invitePendingStatus;
-
   /// No description provided for @copyCode.
   ///
   /// In fr, this message translates to:
@@ -545,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteSub.
   ///
   /// In fr, this message translates to:
-  /// **'Saisis son adresse e-mail. On lui envoie un code pour rejoindre {household}.'**
+  /// **'Saisis son adresse e-mail : on lui enverra un code pour rejoindre {household}.'**
   String inviteSub(String household);
 
   /// No description provided for @sendInvitation.
@@ -800,12 +794,6 @@ abstract class AppLocalizations {
   /// **'Partagez vos listes et vos notes, et voyez ce que l’autre ajoute.'**
   String get inviteCardSub;
 
-  /// No description provided for @inviteHowSub.
-  ///
-  /// In fr, this message translates to:
-  /// **'Envoie-lui un e-mail, ou donne-lui le code toi-même.'**
-  String get inviteHowSub;
-
   /// No description provided for @invitationSent.
   ///
   /// In fr, this message translates to:
@@ -845,7 +833,7 @@ abstract class AppLocalizations {
   /// No description provided for @joinHouseholdSub.
   ///
   /// In fr, this message translates to:
-  /// **'Les 6 caractères du code que l’autre t’a envoyé. Tes listes et notes viennent avec toi.'**
+  /// **'Renseigne le code que ta moitié t’a partagé. Tes listes et notes déjà créées viennent avec toi.'**
   String get joinHouseholdSub;
 
   /// No description provided for @joinedHousehold.
@@ -1064,6 +1052,24 @@ abstract class AppLocalizations {
   /// **'Créer une liste'**
   String get createAList;
 
+  /// No description provided for @firstNoteTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ta première note.'**
+  String get firstNoteTitle;
+
+  /// No description provided for @firstNoteSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une idée, une recette, le code wifi : garde-le ici.'**
+  String get firstNoteSub;
+
+  /// No description provided for @createANote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer une note'**
+  String get createANote;
+
   /// No description provided for @justNow.
   ///
   /// In fr, this message translates to:
@@ -1087,12 +1093,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'hier'**
   String get yesterdayLower;
-
-  /// No description provided for @noNotesYet.
-  ///
-  /// In fr, this message translates to:
-  /// **'Pas encore de note. Touche + pour en créer une.'**
-  String get noNotesYet;
 
   /// No description provided for @notesTitle.
   ///
@@ -1877,7 +1877,7 @@ abstract class AppLocalizations {
   /// No description provided for @noDeadline.
   ///
   /// In fr, this message translates to:
-  /// **'Non due'**
+  /// **'Échéance'**
   String get noDeadline;
 
   /// No description provided for @noReminder.
@@ -2041,6 +2041,48 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Dernières modifs'**
   String get latestChanges;
+
+  /// No description provided for @pinnedOnHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épinglée sur l’accueil'**
+  String get pinnedOnHome;
+
+  /// No description provided for @pinnedToHomeSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Visible sur ton accueil'**
+  String get pinnedToHomeSub;
+
+  /// No description provided for @onlyInAllLists.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seulement dans « Toutes les listes »'**
+  String get onlyInAllLists;
+
+  /// No description provided for @partnerSeesAndEdits.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name} la voit et peut la modifier'**
+  String partnerSeesAndEdits(String name);
+
+  /// No description provided for @onlyYouSeeIt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Visible par toi uniquement'**
+  String get onlyYouSeeIt;
+
+  /// No description provided for @reservedToCreatorShare.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réservé à {name}, qui l’a créée'**
+  String reservedToCreatorShare(String name);
+
+  /// No description provided for @reservedToCreatorDelete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réservé à {name}, qui l’a créée'**
+  String reservedToCreatorDelete(String name);
 
   /// No description provided for @toShareThisList.
   ///
@@ -2227,24 +2269,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Créée par toi'**
   String get createdByYou;
-
-  /// No description provided for @askAuthor.
-  ///
-  /// In fr, this message translates to:
-  /// **'Pour la passer en perso ou la supprimer, demande à {name}.'**
-  String askAuthor(String name);
-
-  /// No description provided for @pinToHome.
-  ///
-  /// In fr, this message translates to:
-  /// **'Épingler sur l’accueil'**
-  String get pinToHome;
-
-  /// No description provided for @unpinFromHome.
-  ///
-  /// In fr, this message translates to:
-  /// **'Retirer de l’accueil'**
-  String get unpinFromHome;
 
   /// No description provided for @pinnedToHome.
   ///

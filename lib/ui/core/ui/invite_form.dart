@@ -25,17 +25,18 @@ class InviteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Resend: peach, darker when pressed. Cancel: an outline that turns ink.
     Widget action(String label, VoidCallback onTap, {required bool filled}) => Pressable(
       onTap: onTap,
-      scale: 0.95,
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+      scale: 0.98,
+      builder: (context, pressed) => AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        height: 36,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: filled ? PnColors.peach : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: filled ? null : Border.all(color: PnColors.line, width: 1.5),
+          color: filled ? (pressed ? PnColors.tonalPressed : PnColors.peach) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: filled ? null : Border.all(color: pressed ? PnColors.ink : PnColors.line, width: 1.5),
         ),
         child: Text(
           label,
@@ -77,7 +78,7 @@ class InviteRow extends StatelessWidget {
                           decoration: const BoxDecoration(color: PnColors.terra, shape: BoxShape.circle),
                         ),
                         const SizedBox(width: 6),
-                        Text(l10n.invitePendingStatus, style: PnText.meta),
+                        Text(l10n.invitationPending, style: PnText.meta),
                       ],
                     ),
                   ],
@@ -86,13 +87,14 @@ class InviteRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          // From the email's left edge: the icon (24) and its gap (12).
           Padding(
             padding: const EdgeInsets.only(left: 36),
             child: Row(
               children: [
-                action(l10n.resend, onResend, filled: true),
+                Expanded(child: action(l10n.resend, onResend, filled: true)),
                 const SizedBox(width: 8),
-                action(l10n.cancel, onCancel, filled: false),
+                Expanded(child: action(l10n.cancel, onCancel, filled: false)),
               ],
             ),
           ),

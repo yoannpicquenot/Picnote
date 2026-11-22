@@ -22,6 +22,7 @@ abstract final class PnIcons {
   static const logOut = 'InterfaceLogOut';
   static const trash = 'InterfaceTrashFull';
   static const user = 'UserUser01';
+  static const users = 'UserUsers';
   static const info = 'WarningInfo';
   static const list = 'List';
   static const text = 'Text';

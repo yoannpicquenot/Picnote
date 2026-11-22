@@ -53,8 +53,14 @@ class _InviteSheetState extends State<InviteSheet> {
       listenable: _changes,
       builder: (context, _) => switch (_vm.step) {
         InviteStep.choose => PnSheet(title: l10n.inviteTheOther, children: _choose(l10n)),
-        InviteStep.email => PnSheet(title: l10n.inviteTheOther, children: _email(l10n)),
-        InviteStep.code => PnSheet(title: l10n.inviteCodeTitle, children: _code(l10n)),
+        // The email form explains itself; the sent animation and the
+        // pending invitation don't need to.
+        InviteStep.email => PnSheet(
+          title: l10n.inviteTheOther,
+          subtitle: _vm.sentTo == null && _vm.pending == null ? l10n.inviteSub(_vm.householdName) : null,
+          children: _email(l10n),
+        ),
+        InviteStep.code => PnSheet(title: l10n.inviteCodeTitle, subtitle: l10n.inviteCodeSub, children: _code(l10n)),
       },
     );
   }
@@ -67,8 +73,8 @@ class _InviteSheetState extends State<InviteSheet> {
     ],
   );
 
+  // No subtitle: the two cards come right under the title.
   List<Widget> _choose(AppLocalizations l10n) => [
-    Text(l10n.inviteHowSub, style: PnText.sub),
     ChoiceRow(
       ChoiceCard(visual: const IconDisc(PnIcons.mail), title: l10n.byEmail, onTap: () => _vm.goTo(InviteStep.email)),
       ChoiceCard(
@@ -105,7 +111,6 @@ class _InviteSheetState extends State<InviteSheet> {
       ];
     }
     return [
-      Text(l10n.inviteSub(_vm.householdName), style: PnText.sub),
       if (_vm.send.error) Notice(text: l10n.offlineTryAgain),
       InviteEmailForm(
         // After "Cancel", the address comes back in the field.
@@ -124,7 +129,6 @@ class _InviteSheetState extends State<InviteSheet> {
   List<Widget> _code(AppLocalizations l10n) {
     final code = _vm.code;
     return [
-      Text(l10n.inviteCodeSub, style: PnText.sub),
       InviteCodeBoxes(code: code, label: l10n.inviteCodeGroupLabel(code?.split('').join(' ') ?? '')),
       if (_vm.createCode.error) Notice(text: l10n.offlineTryAgain),
       _backAnd(

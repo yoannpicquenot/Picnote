@@ -419,12 +419,13 @@ class _BottomBar extends StatelessWidget {
                     onTap: onAdd,
                     scale: 0.94,
                     semanticLabel: addLabel,
-                    child: Container(
+                    builder: (context, pressed) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 140),
                       width: 64,
                       height: 64,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: PnColors.night,
+                        color: pressed ? PnColors.terraPressed : PnColors.night,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: const [
                           BoxShadow(color: Color(0x521C120D), blurRadius: 12, offset: Offset(3, 4)),

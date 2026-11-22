@@ -34,7 +34,8 @@ class OnboardingViewModel extends ChangeNotifier {
     _householdRepository.addListener(notifyListeners);
   }
 
-  static const avatarColors = [0xFFAF5C3C, 0xFF3F7063, 0xFF7A5412, 0xFF8C323E, 0xFF5E3E2C];
+  /// PnColors.avatars, as stored.
+  static const avatarColors = [0xFFAF5C3C, 0xFF3F7063, 0xFFCC9214, 0xFF944454, 0xFF684A3C];
 
   final AuthRepository _authRepository;
   final HouseholdRepository _householdRepository;

@@ -91,9 +91,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     // While swiping, the blocks trail the title, one after another.
                     TabStagger(depth: 1, child: _lists(context, l10n)),
-                    TabStagger(depth: 2, child: _section(context, l10n, l10n.todayTitle, vm.today, alwaysShow: true)),
-                    if (vm.tomorrow.isNotEmpty)
-                      TabStagger(depth: 3, child: _section(context, l10n, l10n.tomorrowTitle, vm.tomorrow)),
+                    // Not before the first list: nothing could be planned yet.
+                    if (vm.listCount > 0) ...[
+                      TabStagger(depth: 2, child: _section(context, l10n, l10n.todayTitle, vm.today, alwaysShow: true)),
+                      if (vm.tomorrow.isNotEmpty)
+                        TabStagger(depth: 3, child: _section(context, l10n, l10n.tomorrowTitle, vm.tomorrow)),
+                    ],
                   ],
                 ),
               ],

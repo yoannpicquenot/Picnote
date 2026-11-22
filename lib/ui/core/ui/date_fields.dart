@@ -279,11 +279,16 @@ class _MonthCalendarState extends State<MonthCalendar> {
                   opacity: value != null ? 1 : 0.4,
                   child: Pressable(
                     onTap: value != null ? widget.onDone : null,
-                    child: Container(
+                    scale: 0.98,
+                    builder: (context, pressed) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 140),
                       height: 36,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(color: t.fg, borderRadius: BorderRadius.circular(14)),
+                      decoration: BoxDecoration(
+                        color: pressed ? pressedColor(t.fg) : t.fg,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       child: Text(l10n.calendarDone, style: PnText.pill.copyWith(color: t.bg)),
                     ),
                   ),

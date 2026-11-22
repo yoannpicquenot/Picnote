@@ -44,18 +44,23 @@ class _SheetDrag extends InheritedWidget {
   bool updateShouldNotify(_SheetDrag oldWidget) => enabled != oldWidget.enabled;
 }
 
-/// Sheet layout: grab handle, title, scrolling body, optional fixed footer.
+/// Sheet layout: grab handle, title, optional subtitle, scrolling body,
+/// optional fixed footer. The same rhythm for every sheet: title, 8 px,
+/// subtitle, 20 px, content; 32 px at the bottom (16 above a footer, 32
+/// under it). An explanation belongs in [subtitle], not in the content.
 class PnSheet extends StatelessWidget {
   const PnSheet({
     super.key,
     required this.title,
     required this.children,
+    this.subtitle,
     this.titleColor = PnColors.terra,
     this.footer,
     this.gap = 18,
   });
 
   final String title;
+  final String? subtitle;
   final Color titleColor;
   final List<Widget> children;
   final Widget? footer;
@@ -73,7 +78,7 @@ class PnSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -88,13 +93,17 @@ class PnSheet extends StatelessWidget {
                   const SizedBox(height: 14),
                 ] else
                   const SizedBox(height: 10),
-                Text(title, style: PnText.sheetTitle.copyWith(color: titleColor)),
+                Text(title, style: PnText.sheetTitle.copyWith(color: titleColor, height: 1.15)),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 8),
+                  Text(subtitle!, style: PnText.sub.copyWith(height: 1.4)),
+                ],
               ],
             ),
           ),
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, footer != null ? 16 : 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -103,7 +112,7 @@ class PnSheet extends StatelessWidget {
               ),
             ),
           ),
-          if (footer != null) Padding(padding: EdgeInsets.fromLTRB(20, 6, 20, keyboard > 0 ? 12 : 16), child: footer),
+          if (footer != null) Padding(padding: EdgeInsets.fromLTRB(20, 0, 20, keyboard > 0 ? 12 : 32), child: footer),
         ],
       ),
     );

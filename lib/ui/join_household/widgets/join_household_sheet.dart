@@ -63,10 +63,11 @@ class _JoinHouseholdSheetState extends State<JoinHouseholdSheet> {
           JoinHouseholdState.failed => l10n.offlineTryAgain,
           _ => null,
         };
+        final checking = vm.state == JoinHouseholdState.loading;
         return PnSheet(
           title: l10n.joinHouseholdTitle,
+          subtitle: l10n.joinHouseholdSub,
           children: [
-            Text(l10n.joinHouseholdSub, style: PnText.sub),
             CodeBoxes(
               alphanumeric: true,
               value: vm.code,
@@ -78,15 +79,17 @@ class _JoinHouseholdSheetState extends State<JoinHouseholdSheet> {
                   ? CodeBoxesState.loading
                   : CodeBoxesState.idle,
             ),
-            Text(
-              error ?? (vm.state == JoinHouseholdState.loading ? l10n.joinCodeChecking : l10n.joinCodeAlphabet),
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.4,
-                fontWeight: FontWeight.w500,
-                color: error != null ? PnColors.terraDark : PnColors.muted,
+            // Only "Checking the code…" or what went wrong.
+            if (error != null || checking)
+              Text(
+                error ?? l10n.joinCodeChecking,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
+                  color: error != null ? PnColors.terraDark : PnColors.muted,
+                ),
               ),
-            ),
           ],
         );
       },

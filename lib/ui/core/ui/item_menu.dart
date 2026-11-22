@@ -6,19 +6,26 @@ import '../../../l10n/app_localizations.dart';
 import '../themes/colors.dart';
 import '../themes/theme.dart';
 import 'avatar.dart';
-import 'buttons.dart';
-import 'date_fields.dart';
+import 'controls.dart';
 import 'edited_label.dart';
 import 'pn_icon.dart';
+import 'settings_rows.dart';
 import 'sheet.dart';
 
 /// What was picked in an [ItemMenuSheet].
 enum ItemMenuAction { toggleShared, invite, togglePin, delete }
 
-/// "⋯" menu of an open list or note: its 3 latest changes, who sees it
-/// (or "Invite someone" while alone) and "Delete". Pops the
-/// [ItemMenuAction] picked; picking the visibility already set does
-/// nothing.
+/// "⋯" menu of an open list or note, in the language of the settings: a
+/// card of actions (pinned to home, shared, or "Invite someone" while
+/// alone, delete), then its 3 latest changes and who created it. Pops the
+/// [ItemMenuAction] picked.
+///
+/// What only its creator may change (sharing, deleting a note the other
+/// wrote) stays visible, greyed, with the reason.
+///
+/// The pin switch works in place, through [onSetPinned], while home has
+/// room; pinning with home full pops [ItemMenuAction.togglePin] instead, to
+/// make room first.
 class ItemMenuSheet extends StatefulWidget {
   const ItemMenuSheet({
     super.key,
@@ -31,6 +38,8 @@ class ItemMenuSheet extends StatefulWidget {
     required this.theme,
     this.creatorId,
     this.pinned,
+    this.homeFull = false,
+    this.onSetPinned,
     this.canShare = true,
     this.canDelete = true,
   });
@@ -49,6 +58,12 @@ class ItemMenuSheet extends StatefulWidget {
   /// Whether a list is on home; null for a note, which has no pin.
   final bool? pinned;
 
+  /// Home already shows [maxPinnedLists] lists: pinning needs room first.
+  final bool homeFull;
+
+  /// Pins or unpins the list without leaving the menu.
+  final Future<void> Function(bool pinned)? onSetPinned;
+
   /// False on a shared note written by the other member.
   final bool canShare;
   final bool canDelete;
@@ -58,9 +73,40 @@ class ItemMenuSheet extends StatefulWidget {
 }
 
 class _ItemMenuSheetState extends State<ItemMenuSheet> {
+  /// The switch, ahead of the list's own state while it saves.
+  late bool? _pinned = widget.pinned;
+
+  Future<void> _togglePin() async {
+    final pinned = _pinned;
+    final onSetPinned = widget.onSetPinned;
+    if (pinned == null) return;
+    if ((!pinned && widget.homeFull) || onSetPinned == null) {
+      Navigator.pop(context, ItemMenuAction.togglePin);
+      return;
+    }
+    setState(() => _pinned = !pinned);
+    await onSetPinned(!pinned);
+  }
+
+  bool get isNote => widget.isNote;
+  String get meId => widget.meId;
+  List<Member> get members => widget.members;
+  bool get shared => widget.shared;
+  String? get creatorId => widget.creatorId;
+  bool get canShare => widget.canShare;
+  bool get canDelete => widget.canDelete;
+  Future<List<Activity>> get changes => widget.changes;
+
   Member? get _partner {
-    for (final m in widget.members) {
-      if (m.id != widget.meId) return m;
+    for (final m in members) {
+      if (m.id != meId) return m;
+    }
+    return null;
+  }
+
+  Member? _member(String id) {
+    for (final m in members) {
+      if (m.id == id) return m;
     }
     return null;
   }
@@ -69,149 +115,107 @@ class _ItemMenuSheetState extends State<ItemMenuSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final partner = _partner;
-    const divider = BorderSide(color: PnColors.line);
-    Widget row({required Widget icon, required Widget text, required VoidCallback onTap}) => Pressable(
-      onTap: onTap,
-      scale: 0.99,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: const BoxDecoration(border: Border(top: divider)),
-        child: Row(
-          children: [
-            SizedBox(width: 20, child: Center(child: icon)),
-            const SizedBox(width: 12),
-            Expanded(child: text),
-          ],
-        ),
-      ),
-    );
-    final creator = widget.creatorId == null ? null : _member(widget.creatorId!);
+    final creator = creatorId == null ? null : _member(creatorId!);
+    // Created by the other member: what only they may do is greyed, with why.
+    final reservedTo = creator != null && creator.id != meId ? creator : null;
+    void pick(ItemMenuAction a) => Navigator.pop(context, a);
+    final deleteTitle = isNote ? l10n.deleteNote : l10n.deleteList;
     return PnSheet(
       title: widget.title,
       children: [
-        if (partner != null && creator != null)
-          Row(
-            children: [
-              Avatar.of(creator, size: 24),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  creator.id == widget.meId ? l10n.createdByYou : l10n.createdBy(creator.name),
-                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.ink),
-                ),
-              ),
-            ],
-          ),
-        FutureBuilder(
-          future: widget.changes,
-          builder: (context, snapshot) {
-            final changes = snapshot.data ?? const <Activity>[];
-            if (changes.isEmpty) return const SizedBox.shrink();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(l10n.latestChanges, style: PnText.label),
-                for (final e in changes.take(3)) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      if (partner != null)
-                        if (_member(e.actorId) case final m?) ...[Avatar.of(m, size: 24), const SizedBox(width: 10)],
-                      Expanded(
-                        child: Text(
-                          activityText(l10n, e, meId: widget.meId, solo: partner == null, actor: _member(e.actorId)),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                            height: 1.35,
-                            color: PnColors.ink,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(editedLabel(context, e.at), style: PnText.meta),
-                    ],
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        SettingsCard(
           children: [
+            if (_pinned case final pinned?)
+              SettingsRow(
+                icon: PnIcons.pin,
+                title: l10n.pinnedOnHome,
+                subtitle: pinned ? l10n.pinnedToHomeSub : l10n.onlyInAllLists,
+                trailing: PnToggle(on: pinned),
+                onTap: _togglePin,
+              ),
             if (partner == null)
-              row(
-                icon: const PnIcon(PnIcons.plus, color: PnColors.terraDark, size: 20),
-                text: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.inviteSomeone,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: PnColors.ink),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(widget.isNote ? l10n.toShareThisNote : l10n.toShareThisList, style: PnText.meta),
-                  ],
-                ),
-                onTap: () => Navigator.pop(context, ItemMenuAction.invite),
+              SettingsRow(
+                icon: PnIcons.plus,
+                title: l10n.inviteSomeone,
+                subtitle: isNote ? l10n.toShareThisNote : l10n.toShareThisList,
+                onTap: () => pick(ItemMenuAction.invite),
               )
             else
-              Container(
-                padding: const EdgeInsets.only(top: 14, bottom: 6),
-                decoration: const BoxDecoration(border: Border(top: divider)),
-                child: IgnorePointer(
-                  ignoring: !widget.canShare,
-                  child: Opacity(
-                    opacity: widget.canShare ? 1 : 0.6,
-                    child: VisibilityPicker(
-                      note: widget.isNote,
-                      shared: widget.shared,
-                      theme: widget.theme,
-                      members: widget.members,
-                      partnerName: partner.name,
-                      onChanged: (v) {
-                        if (v != widget.shared) Navigator.pop(context, ItemMenuAction.toggleShared);
-                      },
-                    ),
-                  ),
-                ),
+              SettingsRow(
+                icon: PnIcons.users,
+                title: isNote ? l10n.sharedNote : l10n.sharedList,
+                subtitle: !canShare && reservedTo != null
+                    ? l10n.reservedToCreatorShare(reservedTo.name)
+                    : shared
+                    ? l10n.partnerSeesAndEdits(partner.name)
+                    : l10n.onlyYouSeeIt,
+                trailing: PnToggle(on: shared),
+                dimmed: !canShare,
+                onTap: () => pick(ItemMenuAction.toggleShared),
               ),
-            // Why the choice above is greyed out, and Delete missing.
-            if (partner != null && !widget.canShare && creator != null && creator.id != widget.meId)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(l10n.askAuthor(creator.name), style: PnText.meta),
-              ),
-            if (widget.pinned case final pinned?)
-              row(
-                icon: PnIcon(pinned ? PnIcons.pinOff : PnIcons.pin, color: PnColors.terraDark, size: 20),
-                text: Text(
-                  pinned ? l10n.unpinFromHome : l10n.pinToHome,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: PnColors.ink),
-                ),
-                onTap: () => Navigator.pop(context, ItemMenuAction.togglePin),
-              ),
-            if (widget.canDelete)
-              row(
-                icon: const PnIcon(PnIcons.trash, color: PnColors.danger, size: 18),
-                text: Text(
-                  widget.isNote ? l10n.deleteNote : l10n.deleteList,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: PnColors.danger),
-                ),
-                onTap: () => Navigator.pop(context, ItemMenuAction.delete),
+            if (canDelete)
+              SettingsRow(
+                icon: PnIcons.trash,
+                title: deleteTitle,
+                danger: true,
+                onTap: () => pick(ItemMenuAction.delete),
+              )
+            else if (partner != null && reservedTo != null)
+              SettingsRow(
+                icon: PnIcons.trash,
+                title: deleteTitle,
+                subtitle: l10n.reservedToCreatorDelete(reservedTo.name),
+                danger: true,
+                dimmed: true,
               ),
           ],
         ),
+        FutureBuilder(
+          future: changes,
+          builder: (context, snapshot) {
+            final latest = snapshot.data ?? const <Activity>[];
+            if (latest.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l10n.latestChanges, style: PnText.label),
+                  for (final e in latest.take(3)) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        if (partner != null)
+                          if (_member(e.actorId) case final m?) ...[Avatar.of(m, size: 20), const SizedBox(width: 10)],
+                        Expanded(
+                          child: Text(
+                            activityText(l10n, e, meId: meId, solo: partner == null, actor: _member(e.actorId)),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              height: 1.35,
+                              color: PnColors.ink,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(editedLabel(context, e.at), style: PnText.meta),
+                      ],
+                    ),
+                  ],
+                  if (partner != null && creator != null) ...[
+                    const SizedBox(height: 14),
+                    const SoftDivider(),
+                    const SizedBox(height: 10),
+                    Text(creator.id == meId ? l10n.createdByYou : l10n.createdBy(creator.name), style: PnText.meta),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
       ],
     );
-  }
-
-  Member? _member(String id) {
-    for (final m in widget.members) {
-      if (m.id == id) return m;
-    }
-    return null;
   }
 }
 

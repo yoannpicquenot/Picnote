@@ -237,9 +237,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteResentStatus => 'Sent again';
 
   @override
-  String get invitePendingStatus => 'Pending';
-
-  @override
   String get copyCode => 'Copy code';
 
   @override
@@ -256,7 +253,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inviteSub(String household) {
-    return 'Enter their email. We’ll send them a code to join $household.';
+    return 'Enter their email: we’ll send them a code to join $household.';
   }
 
   @override
@@ -405,10 +402,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Share your lists and notes, and see what the other adds.';
 
   @override
-  String get inviteHowSub =>
-      'Send them an email, or give them the code yourself.';
-
-  @override
   String get invitationSent => 'Invitation sent.';
 
   @override
@@ -430,7 +423,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get joinHouseholdSub =>
-      'The 6 characters of the code the other person sent you. Your lists and notes come with you.';
+      'Enter the code your other half shared with you. The lists and notes you already made come with you.';
 
   @override
   String joinedHousehold(String household) {
@@ -560,6 +553,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createAList => 'Create a list';
 
   @override
+  String get firstNoteTitle => 'Your first note.';
+
+  @override
+  String get firstNoteSub => 'An idea, a recipe, the wifi code: keep it here.';
+
+  @override
+  String get createANote => 'Create a note';
+
+  @override
   String get justNow => 'just now';
 
   @override
@@ -574,9 +576,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterdayLower => 'yesterday';
-
-  @override
-  String get noNotesYet => 'No notes yet. Tap + to start one.';
 
   @override
   String get notesTitle => 'Notes.';
@@ -1056,7 +1055,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visibilityShared => 'Shared';
 
   @override
-  String get noDeadline => 'No deadline';
+  String get noDeadline => 'Deadline';
 
   @override
   String get noReminder => 'No reminder';
@@ -1150,6 +1149,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get latestChanges => 'Latest changes';
+
+  @override
+  String get pinnedOnHome => 'Pinned to home';
+
+  @override
+  String get pinnedToHomeSub => 'Shown on your home screen';
+
+  @override
+  String get onlyInAllLists => 'Only in “All lists”';
+
+  @override
+  String partnerSeesAndEdits(String name) {
+    return '$name sees it and can edit it';
+  }
+
+  @override
+  String get onlyYouSeeIt => 'Only you can see it';
+
+  @override
+  String reservedToCreatorShare(String name) {
+    return 'Only $name can change it: they created it';
+  }
+
+  @override
+  String reservedToCreatorDelete(String name) {
+    return 'Only $name can delete it: they created it';
+  }
 
   @override
   String get toShareThisList => 'To share this list';
@@ -1308,17 +1334,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createdByYou => 'Created by you';
-
-  @override
-  String askAuthor(String name) {
-    return 'To make it personal or delete it, ask $name.';
-  }
-
-  @override
-  String get pinToHome => 'Pin to home';
-
-  @override
-  String get unpinFromHome => 'Remove from home';
 
   @override
   String get pinnedToHome => 'List pinned to home';

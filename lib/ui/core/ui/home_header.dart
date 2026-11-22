@@ -243,10 +243,15 @@ class _AvatarGroup extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [BoxShadow(color: PnColors.cream, spreadRadius: 3)],
                 ),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 400),
-                  opacity: whoIsHere.isHere(m) ? 1 : 0.4,
-                  child: Avatar.of(m, size: _size),
+                child: _Arriving(
+                  // This user is always here: only the other one arrives.
+                  here: m.id == whoIsHere.meId || whoIsHere.isHere(m),
+                  color: Color(m.color),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 400),
+                    opacity: whoIsHere.isHere(m) ? 1 : 0.4,
+                    child: Avatar.of(m, size: _size),
+                  ),
                 ),
               ),
             ),
@@ -507,6 +512,74 @@ class _PulsingDotsState extends State<_PulsingDots> with SingleTickerProviderSta
           ],
         ],
       ),
+    );
+  }
+}
+
+/// A ring in the member's color that grows and fades around their avatar
+/// when they open the app (from away to here): twice, then it stops.
+class _Arriving extends StatefulWidget {
+  const _Arriving({required this.here, required this.color, required this.child});
+
+  final bool here;
+  final Color color;
+  final Widget child;
+
+  @override
+  State<_Arriving> createState() => _ArrivingState();
+}
+
+class _ArrivingState extends State<_Arriving> with SingleTickerProviderStateMixin {
+  /// Two waves of 900 ms.
+  static const _waves = 2;
+  late final _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900 * _waves),
+  );
+
+  @override
+  void didUpdateWidget(_Arriving old) {
+    super.didUpdateWidget(old);
+    if (!old.here && widget.here && !MediaQuery.disableAnimationsOf(context)) _c.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        widget.child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: AnimatedBuilder(
+              animation: _c,
+              builder: (context, _) {
+                if (!_c.isAnimating) return const SizedBox.shrink();
+                // Each wave: from the avatar's edge to 1.7 times, 0.7 → 0.
+                final t = Curves.easeOut.transform((_c.value * _waves) % 1);
+                return Transform.scale(
+                  scale: 1 + 0.7 * t,
+                  child: Opacity(
+                    opacity: 0.7 * (1 - t),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: widget.color, width: 2),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
