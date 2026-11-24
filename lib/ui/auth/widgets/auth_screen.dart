@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+import '../../../data/services/gmail_launcher.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../core/themes/colors.dart';
@@ -109,10 +110,7 @@ class _Code extends StatelessWidget {
   static bool _usesGmail(String email) =>
       RegExp(r'@(gmail|googlemail)\.com$', caseSensitive: false).hasMatch(email.trim());
 
-  /// Gmail already searching for Picnote emails. On a phone, the Gmail app
-  /// opens instead when it is installed.
-  static Future<void> _openGmail() =>
-      launchUrl(Uri.parse('https://mail.google.com/mail/u/0/#search/picnote'), mode: LaunchMode.externalApplication);
+  static Future<void> _openGmail() => openGmail('Picnote');
 
   @override
   Widget build(BuildContext context) {
