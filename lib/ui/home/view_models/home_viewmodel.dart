@@ -4,9 +4,11 @@ import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/household/household_repository.dart';
 import '../../../data/repositories/invite_prompt/invite_prompt_repository.dart';
 import '../../../data/repositories/list/list_repository.dart';
+import '../../../data/repositories/memo/memo_repository.dart';
 import '../../../data/repositories/note/note_repository.dart';
 import '../../../domain/models/household.dart';
 import '../../../domain/models/list_stats.dart';
+import '../../../domain/models/memo_task.dart';
 import '../../../domain/models/task.dart';
 import '../../../domain/models/task_list.dart';
 import '../../../utils/command.dart';
@@ -20,11 +22,13 @@ class HomeViewModel extends ChangeNotifier {
     required this._householdRepository,
     required this._noteRepository,
     required this._invitePromptRepository,
+    required this._memoRepository,
   }) {
     _listRepository.addListener(notifyListeners);
     _householdRepository.addListener(notifyListeners);
     _noteRepository.addListener(notifyListeners);
     _invitePromptRepository.addListener(notifyListeners);
+    _memoRepository.addListener(notifyListeners);
     load = Command0(_load)..execute();
   }
 
@@ -33,6 +37,7 @@ class HomeViewModel extends ChangeNotifier {
   final HouseholdRepository _householdRepository;
   final NoteRepository _noteRepository;
   final InvitePromptRepository _invitePromptRepository;
+  final MemoRepository _memoRepository;
 
   late final Command0<void> load;
 
@@ -110,8 +115,31 @@ class HomeViewModel extends ChangeNotifier {
   /// Unchecked first, then checked, each kept in its own order.
   static List<Task> _openFirst(Iterable<Task> tasks) => [...tasks.where((t) => !t.done), ...tasks.where((t) => t.done)];
 
+  /// Null while alone in the household.
+  Member? get partner => _householdRepository.household?.partnerOf(_meId);
+
+  /// What is left in the Pense-bête, for its card.
+  ({int open, int mine, int theirs}) get memoCount => countMemos(_memoRepository.tasks, _meId, partner?.id);
+
+  /// The Pense-bête's reminders of day [n] (0 today, 1 tomorrow) that
+  /// concern me: mine, ours, or no one's in particular. A missed one is
+  /// today's.
+  List<MemoTask> _memosOn(int n) {
+    final mine = _memoRepository.tasks.where(
+      (t) => t.hasReminder && daysFromToday(t.day!) == n && (isSolo || t.concerns(_meId)),
+    );
+    return [...mine.where((t) => !t.done), ...mine.where((t) => t.done)];
+  }
+
+  List<MemoTask> get memosToday => _memosOn(0);
+
+  List<MemoTask> get memosTomorrow => _memosOn(1);
+
+  /// Checks it in the Pense-bête too.
+  Future<void> toggleMemo(MemoTask task) => _memoRepository.updateTask(task.copyWith(done: !task.done));
+
   Future<Result<void>> _load() async {
-    final results = await Future.wait([_listRepository.load(), _noteRepository.load()]);
+    final results = await Future.wait([_listRepository.load(), _noteRepository.load(), _memoRepository.load()]);
     for (final r in results) {
       if (r case Error(:final error)) return Result.error(error);
     }
@@ -126,6 +154,7 @@ class HomeViewModel extends ChangeNotifier {
     _householdRepository.removeListener(notifyListeners);
     _noteRepository.removeListener(notifyListeners);
     _invitePromptRepository.removeListener(notifyListeners);
+    _memoRepository.removeListener(notifyListeners);
     super.dispose();
   }
 }

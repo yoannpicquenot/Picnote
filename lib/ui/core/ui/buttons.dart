@@ -257,3 +257,40 @@ class IconChip extends StatelessWidget {
     );
   }
 }
+
+/// "+ New list", "+ New note": a small night pill at the top right of the
+/// Lists and Notes tabs.
+class NewPill extends StatelessWidget {
+  const NewPill({super.key, required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      scale: 0.96,
+      child: Container(
+        height: 36,
+        padding: const EdgeInsets.fromLTRB(8, 0, 12, 0),
+        decoration: BoxDecoration(color: PnColors.night, borderRadius: BorderRadius.circular(14)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PnIcon(PnIcons.plus, color: PnColors.peach, size: 18),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: PnText.pill.copyWith(color: PnColors.peach),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -12,7 +12,9 @@ import '../../../domain/models/note.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../core/themes/colors.dart';
 import '../../core/themes/theme.dart';
+import '../../core/ui/buttons.dart';
 import '../../core/ui/controls.dart';
+import '../../core/ui/pn_icon.dart';
 import '../../core/ui/selection_handles.dart';
 import '../view_models/note_viewmodel.dart';
 import 'format_bar.dart';
@@ -543,6 +545,25 @@ class NoteEditorState extends State<NoteEditor> with SingleTickerProviderStateMi
     _focus.requestFocus();
   }
 
+  /// A note with nothing in it yet: one plain, empty line.
+  bool get _blank {
+    final doc = controller.document;
+    if (doc.length != 1) return false;
+    final first = doc.root.children.first;
+    return first is Line && first.style.isEmpty;
+  }
+
+  /// From the chips of an empty note: its first line becomes [type], and
+  /// typing starts there.
+  void startWith(NoteBlockType type) {
+    for (final attribute in lineAttributes(type)) {
+      controller.formatText(0, 0, attribute);
+    }
+    controller.updateSelection(const TextSelection.collapsed(offset: 0), ChangeSource.local);
+    _focus.requestFocus();
+    _save();
+  }
+
   Future<void> _editTable(int offset, List<List<String>> cells) async {
     if (!mounted) return;
     await editTable(context, controller, offset, cells);
@@ -624,7 +645,8 @@ class NoteEditorState extends State<NoteEditor> with SingleTickerProviderStateMi
               config: QuillEditorConfig(
                 // The page scrolls, with the title above.
                 scrollable: false,
-                placeholder: l10n.blockTextHint,
+                // Only shown while the note is empty.
+                placeholder: l10n.noteStartWriting,
                 textCapitalization: TextCapitalization.sentences,
                 // Room for the bar above the keyboard.
                 scrollBottomInset: FormatBar.height + 20,
@@ -682,6 +704,13 @@ class NoteEditorState extends State<NoteEditor> with SingleTickerProviderStateMi
                 // ignore: experimental_member_use, the only way to draw the app's own checkbox.
                 customLeadingBlockBuilder: _leading,
               ),
+            ),
+            // An empty note offers a few ways to start, until something is
+            // typed or the "/" menu opens.
+            ListenableBuilder(
+              listenable: Listenable.merge([controller, widget.bars]),
+              builder: (context, _) =>
+                  _blank && widget.bars.value.slash == null ? _StartChips(onPick: startWith) : const SizedBox.shrink(),
             ),
             GestureDetector(behavior: HitTestBehavior.opaque, onTap: _tapTail, child: const SizedBox(height: 80)),
           ],
@@ -1001,6 +1030,57 @@ class _RemoteCaret extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Under an empty note: Heading, Checkbox, List, then a word about "/".
+class _StartChips extends StatelessWidget {
+  const _StartChips({required this.onPick});
+
+  final ValueChanged<NoteBlockType> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    Widget chip(NoteBlockType type, String icon, String label) => Pressable(
+      onTap: () => onPick(type),
+      scale: 0.94,
+      child: Container(
+        height: 36,
+        padding: const EdgeInsets.fromLTRB(10, 0, 12, 0),
+        decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PnIcon(icon, color: PnColors.terraDark, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: PnText.pill.copyWith(color: PnColors.terraDark)),
+          ],
+        ),
+      ),
+    );
+    // Part of the editor: tapping a chip keeps the keyboard.
+    return TextFieldTapRegion(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                chip(NoteBlockType.heading, PnIcons.heading, l10n.blockHeading),
+                chip(NoteBlockType.todo, PnIcons.checkbox, l10n.blockCheckbox),
+                chip(NoteBlockType.bullet, PnIcons.list, l10n.noteChipList),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(l10n.noteOrSlash, style: const TextStyle(fontSize: 12, color: PnColors.muted)),
+          ],
+        ),
       ),
     );
   }

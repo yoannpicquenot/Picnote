@@ -22,12 +22,14 @@ import '../../core/ui/tab_stagger.dart';
 import '../view_models/notes_viewmodel.dart';
 import 'first_note_card.dart';
 
+/// The Notes tab: "+ New note" at the top, then the notes two by two, or
+/// a card to create the first one.
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key, required this.viewModel, this.onCreateNote});
 
   final NotesViewModel viewModel;
 
-  /// Opens a new note (from the empty-state card).
+  /// Opens the "New note" sheet.
   final VoidCallback? onCreateNote;
 
   @override
@@ -52,20 +54,16 @@ class _NotesScreenState extends State<NotesScreen> {
                   gap: 20,
                   children: [
                     const HomeHeaderGap(),
-                    Gap(
-                      gap: 8,
-                      children: [
-                        Text(l10n.notesTitle, style: PnText.greeting),
-                        Text(l10n.notesLede, style: PnText.lede),
-                      ],
-                    ),
-                    // While swiping, the notes trail the title.
-                    TabStagger(
-                      depth: 1,
-                      child: vm.notes.isEmpty
-                          ? RiseIn(child: FirstNoteCard(onCreate: widget.onCreateNote))
-                          : _grid(context, vm),
-                    ),
+                    if (vm.notes.isEmpty)
+                      TabStagger(depth: 1, child: RiseIn(child: FirstNoteCard(onCreate: widget.onCreateNote)))
+                    else ...[
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: NewPill(label: l10n.newNote, onTap: widget.onCreateNote),
+                      ),
+                      // While swiping, the notes trail the button.
+                      TabStagger(depth: 1, child: _grid(context, vm)),
+                    ],
                   ],
                 ),
               ],

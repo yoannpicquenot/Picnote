@@ -10,7 +10,7 @@ import '../../join_household/widgets/join_household_sheet.dart';
 import '../view_models/header_viewmodel.dart';
 import 'tab_pager.dart';
 
-/// Lists (home) and Notes in a [TabPager], under one header and one
+/// Home, Lists and Notes in a [TabPager], under one header and one
 /// watermark that stay in place while swiping between them.
 class HomeTabs extends StatefulWidget {
   const HomeTabs({

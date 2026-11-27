@@ -535,14 +535,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tomorrowTitle => 'Tomorrow.';
 
   @override
-  String seeAllLists(int count) {
-    return 'See all $count lists';
-  }
-
-  @override
-  String get nothingPlanned => 'Nothing planned. Enjoy it.';
-
-  @override
   String get firstListTitle => 'Your first list.';
 
   @override
@@ -576,12 +568,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterdayLower => 'yesterday';
-
-  @override
-  String get notesTitle => 'Notes.';
-
-  @override
-  String get notesLede => 'Something to remember?';
 
   @override
   String get untitled => 'Untitled';
@@ -650,9 +636,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap an item to edit it, drag the dots to move it, swipe left to delete it.';
 
   @override
-  String get allLists => 'All lists';
-
-  @override
   String get home => 'Home';
 
   @override
@@ -676,7 +659,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allListsTitle => 'All lists.';
 
   @override
-  String get noListsYet => 'No lists yet. Tap + to create one.';
+  String get noListsYet => 'No lists yet.';
 
   @override
   String deleteNamed(String name) {
@@ -714,9 +697,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get personalNoteOnlyYou => 'Personal note, only you can see it';
-
-  @override
-  String get slashHint => 'Type / to add a heading, checklist or link.';
 
   @override
   String get reminderTitle => 'Reminder.';
@@ -1350,4 +1330,109 @@ class AppLocalizationsEn extends AppLocalizations {
   String partnerEditedNote(String who, String name) {
     return '$who edited the note “$name”';
   }
+
+  @override
+  String get tabHome => 'Home';
+
+  @override
+  String get noteStartWriting => 'Start writing…';
+
+  @override
+  String get noteOrSlash => 'Or type / for more blocks.';
+
+  @override
+  String get noteChipList => 'List';
+
+  @override
+  String get memoTitle => 'Pense-bête.';
+
+  @override
+  String get memoName => 'Pense-bête';
+
+  @override
+  String memoCardSolo(int count) {
+    return '$count to do';
+  }
+
+  @override
+  String memoCardDuo(int mine, int theirs, String name) {
+    return '$mine for you, $theirs for $name';
+  }
+
+  @override
+  String get memoAddTask => 'Add a task';
+
+  @override
+  String get memoNewTask => 'New task.';
+
+  @override
+  String get memoEditTask => 'Edit task.';
+
+  @override
+  String get memoWhatToDo => 'What needs doing?';
+
+  @override
+  String get memoForWhom => 'For whom?';
+
+  @override
+  String get memoMe => 'Me';
+
+  @override
+  String get memoBoth => 'Both of us';
+
+  @override
+  String get memoRepeat => 'Repeat';
+
+  @override
+  String get memoNone => 'None';
+
+  @override
+  String get memoPick => 'Pick…';
+
+  @override
+  String get memoRepeatNever => 'Never';
+
+  @override
+  String get memoRepeatDaily => 'Every day';
+
+  @override
+  String get memoRepeatWeekly => 'Every week';
+
+  @override
+  String get memoRepeatMonthly => 'Every month';
+
+  @override
+  String get memoRingsForMe => 'Only you will get the reminder.';
+
+  @override
+  String memoRingsFor(String name) {
+    return 'Only $name will get the reminder.';
+  }
+
+  @override
+  String get memoRingsForBoth => 'You’ll both get the reminder.';
+
+  @override
+  String get memoRingsSolo => 'You’ll get the reminder.';
+
+  @override
+  String memoDeleted(String title) {
+    return '“$title” deleted';
+  }
+
+  @override
+  String memoTag(String hour) {
+    return 'Pense-bête, at $hour';
+  }
+
+  @override
+  String memoDetails(String title) {
+    return '$title, details';
+  }
+
+  @override
+  String get memoSave => 'Save';
+
+  @override
+  String get newItem => 'New item';
 }

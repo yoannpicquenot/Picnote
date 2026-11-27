@@ -7,6 +7,7 @@ import 'package:picnote/config/dependencies.dart';
 import 'package:picnote/config/local.dart';
 import 'package:picnote/data/repositories/household/household_repository_local.dart';
 import 'package:picnote/data/repositories/live/live_repository.dart';
+import 'package:picnote/data/repositories/memo/memo_repository.dart';
 import 'package:picnote/data/repositories/note/note_repository.dart';
 import 'package:picnote/domain/models/live.dart';
 import 'package:picnote/domain/models/note.dart';
@@ -22,6 +23,8 @@ import 'package:picnote/ui/core/ui/list_sheet.dart';
 import 'package:picnote/ui/core/ui/selection_handles.dart';
 import 'package:picnote/ui/all_lists/widgets/all_lists_screen.dart';
 import 'package:picnote/ui/list/widgets/list_screen.dart';
+import 'package:picnote/ui/memo/widgets/memo_screen.dart';
+import 'package:picnote/utils/result.dart';
 import 'package:picnote/ui/core/ui/sheet.dart';
 import 'package:picnote/ui/core/ui/task_row.dart';
 import 'package:picnote/ui/note/widgets/format_bar.dart';
@@ -66,11 +69,11 @@ void main() {
       )
       .first;
 
-  /// "+" then "New list" or "New note" in its menu.
+  /// "+ New list" on the Lists tab, or "+ New note" on Notes.
   Future<void> startNew(WidgetTester tester, String item) async {
-    await tester.tap(find.byTooltip('Ajouter'));
+    await tester.tap(find.text(item == 'Nouvelle liste' ? 'Listes' : 'Notes'));
     await settle(tester);
-    await tester.tap(find.text(item));
+    await tester.tap(find.widgetWithText(NewPill, item));
     await settle(tester);
   }
 
@@ -88,6 +91,8 @@ void main() {
         Routes.list('c'),
         Routes.list('b'),
         Routes.lists,
+        Routes.editLists(returnTo: 'b'),
+        Routes.memos,
         Routes.notes,
         Routes.note('ca'),
         Routes.note('mo'),
@@ -197,7 +202,7 @@ void main() {
     expect(find.text('Dîner.'), findsNothing);
   });
 
-  testWidgets('the "+" opens a menu, then the new list sheet', (tester) async {
+  testWidgets('"+ New list" on the Lists tab opens the new list sheet', (tester) async {
     await pumpApp(tester, const Size(390, 844));
 
     await startNew(tester, 'Nouvelle liste');
@@ -261,7 +266,7 @@ void main() {
     final bar = find.ancestor(of: find.text('Listes'), matching: find.byType(IgnorePointer));
     expect(tester.widget<IgnorePointer>(bar.first).ignoring, isTrue);
 
-    await tester.tap(find.text('Accueil'));
+    await tester.tap(find.widgetWithText(BackLink, 'Accueil'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
     expect(fading(), isTrue);
@@ -787,64 +792,218 @@ void main() {
     final tag = find.widgetWithText(InfoPill, 'Courses pour le grand repas de famille du dimanche').first;
     expect(tester.getSize(tag).width, lessThanOrEqualTo(120));
     expect(tester.getSize(tag).height, lessThan(30), reason: 'on one line');
+    await tester.ensureVisible(tag);
+    await settle(tester);
     await tester.tap(tag);
     await settle(tester);
     expect(router.state.uri.path, Routes.list('c'));
   });
 
-  testWidgets('a swipe on a task of Today goes to Notes, and deletes nothing', (tester) async {
+  testWidgets('a swipe on a task of Today goes to Lists, and deletes nothing', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     final repo = tester.element(find.byType(HomeScreen)).read<ListRepository>();
     final before = repo.tasks.length;
     await tester.fling(find.text('Tomates'), const Offset(-300, 0), 1000);
     await settle(tester);
-    expect(router.state.uri.path, Routes.notes);
+    expect(router.state.uri.path, Routes.lists);
     expect(repo.tasks, hasLength(before));
   });
 
-  testWidgets('the bottom bar shows on Lists and Notes only', (tester) async {
+  testWidgets('the bottom bar shows on Home, Lists and Notes only, with no "+"', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
     bool barShown() => tester.getTopLeft(find.text('Listes')).dy < 844;
     expect(barShown(), isTrue);
-    for (final route in [Routes.lists, Routes.settings, Routes.list('c')]) {
+    expect(find.byTooltip('Ajouter'), findsNothing);
+    for (final route in [Routes.settings, Routes.list('c'), Routes.memos, Routes.note('ca')]) {
       router.go(route);
       await settle(tester);
       expect(barShown(), isFalse, reason: route);
     }
-    router.go(Routes.notes);
-    await settle(tester);
-    expect(barShown(), isTrue);
+    for (final route in [Routes.lists, Routes.notes]) {
+      router.go(route);
+      await settle(tester);
+      expect(barShown(), isTrue, reason: route);
+    }
   });
 
-  testWidgets('a swipe sideways goes from Lists to Notes and back', (tester) async {
+  testWidgets('a swipe sideways goes from Home to Lists to Notes and back', (tester) async {
     final router = await pumpApp(tester, const Size(390, 844));
+    final headerTop = tester.getTopLeft(find.text('PICNOTE.'));
     // Mid-swipe, both pages follow the finger, side by side.
     final drag = await tester.startGesture(tester.getCenter(find.text('PICNOTE.')));
     await drag.moveBy(const Offset(-40, 0));
     await drag.moveBy(const Offset(-100, 0));
     await tester.pump();
-    expect(find.text('PICNOTE.'), findsOneWidget, reason: 'one header, shared by both pages');
-    expect(tester.getTopLeft(find.text('PICNOTE.')).dx, 20, reason: 'the header stays in place');
-    expect(find.text('Notes.'), findsOneWidget);
-    expect(tester.getTopLeft(find.text('Notes.')).dx, lessThan(390));
+    expect(find.text('PICNOTE.'), findsOneWidget, reason: 'one header, shared by the pages');
+    expect(tester.getTopLeft(find.text('PICNOTE.')), headerTop, reason: 'the header stays in place');
+    expect(find.text('Épinglées.'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Épinglées.')).dx, lessThan(390));
     // The blocks trail the title: Today, leaving, is further to the left.
     expect(tester.getTopLeft(find.text('Aujourd’hui.')).dx, lessThan(tester.getTopLeft(find.text('Salut Mel,')).dx));
-    // The tabs follow the finger: Lists fading, Notes not yet selected.
-    final lists = tester.widget<Text>(find.text('Listes')).style!.color!;
-    expect(lists, isNot(PnColors.terraDark));
-    expect(lists, isNot(PnColors.muted));
-    // Let go before halfway: back to Lists.
+    // The tabs follow the finger: Home fading, Lists not yet selected.
+    final home = tester.widget<Text>(find.text('Accueil')).style!.color!;
+    expect(home, isNot(PnColors.terraDark));
+    expect(home, isNot(PnColors.muted));
+    // Let go before halfway: back to Home.
     await drag.up();
     await settle(tester);
     expect(router.state.uri.path, Routes.home);
-    expect(find.text('Notes.'), findsNothing);
+    expect(find.text('Épinglées.'), findsNothing);
 
-    await tester.fling(find.text('PICNOTE.'), const Offset(-300, 0), 1000);
+    for (final to in [Routes.lists, Routes.notes]) {
+      await tester.fling(find.text('PICNOTE.'), const Offset(-300, 0), 1000);
+      await settle(tester);
+      expect(router.state.uri.path, to);
+    }
+    for (final to in [Routes.lists, Routes.home]) {
+      await tester.fling(find.text('PICNOTE.'), const Offset(300, 0), 1000);
+      await settle(tester);
+      expect(router.state.uri.path, to);
+    }
+  });
+
+  testWidgets('the header stays put while the page scrolls under it', (tester) async {
+    await pumpApp(tester, const Size(390, 844));
+    final top = tester.getTopLeft(find.text('PICNOTE.'));
+    // Its cream fade shows only once the page is scrolled.
+    double fade() => tester
+        .widget<AnimatedOpacity>(
+          find
+              .ancestor(
+                of: find.byWidgetPredicate(
+                  (w) =>
+                      w is DecoratedBox &&
+                      w.decoration is BoxDecoration &&
+                      (w.decoration as BoxDecoration).gradient?.stops?.contains(0.82) == true,
+                ),
+                matching: find.byType(AnimatedOpacity),
+              )
+              .first,
+        )
+        .opacity;
+    expect(fade(), 0);
+    await tester.drag(find.text('Salut Mel,'), const Offset(0, -300));
     await settle(tester);
-    expect(router.state.uri.path, Routes.notes);
-    await tester.fling(find.text('PICNOTE.'), const Offset(300, 0), 1000);
+    expect(tester.getTopLeft(find.text('PICNOTE.')), top);
+    expect(fade(), 1);
+  });
+
+  testWidgets('the Pense-bête is on home only, and goes back there', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    expect(find.text('3 pour toi, 2 pour Yoann'), findsOneWidget);
+
+    await tester.tap(find.text('Pense-bête.'));
+    await settle(tester);
+    expect(router.state.uri.path, Routes.memos);
+    expect(find.text('Sortir les poubelles'), findsOneWidget);
+    // Its reminder and its repeat on one line.
+    expect(find.textContaining(', chaque semaine'), findsWidgets);
+    await tester.tap(find.widgetWithText(BackLink, 'Accueil'));
     await settle(tester);
     expect(router.state.uri.path, Routes.home);
+
+    // Not on the other tabs.
+    for (final tab in ['Listes', 'Notes']) {
+      await tester.tap(find.text(tab));
+      await settle(tester);
+      expect(find.text('Pense-bête.'), findsNothing, reason: tab);
+    }
+  });
+
+  testWidgets('the Pense-bête adds a task for whom it is for, and deletes with undo in place', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.memos);
+    await settle(tester);
+
+    await tester.tap(find.text('Ajouter une tâche'));
+    await settle(tester);
+    expect(find.text('Nouvelle tâche.'), findsOneWidget);
+    expect(find.text('Pour qui ?'), findsNothing, reason: 'a label for screen readers only');
+    await tester.enterText(find.byType(TextField).first, 'Réserver le resto');
+    await tester.tap(find.text('Nous deux'));
+    await settle(tester);
+    // No reminder yet: nothing to say about who gets it.
+    expect(find.text('Vous recevrez tous les deux le rappel.'), findsNothing);
+    await tester.tap(find.text('Rappel'));
+    await settle(tester);
+    await tester.tap(find.text('Demain').last);
+    await settle(tester);
+    await tester.tap(find.text('20 h'));
+    await settle(tester);
+    expect(find.text('Demain à 20 h'), findsOneWidget);
+    expect(find.text('Vous recevrez tous les deux le rappel.'), findsOneWidget);
+    await tester.tap(find.text('Yoann').last);
+    await settle(tester);
+    expect(find.text('Le rappel ne sonnera que pour Yoann.'), findsOneWidget);
+    await tester.tap(find.text('Ajouter'));
+    await settle(tester);
+    expect(find.text('Réserver le resto'), findsOneWidget);
+    expect(find.text('Demain à 20 h'), findsOneWidget);
+
+    final repo = tester.element(find.byType(MemoScreen)).read<MemoRepository>();
+    final added = repo.tasks.last;
+    expect(added.forId, 'yoann');
+    expect(added.remindHour, 20);
+    expect(added.authorId, 'me');
+
+    final order = [for (final t in repo.tasks) t.id];
+    await tester.drag(find.text('Appeler le plombier'), const Offset(-500, 0));
+    await settle(tester);
+    expect(find.text('Appeler le plombier'), findsNothing);
+    expect(find.text('« Appeler le plombier » supprimée'), findsOneWidget);
+    await tester.tap(find.text('Annuler'));
+    await settle(tester);
+    expect([for (final t in repo.tasks) t.id], order);
+  });
+
+  testWidgets('a list adds item after item from "+ Add an item"', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    router.go(Routes.list('m'));
+    await settle(tester);
+    final repo = tester.element(find.byType(ListScreen)).read<ListRepository>();
+    int count() => repo.tasks.where((t) => t.listId == 'm').length;
+    final before = count();
+
+    expect(find.text('Nouvel élément'), findsNothing, reason: 'a button at first');
+    await tester.tap(find.text('Ajouter un élément'));
+    await settle(tester);
+    final field = find.widgetWithText(TextField, 'Nouvel élément');
+    expect(field, findsOneWidget);
+
+    await tester.enterText(field, 'Ampoules');
+    await tester.tap(find.text('Ajouter un élément'));
+    await settle(tester);
+    expect(count(), before + 1);
+    expect(find.widgetWithText(TextField, 'Nouvel élément'), findsOneWidget, reason: 'open for the next one');
+
+    await tester.enterText(find.widgetWithText(TextField, 'Nouvel élément'), 'Joint');
+    await tester.testTextInput.receiveAction(TextInputAction.next);
+    await settle(tester);
+    expect(count(), before + 2);
+    expect(find.widgetWithText(TextField, 'Nouvel élément'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Nouvel élément'), 'Pas ça');
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle(tester);
+    expect(count(), before + 2, reason: 'Escape adds nothing');
+    expect(find.text('Nouvel élément'), findsNothing);
+  });
+
+  testWidgets('an empty note offers to start with a heading, a checkbox or a list', (tester) async {
+    final router = await pumpApp(tester, const Size(390, 844));
+    final notes = tester.element(find.byType(HomeScreen)).read<NoteRepository>();
+    final created = await notes.createNote(title: '', isShared: false, authorId: 'me');
+    final id = (created as Ok<Note>).value.id;
+    router.go(Routes.note(id));
+    await settle(tester);
+
+    expect(find.text('Commence à écrire…', findRichText: true), findsOneWidget);
+    expect(find.text('Ou tape / pour d’autres blocs.'), findsOneWidget);
+    await tester.tap(find.text('Case à cocher'));
+    await settle(tester);
+    expect(find.text('Ou tape / pour d’autres blocs.'), findsNothing);
+    final editor = tester.state<NoteEditorState>(find.byType(NoteEditor));
+    expect(editor.isList(NoteBlockType.todo), isTrue);
   });
 
   testWidgets('home full: pinning a list goes to all lists to make room, then back to the list', (tester) async {

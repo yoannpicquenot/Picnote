@@ -313,15 +313,6 @@
   "goodNight": "Bonne soirée ?",
   "todayTitle": "Aujourd’hui.",
   "tomorrowTitle": "Demain.",
-  "seeAllLists": "Voir les {count} listes",
-  "@seeAllLists": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "nothingPlanned": "Rien de prévu. Profites-en.",
   "firstListTitle": "Ta première liste.",
   "firstListSub": "Courses, maison, idées cadeaux : commence par ce que tu as en tête.",
   "createAList": "Créer une liste",
@@ -346,8 +337,6 @@
     }
   },
   "yesterdayLower": "hier",
-  "notesTitle": "Notes.",
-  "notesLede": "Une idée à garder ?",
   "untitled": "Sans titre",
   "nowPersonalList": "Liste passée en perso",
   "sharedWith": "Partagée avec {name}",
@@ -393,7 +382,6 @@
   "addItem": "Ajouter un élément",
   "doneSection": "Fait",
   "listHint": "Touche un élément pour le modifier, glisse les points pour le déplacer, ou vers la gauche pour le supprimer.",
-  "allLists": "Toutes les listes",
   "home": "Accueil",
   "personalShareWith": "Perso. Partager avec {name}",
   "@personalShareWith": {
@@ -408,7 +396,7 @@
   "sharedList": "Liste partagée",
   "personalListOnlyYou": "Liste perso, visible par toi uniquement",
   "allListsTitle": "Toutes les listes.",
-  "noListsYet": "Aucune liste. Touche + pour en créer une.",
+  "noListsYet": "Aucune liste pour l’instant.",
   "deleteNamed": "Supprimer {name}",
   "@deleteNamed": {
     "placeholders": {
@@ -434,7 +422,6 @@
   "noteOptions": "Options de la note",
   "sharedNote": "Note partagée",
   "personalNoteOnlyYou": "Note perso, visible par toi uniquement",
-  "slashHint": "Tape / pour ajouter un titre, une liste ou un lien.",
   "reminderTitle": "Rappel.",
   "removeReminder": "Retirer le rappel",
   "reminderBothNotified": "Toi et {name} recevez une notification.",
@@ -913,5 +900,84 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tabHome": "Accueil",
+  "noteStartWriting": "Commence à écrire…",
+  "noteOrSlash": "Ou tape / pour d’autres blocs.",
+  "noteChipList": "Liste",
+  "memoTitle": "Pense-bête.",
+  "memoName": "Pense-bête",
+  "memoCardSolo": "{count} à faire",
+  "@memoCardSolo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "memoCardDuo": "{mine} pour toi, {theirs} pour {name}",
+  "@memoCardDuo": {
+    "placeholders": {
+      "mine": {
+        "type": "int"
+      },
+      "theirs": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memoAddTask": "Ajouter une tâche",
+  "memoNewTask": "Nouvelle tâche.",
+  "memoEditTask": "Modifier la tâche.",
+  "memoWhatToDo": "Qu’est-ce qu’il faut faire ?",
+  "memoForWhom": "Pour qui ?",
+  "memoMe": "Moi",
+  "memoBoth": "Nous deux",
+  "memoRepeat": "Répéter",
+  "memoNone": "Aucun",
+  "memoPick": "Choisir…",
+  "memoRepeatNever": "Jamais",
+  "memoRepeatDaily": "Chaque jour",
+  "memoRepeatWeekly": "Chaque semaine",
+  "memoRepeatMonthly": "Chaque mois",
+  "memoRingsForMe": "Le rappel ne sonnera que pour toi.",
+  "memoRingsFor": "Le rappel ne sonnera que pour {name}.",
+  "@memoRingsFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memoRingsForBoth": "Vous recevrez tous les deux le rappel.",
+  "memoRingsSolo": "Tu recevras le rappel.",
+  "memoDeleted": "« {title} » supprimée",
+  "@memoDeleted": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "memoTag": "Pense-bête, à {hour}",
+  "@memoTag": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      }
+    }
+  },
+  "memoDetails": "{title}, détails",
+  "@memoDetails": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "memoSave": "Valider",
+  "newItem": "Nouvel élément"
 }

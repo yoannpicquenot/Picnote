@@ -3,24 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../core/themes/colors.dart';
 import '../../core/ui/home_header.dart';
 import '../../core/ui/layout.dart';
 import '../../core/ui/tab_stagger.dart';
 
-/// Where the Lists / Notes pager stands: 0 on Lists, 1 on Notes, in
+/// Where the tabs' pager stands: 0 on Home, 1 on Lists, 2 on Notes, in
 /// between while swiping. The bottom bar's tabs follow it.
 final tabsPosition = ValueNotifier<double>(0);
 
-/// Lists and Notes side by side: a swipe drags both along with the
+/// Home, Lists and Notes side by side: a swipe drags them along with the
 /// finger, and they snap into place when it lets go. [onSettled] tells
 /// which page the swipe ended on; [index] (from the route) moves the pages
-/// when a tab is picked another way. Both pages are kept, so each one
-/// keeps its scroll position.
+/// when a tab is picked another way. Every page is kept, so each one keeps
+/// its scroll position.
 ///
-/// [header] and [backdrop] are shared by both pages and do not swipe:
-/// they only follow the page's vertical scroll, blending the two pages'
-/// scroll while a swipe is under way. Each page leaves room for the
-/// header with [HomeHeaderGap].
+/// [header] and [backdrop] are shared by the pages and do not swipe. The
+/// header stays put at the top; the backdrop follows the page's vertical
+/// scroll, blending two pages' scroll while a swipe is under way. Each page
+/// leaves room for the header with [HomeHeaderGap].
 class TabPager extends StatefulWidget {
   const TabPager({
     super.key,
@@ -91,8 +92,8 @@ class _TabPagerState extends State<TabPager> {
     } else {
       _controller.animateToPage(
         widget.index,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeInOutCubic,
+        duration: const Duration(milliseconds: 280),
+        curve: const Cubic(0.2, 0.8, 0.3, 1),
       );
     }
   }
@@ -203,11 +204,47 @@ class _TabPagerState extends State<TabPager> {
           ),
         ),
       ),
+      // Fixed: neither swiping nor scrolling moves it. Once the page is
+      // scrolled, it passes under it, fading out on a cream backdrop that
+      // shows only then.
       Positioned(
         left: 0,
         right: 0,
         top: 0,
-        child: _follow(_SizeReporter(onSize: _onHeaderSize, child: _passDrags(widget.header))),
+        child: _passDrags(
+          Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge([_controller, _scrolled]),
+                    builder: (context, child) => AnimatedOpacity(
+                      opacity: _scroll > 4 ? 1 : 0,
+                      duration: const Duration(milliseconds: 160),
+                      child: child,
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: const [0, 0.82, 1],
+                          colors: [PnColors.cream, PnColors.cream, PnColors.cream.withValues(alpha: 0)],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + homeHeaderTop, bottom: 14),
+                child: ContentWidth(
+                  child: _SizeReporter(onSize: _onHeaderSize, child: widget.header),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ],
   );

@@ -13,6 +13,8 @@ import '../ui/home/view_models/home_viewmodel.dart';
 import '../ui/home/widgets/home_screen.dart';
 import '../ui/list/view_models/list_viewmodel.dart';
 import '../ui/list/widgets/list_screen.dart';
+import '../ui/memo/view_models/memo_viewmodel.dart';
+import '../ui/memo/widgets/memo_screen.dart';
 import '../ui/note/view_models/note_viewmodel.dart';
 import '../ui/note/widgets/note_screen.dart';
 import '../ui/notes/view_models/notes_viewmodel.dart';
@@ -92,6 +94,7 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
                 authRepository: authRepository,
                 householdRepository: householdRepository,
                 listRepository: context.read(),
+                memoRepository: context.read(),
                 noteRepository: context.read(),
                 settingsRepository: context.read(),
               ),
@@ -107,17 +110,36 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
             ),
             GoRoute(
               path: Routes.lists,
+              pageBuilder: (context, state) => _tabs(context, state, 1, authRepository, householdRepository),
+            ),
+            // Opened from a list when home is full: all lists on their own,
+            // in edit mode, to unpin one.
+            GoRoute(
+              path: '/lists-edit',
               pageBuilder: (context, state) => _page(
                 context,
                 state,
                 _Motion.deeper,
                 _Owned(
-                  create: () => AllListsViewModel(
-                    listRepository: context.read(),
-                    householdRepository: householdRepository,
-                    editing: state.uri.queryParameters['edit'] == '1',
-                  ),
+                  create: () => _allLists(context, authRepository, householdRepository, editing: true),
                   builder: (vm) => AllListsScreen(viewModel: vm, returnTo: state.uri.queryParameters['back']),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: Routes.memos,
+              pageBuilder: (context, state) => _page(
+                context,
+                state,
+                _Motion.deeper,
+                _Owned(
+                  create: () => MemoViewModel(
+                    memoRepository: context.read(),
+                    authRepository: authRepository,
+                    householdRepository: householdRepository,
+                    settingsRepository: context.read(),
+                  ),
+                  builder: (vm) => MemoScreen(viewModel: vm),
                 ),
               ),
             ),
@@ -150,7 +172,7 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
             ),
             GoRoute(
               path: Routes.notes,
-              pageBuilder: (context, state) => _tabs(context, state, 1, authRepository, householdRepository),
+              pageBuilder: (context, state) => _tabs(context, state, 2, authRepository, householdRepository),
               routes: [
                 GoRoute(
                   path: ':id',
@@ -221,8 +243,8 @@ GoRouter router(AuthRepository authRepository, HouseholdRepository householdRepo
       ],
     );
 
-/// Lists (home) and Notes, one page for both routes: going from one to the
-/// other moves the pager instead of opening a new page.
+/// Home, Lists and Notes, one page for the three routes: going from one to
+/// another moves the pager instead of opening a new page.
 Page<void> _tabs(
   BuildContext context,
   GoRouterState state,
@@ -245,7 +267,7 @@ Page<void> _tabs(
     builder: (header) => HomeTabs(
       viewModel: header,
       index: index,
-      onSettled: (i) => context.go(i == 0 ? Routes.home : Routes.notes),
+      onSettled: (i) => context.go(Routes.tabs[i]),
       pages: [
         _Owned(
           create: () => HomeViewModel(
@@ -254,9 +276,18 @@ Page<void> _tabs(
             householdRepository: householdRepository,
             noteRepository: context.read(),
             invitePromptRepository: context.read(),
+            memoRepository: context.read(),
           ),
           builder: (vm) =>
               HomeScreen(viewModel: vm, onCreateList: () => startNewList(context, context.read<ShellViewModel>())),
+        ),
+        _Owned(
+          create: () => _allLists(context, authRepository, householdRepository),
+          builder: (vm) => AllListsScreen(
+            viewModel: vm,
+            asTab: true,
+            onCreateList: () => startNewList(context, context.read<ShellViewModel>()),
+          ),
         ),
         _Owned(
           create: () => NotesViewModel(noteRepository: context.read(), householdRepository: householdRepository),
@@ -267,6 +298,13 @@ Page<void> _tabs(
     ),
   ),
 );
+
+AllListsViewModel _allLists(
+  BuildContext context,
+  AuthRepository auth,
+  HouseholdRepository household, {
+  bool editing = false,
+}) => AllListsViewModel(listRepository: context.read(), householdRepository: household, editing: editing);
 
 SettingsViewModel _settings(BuildContext context, AuthRepository auth, HouseholdRepository household) =>
     SettingsViewModel(

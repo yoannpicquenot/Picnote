@@ -1,4 +1,5 @@
 import '../../domain/models/activity.dart';
+import '../../domain/models/memo_task.dart';
 import '../../domain/models/note.dart';
 import '../../domain/models/notification_prefs.dart';
 import '../../domain/models/reminder.dart';
@@ -162,3 +163,34 @@ Activity activityFromRow(Row r) => Activity(
   item: r['item'] as String?,
   at: DateTime.parse(r['at'] as String).toLocal(),
 );
+
+MemoTask memoFromRow(Row r) => MemoTask(
+  id: r['id'] as String,
+  title: r['title'] as String,
+  forId: r['for_id'] as String?,
+  forBoth: r['for_both'] as bool,
+  remindOn: _date(r['remind_on']),
+  remindHour: r['remind_hour'] as int?,
+  repeat: MemoRepeat.values.asNameMap()[r['repeat']] ?? MemoRepeat.never,
+  done: r['done'] as bool,
+  doneAt: switch (r['done_at']) {
+    final String at => DateTime.parse(at).toLocal(),
+    _ => null,
+  },
+  authorId: r['author_id'] as String?,
+);
+
+/// The household is set by the database (see migrations/*memo*).
+Row memoToRow(MemoTask t, {required double position}) => {
+  'id': t.id,
+  'title': t.title,
+  'for_id': t.forId,
+  'for_both': t.forBoth,
+  'remind_on': _dateString(t.remindOn),
+  'remind_hour': t.remindHour,
+  'repeat': t.repeat.name,
+  'done': t.done,
+  'done_at': t.doneAt?.toUtc().toIso8601String(),
+  'author_id': t.authorId,
+  'position': position,
+};

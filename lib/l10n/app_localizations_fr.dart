@@ -538,14 +538,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tomorrowTitle => 'Demain.';
 
   @override
-  String seeAllLists(int count) {
-    return 'Voir les $count listes';
-  }
-
-  @override
-  String get nothingPlanned => 'Rien de prévu. Profites-en.';
-
-  @override
   String get firstListTitle => 'Ta première liste.';
 
   @override
@@ -580,12 +572,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get yesterdayLower => 'hier';
-
-  @override
-  String get notesTitle => 'Notes.';
-
-  @override
-  String get notesLede => 'Une idée à garder ?';
 
   @override
   String get untitled => 'Sans titre';
@@ -654,9 +640,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Touche un élément pour le modifier, glisse les points pour le déplacer, ou vers la gauche pour le supprimer.';
 
   @override
-  String get allLists => 'Toutes les listes';
-
-  @override
   String get home => 'Accueil';
 
   @override
@@ -680,7 +663,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get allListsTitle => 'Toutes les listes.';
 
   @override
-  String get noListsYet => 'Aucune liste. Touche + pour en créer une.';
+  String get noListsYet => 'Aucune liste pour l’instant.';
 
   @override
   String deleteNamed(String name) {
@@ -718,9 +701,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get personalNoteOnlyYou => 'Note perso, visible par toi uniquement';
-
-  @override
-  String get slashHint => 'Tape / pour ajouter un titre, une liste ou un lien.';
 
   @override
   String get reminderTitle => 'Rappel.';
@@ -1358,4 +1338,109 @@ class AppLocalizationsFr extends AppLocalizations {
   String partnerEditedNote(String who, String name) {
     return '$who a modifié la note « $name »';
   }
+
+  @override
+  String get tabHome => 'Accueil';
+
+  @override
+  String get noteStartWriting => 'Commence à écrire…';
+
+  @override
+  String get noteOrSlash => 'Ou tape / pour d’autres blocs.';
+
+  @override
+  String get noteChipList => 'Liste';
+
+  @override
+  String get memoTitle => 'Pense-bête.';
+
+  @override
+  String get memoName => 'Pense-bête';
+
+  @override
+  String memoCardSolo(int count) {
+    return '$count à faire';
+  }
+
+  @override
+  String memoCardDuo(int mine, int theirs, String name) {
+    return '$mine pour toi, $theirs pour $name';
+  }
+
+  @override
+  String get memoAddTask => 'Ajouter une tâche';
+
+  @override
+  String get memoNewTask => 'Nouvelle tâche.';
+
+  @override
+  String get memoEditTask => 'Modifier la tâche.';
+
+  @override
+  String get memoWhatToDo => 'Qu’est-ce qu’il faut faire ?';
+
+  @override
+  String get memoForWhom => 'Pour qui ?';
+
+  @override
+  String get memoMe => 'Moi';
+
+  @override
+  String get memoBoth => 'Nous deux';
+
+  @override
+  String get memoRepeat => 'Répéter';
+
+  @override
+  String get memoNone => 'Aucun';
+
+  @override
+  String get memoPick => 'Choisir…';
+
+  @override
+  String get memoRepeatNever => 'Jamais';
+
+  @override
+  String get memoRepeatDaily => 'Chaque jour';
+
+  @override
+  String get memoRepeatWeekly => 'Chaque semaine';
+
+  @override
+  String get memoRepeatMonthly => 'Chaque mois';
+
+  @override
+  String get memoRingsForMe => 'Le rappel ne sonnera que pour toi.';
+
+  @override
+  String memoRingsFor(String name) {
+    return 'Le rappel ne sonnera que pour $name.';
+  }
+
+  @override
+  String get memoRingsForBoth => 'Vous recevrez tous les deux le rappel.';
+
+  @override
+  String get memoRingsSolo => 'Tu recevras le rappel.';
+
+  @override
+  String memoDeleted(String title) {
+    return '« $title » supprimée';
+  }
+
+  @override
+  String memoTag(String hour) {
+    return 'Pense-bête, à $hour';
+  }
+
+  @override
+  String memoDetails(String title) {
+    return '$title, détails';
+  }
+
+  @override
+  String get memoSave => 'Valider';
+
+  @override
+  String get newItem => 'Nouvel élément';
 }

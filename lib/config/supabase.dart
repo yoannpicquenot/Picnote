@@ -8,6 +8,7 @@ import '../data/repositories/household/household_repository_supabase.dart';
 import '../data/repositories/invite_prompt/invite_prompt_repository_device.dart';
 import '../data/repositories/list/list_repository_supabase.dart';
 import '../data/repositories/live/live_repository_supabase.dart';
+import '../data/repositories/memo/memo_repository_supabase.dart';
 import '../data/repositories/note/note_repository_supabase.dart';
 import '../data/repositories/push/push_repository.dart';
 import '../data/repositories/push/push_repository_supabase.dart';
@@ -28,6 +29,7 @@ Future<Repositories> supabaseRepositories() async {
   final auth = AuthRepositorySupabase(client);
   final household = HouseholdRepositorySupabase(client);
   final lists = ListRepositorySupabase(client);
+  final memos = MemoRepositorySupabase(client);
   final notes = NoteRepositorySupabase(client);
   final settings = SettingsRepositorySupabase(client);
   final activity = ActivityRepositorySupabase(client);
@@ -47,6 +49,7 @@ Future<Repositories> supabaseRepositories() async {
     final scope = householdId ?? 'user-$userId';
     return ready = Future.wait([
       lists.watch(userId, topic: 'lists:$scope'),
+      memos.watch(householdId == null ? null : userId, topic: 'memos:$scope'),
       notes.watch(userId, topic: 'notes:$scope'),
       activity.watch(userId, householdId),
       live.watch(userId, householdId),
@@ -67,6 +70,7 @@ Future<Repositories> supabaseRepositories() async {
     auth: auth,
     household: household,
     lists: lists,
+    memos: memos,
     notes: notes,
     settings: settings,
     activity: activity,

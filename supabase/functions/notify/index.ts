@@ -4,6 +4,9 @@
 // every minute by the `notify-activity` cron job (see migrations/*push*).
 // Called on the hour with {"kind": "reminders"} by the `daily-reminders`
 // job, it reminds each phone whose hour it is of what is left to do.
+// Called every 5 minutes with {"kind": "memos"} by the `memo-reminders`
+// job, it sends the Pense-bête reminders whose time has come, only to whom
+// each one is for.
 //
 // Secret: FIREBASE_SERVICE_ACCOUNT, the JSON key of a Firebase service
 // account (Firebase console > Project settings > Service accounts).
@@ -30,6 +33,17 @@ type Burst = {
 /** A phone to remind, from due_reminders. */
 type Reminder = { token: string; locale: string; today: string[]; tomorrow: string[] };
 
+/** A Pense-bête reminder that is due, from claim_memo_reminders. */
+type Memo = {
+  task_id: string;
+  title: string;
+  author_name: string | null;
+  repeat: "never" | "daily" | "weekly" | "monthly";
+  /** YYYY-MM-DD, the day it rang for. */
+  remind_on: string;
+  devices: Device[];
+};
+
 type ServiceAccount = { project_id: string; client_email: string; private_key: string };
 
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -41,6 +55,7 @@ Deno.serve(async (request) => {
   const account = JSON.parse(secret) as ServiceAccount;
   const body = await request.json().catch(() => ({}));
   if (body?.kind === "reminders") return await remind(account);
+  if (body?.kind === "memos") return await remindMemos(account);
 
   const { data, error } = await supabase.rpc("claim_activity_notifications");
   if (error) return Response.json({ error: error.message }, { status: 500 });
@@ -75,6 +90,26 @@ async function remind(account: ServiceAccount): Promise<Response> {
   return Response.json({ sent });
 }
 
+/** Claimed even without phones to send to: a repeating one still moves on. */
+async function remindMemos(account: ServiceAccount): Promise<Response> {
+  const { data, error } = await supabase.rpc("claim_memo_reminders");
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+  const memos = (data ?? []) as Memo[];
+  if (!memos.some((m) => m.devices.length > 0)) return Response.json({ sent: 0 });
+
+  const accessToken = await googleAccessToken(account);
+  let sent = 0;
+  for (const memo of memos) {
+    for (const device of memo.devices) {
+      const message = memoWording(memo, device.locale === "fr" ? fr : en);
+      if (await send(account.project_id, accessToken, device.token, message, "/pense-bete", `memo-${memo.task_id}`)) {
+        sent++;
+      }
+    }
+  }
+  return Response.json({ sent });
+}
+
 // ---------------------------------------------------------------------------
 // Wording
 // ---------------------------------------------------------------------------
@@ -95,7 +130,14 @@ type Words = {
   leftToday: (n: number) => string;
   leftTomorrow: (n: number) => string;
   tomorrow: string;
+  addedBy: (who: string) => string;
+  daily: string;
+  weekly: (weekday: number) => string;
+  monthly: string;
 };
+
+const frDays = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const enDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const fr: Words = {
   untitled: "Sans titre",
@@ -113,6 +155,10 @@ const fr: Words = {
   leftToday: (n) => `${n} chose${n > 1 ? "s" : ""} à faire aujourd’hui`,
   leftTomorrow: (n) => `${n} chose${n > 1 ? "s" : ""} à faire demain`,
   tomorrow: "Demain",
+  addedBy: (who) => `Ajoutée par ${who}`,
+  daily: "chaque jour",
+  weekly: (d) => `chaque ${frDays[d]}`,
+  monthly: "chaque mois",
 };
 
 const en: Words = {
@@ -131,7 +177,27 @@ const en: Words = {
   leftToday: (n) => `${n} thing${n > 1 ? "s" : ""} to do today`,
   leftTomorrow: (n) => `${n} thing${n > 1 ? "s" : ""} to do tomorrow`,
   tomorrow: "Tomorrow",
+  addedBy: (who) => `Added by ${who}`,
+  daily: "every day",
+  weekly: (d) => `every ${enDays[d]}`,
+  monthly: "every month",
 };
+
+/** The task as title; "Ajoutée par Mel, chaque mardi" below. */
+function memoWording(m: Memo, w: Words): { title: string; body?: string } {
+  const weekday = new Date(`${m.remind_on}T12:00:00Z`).getUTCDay();
+  const repeat = m.repeat === "daily"
+    ? w.daily
+    : m.repeat === "weekly"
+    ? w.weekly(weekday)
+    : m.repeat === "monthly"
+    ? w.monthly
+    : null;
+  const parts = [m.author_name ? w.addedBy(m.author_name) : null, repeat].filter((p) => p != null) as string[];
+  if (parts.length === 0) return { title: m.title };
+  const body = parts.join(", ");
+  return { title: m.title, body: body[0].toUpperCase() + body.slice(1) };
+}
 
 /** "Lait, Pain et Œufs", or "Lait, Pain, Œufs et 2 autres". */
 function itemList(items: string[], w: Words): string {

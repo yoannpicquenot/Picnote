@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../../data/repositories/auth/auth_repository.dart';
 import '../../../data/repositories/household/household_repository.dart';
 import '../../../data/repositories/list/list_repository.dart';
+import '../../../data/repositories/memo/memo_repository.dart';
 import '../../../data/repositories/note/note_repository.dart';
 import '../../../data/repositories/settings/settings_repository.dart';
 import '../../../domain/models/household.dart';
@@ -14,8 +15,8 @@ import '../../../utils/result.dart';
 /// A list or a note the housemate just created, or [edited].
 typedef Creation = ({Member author, String name, String id, bool isNote, bool edited});
 
-/// The bottom bar's "+" creates a list or a note. Also notices when a
-/// pinned list gets done, to offer unpinning it, clears yesterday's
+/// Creates lists and notes (from the Lists and Notes tabs). Also notices
+/// when a pinned list gets done, to offer unpinning it, clears yesterday's
 /// checked tasks at midnight, and tells when the housemate creates or
 /// changes a list or a note.
 class ShellViewModel extends ChangeNotifier {
@@ -23,6 +24,7 @@ class ShellViewModel extends ChangeNotifier {
     required this._authRepository,
     required this._householdRepository,
     required this._listRepository,
+    required this._memoRepository,
     required this._noteRepository,
     required this._settingsRepository,
   }) {
@@ -49,11 +51,13 @@ class ShellViewModel extends ChangeNotifier {
 
   /// Also called when the app comes back: a sleeping phone may run the
   /// midnight timer late.
-  Future<void> archiveStaleTasks() => _listRepository.archiveStaleTasks();
+  Future<void> archiveStaleTasks() =>
+      Future.wait([_listRepository.archiveStaleTasks(), _memoRepository.archiveStaleTasks()]);
 
   final AuthRepository _authRepository;
   final HouseholdRepository _householdRepository;
   final ListRepository _listRepository;
+  final MemoRepository _memoRepository;
   final NoteRepository _noteRepository;
   final SettingsRepository _settingsRepository;
 

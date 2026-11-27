@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:picnote/data/repositories/invite_prompt/invite_prompt_repository.dart';
+import 'package:picnote/data/repositories/memo/memo_repository_local.dart';
 import 'package:picnote/data/repositories/note/note_repository_local.dart';
 import 'package:picnote/domain/models/household.dart';
 import 'package:picnote/domain/models/task.dart';
@@ -20,6 +21,7 @@ void main() {
         householdRepository: FakeHouseholdRepository(household: household),
         noteRepository: NoteRepositoryLocal(),
         invitePromptRepository: invitePrompt ?? InvitePromptRepositoryLocal(),
+        memoRepository: MemoRepositoryLocal(),
       );
 
   group('HomeViewModel', () {

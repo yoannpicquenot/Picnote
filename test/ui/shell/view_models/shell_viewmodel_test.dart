@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:picnote/data/repositories/list/list_repository.dart';
+import 'package:picnote/data/repositories/memo/memo_repository_local.dart';
 import 'package:picnote/data/repositories/note/note_repository.dart';
 import 'package:picnote/data/repositories/note/note_repository_local.dart';
 import 'package:picnote/data/repositories/settings/settings_repository.dart';
@@ -28,6 +29,7 @@ void main() {
         authRepository: FakeAuthRepository(),
         householdRepository: FakeHouseholdRepository(household: kDuo),
         listRepository: lists,
+        memoRepository: MemoRepositoryLocal(),
         noteRepository: notes,
         settingsRepository: SettingsRepositoryLocal(),
       );

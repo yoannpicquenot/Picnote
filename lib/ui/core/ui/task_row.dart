@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 
 import '../../../domain/models/household.dart';
 import '../../../domain/models/task.dart';
@@ -9,7 +10,9 @@ import '../../../l10n/app_localizations.dart';
 import '../themes/colors.dart';
 import '../themes/theme.dart';
 import 'avatar.dart';
+import 'buttons.dart';
 import 'controls.dart';
+import 'pn_icon.dart';
 
 /// A task: checkbox, title (tap to rename, or to check when [onRename] is
 /// null), optional tag or author avatar, and a drag handle. Swipe left to
@@ -198,15 +201,69 @@ class Grip extends StatelessWidget {
   }
 }
 
-/// Empty checkbox + field to append a task. Keeps focus after Enter.
+/// "+ Add an item": a peach square with a plus, and the label.
+class AddRowButton extends StatelessWidget {
+  const AddRowButton({super.key, required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      scale: 0.98,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: PnColors.peach, borderRadius: BorderRadius.circular(12)),
+              child: const PnIcon(PnIcons.plus, color: PnColors.terraDark, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: PnColors.terraDark),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "+ Add an item" under a list. Touched, it becomes a field; the button
+/// stays under it while typing. The button, Enter or leaving the field
+/// adds what was typed, the first two opening the next one at once (the
+/// keyboard stays). Escape closes it without adding.
 class AddTaskRow extends StatefulWidget {
-  const AddTaskRow({super.key, required this.onAdd, required this.placeholder, this.autofocus = false, this.onTyping});
+  const AddTaskRow({
+    super.key,
+    required this.onAdd,
+    required this.label,
+    required this.placeholder,
+    this.autofocus = false,
+    this.onTyping,
+  });
 
   final ValueChanged<String> onAdd;
 
   /// The text as it is typed, empty again once added.
   final ValueChanged<String>? onTyping;
+
+  /// The button's ("Add an item").
+  final String label;
+
+  /// The field's, once open.
   final String placeholder;
+
+  /// Opens on the field (an empty list).
   final bool autofocus;
 
   @override
@@ -216,13 +273,15 @@ class AddTaskRow extends StatefulWidget {
 class _AddTaskRowState extends State<AddTaskRow> {
   final _controller = TextEditingController();
   final _focus = FocusNode();
+  late bool _editing = widget.autofocus;
 
   @override
   void initState() {
     super.initState();
     _focus.addListener(() {
-      setState(() {});
-      if (!_focus.hasFocus) _submit(keepFocus: false);
+      if (_focus.hasFocus) return;
+      _submit(keepFocus: false);
+      if (mounted) setState(() => _editing = false);
     });
   }
 
@@ -233,57 +292,85 @@ class _AddTaskRowState extends State<AddTaskRow> {
     super.dispose();
   }
 
+  void _open() {
+    setState(() => _editing = true);
+    // Once the field is built.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _editing) _focus.requestFocus();
+    });
+  }
+
   void _submit({required bool keepFocus}) {
     final text = _controller.text.trim();
-    if (text.isEmpty) return;
-    widget.onAdd(text);
+    if (text.isNotEmpty) {
+      widget.onAdd(text);
+      _controller.clear();
+      widget.onTyping?.call('');
+    }
+    if (keepFocus) _focus.requestFocus();
+  }
+
+  /// Escape: closes, nothing added.
+  void _cancel() {
     _controller.clear();
     widget.onTyping?.call('');
-    if (keepFocus) _focus.requestFocus();
+    _focus.unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
-    final active = _focus.hasFocus || _controller.text.isNotEmpty;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: active ? 1 : 0.35,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: PnColors.terra, width: 2),
+    // Part of the field: tapping it neither closes the field nor the
+    // keyboard.
+    final button = TextFieldTapRegion(
+      child: AddRowButton(label: widget.label, onTap: _editing ? () => _submit(keepFocus: true) : _open),
+    );
+    if (!_editing) return Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: button);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: PnColors.terra, width: 2),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focus,
-              autofocus: widget.autofocus,
-              style: PnText.body,
-              // Each new item starts with a capital.
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.next,
-              onChanged: (text) {
-                setState(() {});
-                widget.onTyping?.call(text);
-              },
-              onSubmitted: (_) => _submit(keepFocus: true),
-              decoration: InputDecoration.collapsed(
-                hintText: widget.placeholder,
-                hintStyle: PnText.body.copyWith(color: PnColors.placeholder),
+              const SizedBox(width: 12),
+              Expanded(
+                child: CallbackShortcuts(
+                  bindings: {const SingleActivator(LogicalKeyboardKey.escape): _cancel},
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focus,
+                    autofocus: widget.autofocus,
+                    style: PnText.body,
+                    cursorColor: PnColors.terra,
+                    // Each new item starts with a capital.
+                    textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.next,
+                    onChanged: (text) => widget.onTyping?.call(text),
+                    // Not the default for "next", which moves the focus on
+                    // and would close the field.
+                    onEditingComplete: () {},
+                    onSubmitted: (_) => _submit(keepFocus: true),
+                    decoration: InputDecoration.collapsed(
+                      hintText: widget.placeholder,
+                      hintStyle: PnText.body.copyWith(color: PnColors.placeholder),
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 6),
+        button,
+      ],
     );
   }
 }

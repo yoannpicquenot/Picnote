@@ -7,7 +7,6 @@ import '../../../domain/models/task_list.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routing/routes.dart';
 import '../../core/themes/colors.dart';
-import '../../core/ui/buttons.dart';
 import '../../core/ui/list_sheet.dart';
 import '../../core/ui/layout.dart';
 import '../../core/ui/pn_icon.dart';
@@ -41,9 +40,10 @@ Future<void> startNewNote(BuildContext context, ShellViewModel viewModel) async 
   if (id != null && context.mounted) context.go(Routes.note(id));
 }
 
-/// Lists / Notes tabs around a raised "+" in a floating bar. The "+" opens
-/// a menu to create a list or a note. The bar slides away inside a list or
-/// a note, while a sheet is open and while the keyboard is up.
+/// Home, Lists and Notes tabs in a floating bar. Lists and notes are
+/// created from their own tab. The bar slides away everywhere else (a list,
+/// a note, the Pense-bête, settings), while a sheet is open and while the
+/// keyboard is up.
 class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.viewModel, required this.location, required this.child});
 
@@ -58,7 +58,6 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   static const _ease = Cubic(0.2, 0.8, 0.3, 1);
 
-  bool _addOpen = false;
   StreamSubscription<TaskList>? _completed;
   StreamSubscription<Creation>? _partnerCreated;
   bool _barHidden = false;
@@ -122,41 +121,28 @@ class _AppShellState extends State<AppShell> {
 
   String get _location => widget.location;
 
-  /// A list or a note is open.
-  /// Lists or Notes: the bar shows only there, not on the pages opened
-  /// from them (a list, a note, all lists, settings…).
-  bool get _onTabs => _location == Routes.home || _location == Routes.notes;
+  /// Home, Lists or Notes: the bar shows only there, not on the pages
+  /// opened from them.
+  bool get _onTabs => Routes.tabs.contains(_location);
 
-  /// Settings select no tab; all lists belong to Lists.
+  /// Settings and the Pense-bête select no tab; a list belongs to Lists, a
+  /// note to Notes.
   int get _tab {
-    if (_location.startsWith(Routes.settings)) return -1;
-    return _location.startsWith(Routes.notes) ? 1 : 0;
-  }
-
-  void _setAdd(bool open) {
-    if (open != _addOpen) setState(() => _addOpen = open);
-  }
-
-  void _pick(bool note) {
-    _setAdd(false);
-    note ? startNewNote(context, widget.viewModel) : startNewList(context, widget.viewModel);
+    if (_location.startsWith(Routes.settings) || _location.startsWith(Routes.memos)) return -1;
+    if (_location.startsWith(Routes.notes)) return 2;
+    return _location.startsWith(Routes.lists) ? 1 : 0;
   }
 
   @override
   void didUpdateWidget(AppShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.location != widget.location) {
-      _addOpen = false;
-      // A new page starts at the top.
-      _scrolled = false;
-    }
+    // A new page starts at the top.
+    if (oldWidget.location != widget.location) _scrolled = false;
   }
 
-  /// The page's own vertical scroll (inside the Lists / Notes pager, one
-  /// level down), not a field inside it. A swipe between the two tabs
-  /// closes the "+" menu.
+  /// The page's own vertical scroll (inside the tabs' pager, one level
+  /// down), not a field inside it.
   bool _onScroll(ScrollNotification n) {
-    if (n.depth == 0 && n.metrics.axis == Axis.horizontal && n is ScrollStartNotification) _setAdd(false);
     if (n.depth <= 1 && n.metrics.axis == Axis.vertical) {
       final scrolled = n.metrics.pixels > 4;
       if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
@@ -174,16 +160,12 @@ class _AppShellState extends State<AppShell> {
         final hidden = !_onTabs || sheets > 0 || MediaQuery.viewInsetsOf(context).bottom > 0;
         _barHidden = hidden;
         return PopScope(
-          // Android back closes the "+" menu first, then goes back to home,
-          // and stops there: it never leaves the app.
+          // Android back goes back to home, and stops there: it never
+          // leaves the app.
           canPop: false,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
-            if (_addOpen) {
-              _setAdd(false);
-            } else if (_location != Routes.home) {
-              context.go(Routes.home);
-            }
+            if (_location != Routes.home) context.go(Routes.home);
           },
           child: Scaffold(
             resizeToAvoidBottomInset: true,
@@ -195,29 +177,31 @@ class _AppShellState extends State<AppShell> {
                     child: BottomBarVisibility(visible: !hidden, child: widget.child),
                   ),
                 ),
-                // Content scrolled up fades out under the status bar.
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  height: MediaQuery.paddingOf(context).top + 28,
-                  child: IgnorePointer(
-                    child: AnimatedOpacity(
-                      opacity: _scrolled ? 1 : 0,
-                      duration: const Duration(milliseconds: 160),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            stops: const [0, 0.55, 1],
-                            colors: [PnColors.cream, PnColors.cream, PnColors.cream.withValues(alpha: 0)],
+                // Content scrolled up fades out under the status bar. The
+                // tabs have their own header for that.
+                if (!_onTabs)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    height: MediaQuery.paddingOf(context).top + 28,
+                    child: IgnorePointer(
+                      child: AnimatedOpacity(
+                        opacity: _scrolled ? 1 : 0,
+                        duration: const Duration(milliseconds: 160),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              stops: const [0, 0.55, 1],
+                              colors: [PnColors.cream, PnColors.cream, PnColors.cream.withValues(alpha: 0)],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
                 Positioned(
                   left: 0,
                   right: 0,
@@ -240,17 +224,6 @@ class _AppShellState extends State<AppShell> {
                     ),
                   ),
                 ),
-                if (_addOpen && !hidden)
-                  Positioned.fill(
-                    child: _AddMenu(
-                      bottom: 108 + bottomInset,
-                      onClose: () => _setAdd(false),
-                      items: [
-                        (PnIcons.list, l10n.newList, () => _pick(false)),
-                        (PnIcons.document, l10n.newNote, () => _pick(true)),
-                      ],
-                    ),
-                  ),
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 260),
                   curve: _ease,
@@ -271,17 +244,15 @@ class _AppShellState extends State<AppShell> {
                               valueListenable: tabsPosition,
                               builder: (context, position, _) => _BottomBar(
                                 tab: _tab,
-                                // On Lists or Notes, the tabs follow the pager as
-                                // it is swiped, not just once it has settled.
+                                // On the tabs, they follow the pager as it is
+                                // swiped, not just once it has settled.
                                 position: _onTabs ? position : null,
-                                tabs: [(PnIcons.list, l10n.tabLists), (PnIcons.document, l10n.tabNotes)],
-                                onTab: (i) {
-                                  _setAdd(false);
-                                  context.go(i == 0 ? Routes.home : Routes.notes);
-                                },
-                                addOpen: _addOpen,
-                                onAdd: () => _setAdd(!_addOpen),
-                                addLabel: l10n.add,
+                                tabs: [
+                                  ((c) => PnIcon.list(ListIcon.house, color: c, size: 22), l10n.tabHome),
+                                  ((c) => PnIcon(PnIcons.list, color: c, size: 22), l10n.tabLists),
+                                  ((c) => PnIcon(PnIcons.document, color: c, size: 22), l10n.tabNotes),
+                                ],
+                                onTab: (i) => context.go(Routes.tabs[i]),
                               ),
                             ),
                           ),
@@ -300,32 +271,20 @@ class _AppShellState extends State<AppShell> {
 }
 
 class _BottomBar extends StatelessWidget {
-  const _BottomBar({
-    required this.tab,
-    this.position,
-    required this.tabs,
-    required this.onTab,
-    required this.addOpen,
-    required this.onAdd,
-    required this.addLabel,
-  });
+  const _BottomBar({required this.tab, this.position, required this.tabs, required this.onTab});
 
   /// -1 when no tab is selected (settings).
   final int tab;
 
-  /// The pager's position between the two tabs, when it shows: each tab is
+  /// The pager's position between the tabs, when it shows: each tab is
   /// then as selected as the pager is close to its page.
   final double? position;
-  final List<(String, String)> tabs;
+
+  /// Each tab's icon, in a given color, and label.
+  final List<(Widget Function(Color), String)> tabs;
   final ValueChanged<int> onTab;
-  final bool addOpen;
-  final VoidCallback onAdd;
-  final String addLabel;
 
   static const _height = 68.0;
-
-  /// How far the "+" rises above the bar.
-  static const _rise = 15.0;
 
   @override
   Widget build(BuildContext context) {
@@ -352,10 +311,12 @@ class _BottomBar extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      PnIcon(icon, color: color, size: 22),
+                      icon(color),
                       const SizedBox(height: 4),
                       Text(
                         label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: DefaultTextStyle.of(context).style.fontFamily,
                           fontWeight: on > 0.5 ? FontWeight.w600 : FontWeight.w500,
@@ -385,148 +346,15 @@ class _BottomBar extends StatelessWidget {
       );
     }
 
-    // Taller than the bar so the raised "+" can be tapped above it.
-    return SizedBox(
-      height: _height + _rise,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: _height,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: PnColors.snow,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [BoxShadow(color: PnColors.shadow, blurRadius: 40, offset: Offset(0, 8))],
-              ),
-              child: Row(children: [tabButton(0), const SizedBox(width: 80), tabButton(1)]),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Tooltip(
-                message: addLabel,
-                child: Semantics(
-                  expanded: addOpen,
-                  child: Pressable(
-                    onTap: onAdd,
-                    scale: 0.94,
-                    semanticLabel: addLabel,
-                    builder: (context, pressed) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 140),
-                      width: 64,
-                      height: 64,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: pressed ? PnColors.terraPressed : PnColors.night,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x521C120D), blurRadius: 12, offset: Offset(3, 4)),
-                          BoxShadow(color: PnColors.snow, spreadRadius: 5),
-                        ],
-                      ),
-                      child: AnimatedRotation(
-                        turns: addOpen ? 0.125 : 0,
-                        duration: const Duration(milliseconds: 220),
-                        curve: _AppShellState._ease,
-                        child: const PnIcon(PnIcons.plus, color: PnColors.peach, size: 32),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+    return Container(
+      height: _height,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: PnColors.snow,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [BoxShadow(color: PnColors.shadow, blurRadius: 40, offset: Offset(0, 8))],
       ),
-    );
-  }
-}
-
-/// "New list" / "New note", over a light scrim above the bar. A tap on
-/// the scrim closes it.
-class _AddMenu extends StatelessWidget {
-  const _AddMenu({required this.bottom, required this.onClose, required this.items});
-
-  final double bottom;
-  final VoidCallback onClose;
-  final List<(String, String, VoidCallback)> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final still = MediaQuery.disableAnimationsOf(context);
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: still ? 1 : 0, end: 1),
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      builder: (context, t, menu) => Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onClose,
-              child: ColoredBox(color: Color.fromRGBO(28, 18, 13, 0.25 * t)),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: bottom,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 484),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Opacity(
-                    opacity: t,
-                    child: Transform.scale(scale: 0.94 + 0.06 * t, alignment: Alignment.bottomCenter, child: menu),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: PnColors.snow,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [BoxShadow(color: Color(0x2E583727), blurRadius: 40, offset: Offset(0, 8))],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (icon, label, onTap) in items)
-              Pressable(
-                onTap: onTap,
-                scale: 0.98,
-                child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      PnIcon(icon, color: PnColors.terraDark, size: 20),
-                      const SizedBox(width: 12),
-                      Text(
-                        label,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: PnColors.ink),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+      child: Row(children: [for (var i = 0; i < tabs.length; i++) tabButton(i)]),
     );
   }
 }

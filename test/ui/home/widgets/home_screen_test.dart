@@ -4,14 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:picnote/data/repositories/household/household_repository.dart';
 import 'package:picnote/data/repositories/household/household_repository_local.dart';
 import 'package:picnote/data/repositories/invite_prompt/invite_prompt_repository.dart';
+import 'package:picnote/data/repositories/memo/memo_repository_local.dart';
 import 'package:picnote/data/repositories/note/note_repository_local.dart';
 import 'package:picnote/domain/models/household.dart';
+import 'package:picnote/domain/models/memo_task.dart';
 import 'package:picnote/l10n/app_localizations.dart';
 import 'package:picnote/ui/core/themes/theme.dart';
 import 'package:picnote/ui/home/view_models/home_viewmodel.dart';
 import 'package:picnote/ui/home/widgets/home_screen.dart';
 import 'package:picnote/ui/invite/widgets/invite_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:picnote/utils/dates.dart';
 
 import '../../../../testing/fakes/repositories/fake_auth_repository.dart';
 import '../../../../testing/fakes/repositories/fake_household_repository.dart';
@@ -27,7 +30,7 @@ void main() {
     repository = FakeListRepository(lists: [kSharedList, kPersonalList], tasks: kSharedTasks);
   });
 
-  Future<void> pumpHome(WidgetTester tester, {Household household = kDuo}) async {
+  Future<void> pumpHome(WidgetTester tester, {Household household = kDuo, List<MemoTask> memos = const []}) async {
     final households = FakeHouseholdRepository(household: household);
     await tester.pumpWidget(
       // The invite sheets read the household from the tree.
@@ -49,6 +52,7 @@ void main() {
                 householdRepository: households,
                 noteRepository: NoteRepositoryLocal(),
                 invitePromptRepository: invitePrompt,
+                memoRepository: MemoRepositoryLocal(tasks: memos),
               ),
             ),
           ),
@@ -76,11 +80,68 @@ void main() {
     expect(find.text('Perso'), findsNothing);
   });
 
-  testWidgets('says nothing is planned today', (tester) async {
+  testWidgets('shows no Today or Tomorrow with nothing in them', (tester) async {
     await pumpHome(tester);
 
+    expect(find.text('Aujourd’hui.'), findsNothing);
+    expect(find.text('Demain.'), findsNothing);
+  });
+
+  testWidgets('shows the Pense-bête card, even without any list', (tester) async {
+    repository = FakeListRepository();
+    await pumpHome(
+      tester,
+      memos: const [
+        MemoTask(id: 'a', title: 'Poubelles', forId: 'yoann'),
+        MemoTask(id: 'b', title: 'Plantes', forBoth: true),
+        MemoTask(id: 'c', title: 'Véto', forId: 'me'),
+        MemoTask(id: 'd', title: 'Ampoules', done: true, forId: 'me'),
+      ],
+    );
+
+    expect(find.text('Pense-bête.'), findsOneWidget);
+    // "Both" counts for each; what is done, for no one.
+    expect(find.text('2 pour toi, 2 pour Yoann'), findsOneWidget);
+    expect(find.text('Ta première liste.'), findsOneWidget);
+  });
+
+  testWidgets('says what is left in the Pense-bête when alone', (tester) async {
+    await pumpHome(
+      tester,
+      household: kSolo,
+      memos: const [MemoTask(id: 'a', title: 'Poubelles', forId: 'me')],
+    );
+
+    expect(find.text('1 à faire'), findsOneWidget);
+  });
+
+  testWidgets('puts the Pense-bête reminders that concern me first in Today and Tomorrow', (tester) async {
+    await pumpHome(
+      tester,
+      memos: [
+        MemoTask(id: 'a', title: 'Plantes', forBoth: true, remindOn: today(), remindHour: 18),
+        MemoTask(id: 'b', title: 'Poubelles', forId: 'yoann', remindOn: today(), remindHour: 20),
+        MemoTask(id: 'c', title: 'Véto', forId: 'me', remindOn: inDays(1), remindHour: 9),
+        // Missed yesterday: today's now.
+        MemoTask(id: 'd', title: 'Loyer', remindOn: inDays(-1), remindHour: 9),
+      ],
+    );
+
     expect(find.text('Aujourd’hui.'), findsOneWidget);
-    expect(find.text('Rien de prévu. Profites-en.'), findsOneWidget);
+    expect(find.text('Plantes'), findsOneWidget);
+    expect(find.text('Loyer'), findsOneWidget);
+    // For Yoann only: in the Pense-bête, not on my home.
+    expect(find.text('Poubelles'), findsNothing);
+    expect(find.text('Demain.'), findsOneWidget);
+    expect(find.text('Véto'), findsOneWidget);
+    expect(find.text('18 h'), findsOneWidget);
+    expect(find.text('2 restants'), findsOneWidget);
+
+    // Checked from here, it is checked in the Pense-bête: Today and
+    // Tomorrow each have one left.
+    await tester.tap(find.bySemanticsLabel('Marquer comme fait').first);
+    await tester.pumpAndSettle();
+    expect(find.text('1 restant'), findsNWidgets(2));
   });
 
   testWidgets('invites to create the first list', (tester) async {

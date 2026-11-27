@@ -10,6 +10,7 @@ import '../../core/themes/theme.dart';
 import '../../core/ui/buttons.dart';
 import '../../core/ui/controls.dart';
 import '../../core/ui/date_fields.dart';
+import '../../core/ui/home_header.dart';
 import '../../core/ui/layout.dart';
 import '../../core/ui/rise_in.dart';
 import '../../core/ui/pn_icon.dart';
@@ -17,13 +18,22 @@ import '../../core/ui/task_row.dart';
 import '../../core/ui/toast.dart';
 import '../view_models/all_lists_viewmodel.dart';
 
+/// The Lists tab: "Edit" and "+ New list" at the top, the Pense-bête, then
+/// the pinned lists and the others. Also opened on its own page, with a
+/// back link and a title, to make room on home ([returnTo]).
 class AllListsScreen extends StatelessWidget {
-  const AllListsScreen({super.key, required this.viewModel, this.returnTo});
+  const AllListsScreen({super.key, required this.viewModel, this.returnTo, this.asTab = false, this.onCreateList});
 
   final AllListsViewModel viewModel;
 
   /// Opened from a list to make room on home: "OK" goes back to it.
   final String? returnTo;
+
+  /// In the tabs, under the shared header.
+  final bool asTab;
+
+  /// Opens the "New list" sheet.
+  final VoidCallback? onCreateList;
 
   void _toggleEditing(BuildContext context) {
     final back = returnTo;
@@ -66,19 +76,26 @@ class AllListsScreen extends StatelessWidget {
             handle: handle,
           ),
         );
+        final top = MediaQuery.paddingOf(context).top + (asTab ? homeHeaderTop : 4);
         return SingleChildScrollView(
-          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 4, bottom: bottomBarClearance),
+          padding: EdgeInsets.only(top: top, bottom: bottomBarClearance),
           child: ContentWidth(
             child: Gap(
               gap: 16,
               children: [
+                if (asTab) const HomeHeaderGap(),
                 Row(
+                  // Right-aligned; a Spacer would share the room with the
+                  // shrinkable "+ New list".
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    BackLink(
-                      label: l10n.home,
-                      onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home),
-                    ),
-                    const Spacer(),
+                    if (!asTab) ...[
+                      BackLink(
+                        label: l10n.home,
+                        onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home),
+                      ),
+                      const Spacer(),
+                    ],
                     Pressable(
                       onTap: () => _toggleEditing(context),
                       child: AnimatedContainer(
@@ -96,19 +113,26 @@ class AllListsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (asTab && !vm.editing) ...[
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: NewPill(label: l10n.newList, onTap: onCreateList),
+                      ),
+                    ],
                   ],
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Expanded(child: Text(l10n.allListsTitle, style: PnText.screenTitle)),
-                    Text(
-                      '${vm.lists.length}',
-                      style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.muted),
-                    ),
-                  ],
-                ),
+                if (!asTab)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Expanded(child: Text(l10n.allListsTitle, style: PnText.screenTitle)),
+                      Text(
+                        '${vm.lists.length}',
+                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.muted),
+                      ),
+                    ],
+                  ),
                 if (vm.lists.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
@@ -133,7 +157,8 @@ class AllListsScreen extends StatelessWidget {
                             builder: (context, child) => Transform.scale(
                               scale: 1 + 0.02 * Curves.easeOutBack.transform(animation.value),
                               child: Material(
-                                color: Colors.transparent,
+                                // Lifted, the row hides what it passes over.
+                                color: PnColors.cream,
                                 child: DecoratedBox(
                                   decoration: const BoxDecoration(
                                     boxShadow: [
@@ -261,7 +286,8 @@ class _Row extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: const BoxDecoration(
-        color: PnColors.cream,
+        // See-through: the watermark behind the tabs shows between rows.
+        color: Colors.transparent,
         border: Border(bottom: BorderSide(color: PnColors.snow, width: 4)),
       ),
       child: Row(

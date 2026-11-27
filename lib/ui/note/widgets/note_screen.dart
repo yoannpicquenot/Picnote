@@ -265,8 +265,6 @@ class _NoteScreenState extends State<NoteScreen> {
                         ),
                         const SizedBox(height: 22),
                         NoteEditor(key: _editor, viewModel: vm, blocks: note.blocks, bars: _bars),
-                        const SizedBox(height: 24),
-                        Text(l10n.slashHint, textAlign: TextAlign.center, style: PnText.meta),
                         // Clear of the formatting bar, while it shows.
                         ValueListenableBuilder(
                           valueListenable: _bars,

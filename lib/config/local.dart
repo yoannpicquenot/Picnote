@@ -4,10 +4,12 @@ import '../data/repositories/household/household_repository_local.dart';
 import '../data/repositories/invite_prompt/invite_prompt_repository.dart';
 import '../data/repositories/list/list_repository_local.dart';
 import '../data/repositories/live/live_repository.dart';
+import '../data/repositories/memo/memo_repository_local.dart';
 import '../data/repositories/note/note_repository_local.dart';
 import '../data/repositories/settings/settings_repository.dart';
 import '../domain/models/activity.dart';
 import '../domain/models/household.dart';
+import '../domain/models/memo_task.dart';
 import '../domain/models/note.dart';
 import '../domain/models/reminder.dart';
 import '../domain/models/task.dart';
@@ -21,6 +23,7 @@ Repositories localRepositories() => Repositories(
   auth: AuthRepositoryLocal(),
   household: HouseholdRepositoryLocal(),
   lists: ListRepositoryLocal(),
+  memos: MemoRepositoryLocal(),
   notes: NoteRepositoryLocal(),
   settings: SettingsRepositoryLocal(),
   activity: ActivityRepositoryLocal(),
@@ -45,6 +48,38 @@ Repositories demoRepositories({bool french = true}) {
       household: Household(name: 'Maison Saint-Rambert', members: [me, yoann]),
     ),
     settings: SettingsRepositoryLocal(),
+    memos: MemoRepositoryLocal(
+      tasks: [
+        MemoTask(
+          id: 'pb1',
+          title: l('Take out the bins', 'Sortir les poubelles'),
+          forId: yoann.id,
+          remindOn: nextWeekday(DateTime.tuesday),
+          remindHour: 20,
+          repeat: MemoRepeat.weekly,
+          authorId: 'me',
+        ),
+        MemoTask(
+          id: 'pb2',
+          title: l('Book the vet for Pistache', 'Prendre RDV véto pour Pistache'),
+          forId: 'me',
+          remindOn: inDays(1),
+          remindHour: 9,
+          authorId: 'me',
+        ),
+        MemoTask(
+          id: 'pb3',
+          title: l('Water the plants', 'Arroser les plantes'),
+          forBoth: true,
+          remindOn: today(),
+          remindHour: 18,
+          repeat: MemoRepeat.weekly,
+          authorId: yoann.id,
+        ),
+        MemoTask(id: 'pb4', title: l('Call the plumber', 'Appeler le plombier'), forId: 'me', authorId: 'me'),
+        MemoTask(id: 'pb5', title: l('Buy light bulbs', 'Acheter des ampoules'), authorId: yoann.id),
+      ],
+    ),
     live: LiveRepositoryLocal(),
     invitePrompt: InvitePromptRepositoryLocal(),
     activity: ActivityRepositoryLocal(

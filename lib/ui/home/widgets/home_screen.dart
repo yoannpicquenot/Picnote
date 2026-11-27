@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../domain/models/list_stats.dart';
+import '../../../domain/models/memo_task.dart';
 import '../../../domain/models/task.dart';
 import '../../../domain/models/task_list.dart';
 import '../../../l10n/app_localizations.dart';
@@ -13,8 +14,8 @@ import '../../core/ui/controls.dart';
 import '../../core/ui/home_header.dart';
 import '../../core/ui/invite_form.dart';
 import '../../core/ui/layout.dart';
-import '../../core/ui/pn_icon.dart';
 import '../../core/ui/rise_in.dart';
+import '../../core/ui/memo_parts.dart';
 import '../../core/ui/tab_stagger.dart';
 import '../../core/ui/toast.dart';
 import '../../core/ui/task_row.dart';
@@ -90,13 +91,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     // While swiping, the blocks trail the title, one after another.
+                    TabStagger(
+                      depth: 1,
+                      child: MemoCard(
+                        count: vm.memoCount,
+                        partner: vm.partner,
+                        onTap: () => context.push(Routes.memos),
+                      ),
+                    ),
                     TabStagger(depth: 1, child: _lists(context, l10n)),
-                    // Not before the first list: nothing could be planned yet.
-                    if (vm.listCount > 0) ...[
-                      TabStagger(depth: 2, child: _section(context, l10n, l10n.todayTitle, vm.today, alwaysShow: true)),
-                      if (vm.tomorrow.isNotEmpty)
-                        TabStagger(depth: 3, child: _section(context, l10n, l10n.tomorrowTitle, vm.tomorrow)),
-                    ],
+                    // Only once they have something in them.
+                    if (vm.today.isNotEmpty || vm.memosToday.isNotEmpty)
+                      TabStagger(depth: 2, child: _section(context, l10n, l10n.todayTitle, vm.today, vm.memosToday)),
+                    if (vm.tomorrow.isNotEmpty || vm.memosTomorrow.isNotEmpty)
+                      TabStagger(
+                        depth: 3,
+                        child: _section(context, l10n, l10n.tomorrowTitle, vm.tomorrow, vm.memosTomorrow),
+                      ),
                   ],
                 ),
               ],
@@ -129,23 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: onTap,
             ),
           ),
-        if (vm.listCount > shown.length)
-          Center(
-            child: Pressable(
-              onTap: () => context.push(Routes.lists),
-              child: SizedBox(
-                height: 40,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(l10n.seeAllLists(vm.listCount), style: PnText.pill.copyWith(color: PnColors.terraDark)),
-                    const SizedBox(width: 4),
-                    const PnIcon(PnIcons.chevronRight, color: PnColors.terraDark, size: 16),
-                  ],
-                ),
-              ),
-            ),
-          ),
         // The invite card first, then "Your first list." 120 ms later.
         if (vm.showInviteCard)
           RiseIn(
@@ -175,15 +169,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _section(
-    BuildContext context,
-    AppLocalizations l10n,
-    String title,
-    List<Task> tasks, {
-    bool alwaysShow = false,
-  }) {
+  /// Today or Tomorrow: the Pense-bête's reminders first, then the lists'
+  /// tasks, all counted together.
+  Widget _section(BuildContext context, AppLocalizations l10n, String title, List<Task> tasks, List<MemoTask> memos) {
     final vm = widget.viewModel;
-    final open = tasks.where((t) => !t.done).length;
+    final total = tasks.length + memos.length;
+    final open = tasks.where((t) => !t.done).length + memos.where((t) => !t.done).length;
     return Gap(
       gap: 6,
       children: [
@@ -192,17 +183,19 @@ class _HomeScreenState extends State<HomeScreen> {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Expanded(child: Text(title, style: PnText.section)),
-            if (tasks.isNotEmpty)
-              Text(
-                _progress(l10n, ListStats(total: tasks.length, open: open)),
-                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.muted),
-              ),
+            Text(
+              _progress(l10n, ListStats(total: total, open: open)),
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: PnColors.muted),
+            ),
           ],
         ),
-        if (tasks.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(l10n.nothingPlanned, style: PnText.sub),
+        for (final m in memos)
+          TaskRow(
+            key: ValueKey('memo-${m.id}'),
+            // Shown as a list item, checked as one.
+            task: Task(id: m.id, listId: '', title: m.title, done: m.done),
+            tag: MemoTag(hour: m.remindHour, onTap: () => context.push(Routes.memos)),
+            onToggle: () => vm.toggleMemo(m),
           ),
         for (final t in tasks)
           TaskRow(

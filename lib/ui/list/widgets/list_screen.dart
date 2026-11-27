@@ -348,7 +348,8 @@ class _ListScreenState extends State<ListScreen> {
                 AddTaskRow(
                   key: ValueKey('add-${list.id}'),
                   autofocus: vm.taskCount == 0,
-                  placeholder: vm.taskCount == 0 ? l10n.firstItemPlaceholder : l10n.addItem,
+                  label: l10n.addItem,
+                  placeholder: vm.taskCount == 0 ? l10n.firstItemPlaceholder : l10n.newItem,
                   onAdd: vm.addTask,
                   onTyping: vm.typing,
                 ),
@@ -416,7 +417,7 @@ class _ListScreenState extends State<ListScreen> {
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: BackLink(
-                          label: widget.fromAllLists ? l10n.allLists : l10n.home,
+                          label: widget.fromAllLists ? l10n.tabLists : l10n.home,
                           onPressed: _back,
                           color: theme.fg,
                         ),

@@ -1022,18 +1022,6 @@ abstract class AppLocalizations {
   /// **'Demain.'**
   String get tomorrowTitle;
 
-  /// No description provided for @seeAllLists.
-  ///
-  /// In fr, this message translates to:
-  /// **'Voir les {count} listes'**
-  String seeAllLists(int count);
-
-  /// No description provided for @nothingPlanned.
-  ///
-  /// In fr, this message translates to:
-  /// **'Rien de prévu. Profites-en.'**
-  String get nothingPlanned;
-
   /// No description provided for @firstListTitle.
   ///
   /// In fr, this message translates to:
@@ -1093,18 +1081,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'hier'**
   String get yesterdayLower;
-
-  /// No description provided for @notesTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Notes.'**
-  String get notesTitle;
-
-  /// No description provided for @notesLede.
-  ///
-  /// In fr, this message translates to:
-  /// **'Une idée à garder ?'**
-  String get notesLede;
 
   /// No description provided for @untitled.
   ///
@@ -1208,12 +1184,6 @@ abstract class AppLocalizations {
   /// **'Touche un élément pour le modifier, glisse les points pour le déplacer, ou vers la gauche pour le supprimer.'**
   String get listHint;
 
-  /// No description provided for @allLists.
-  ///
-  /// In fr, this message translates to:
-  /// **'Toutes les listes'**
-  String get allLists;
-
   /// No description provided for @home.
   ///
   /// In fr, this message translates to:
@@ -1259,7 +1229,7 @@ abstract class AppLocalizations {
   /// No description provided for @noListsYet.
   ///
   /// In fr, this message translates to:
-  /// **'Aucune liste. Touche + pour en créer une.'**
+  /// **'Aucune liste pour l’instant.'**
   String get noListsYet;
 
   /// No description provided for @deleteNamed.
@@ -1327,12 +1297,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Note perso, visible par toi uniquement'**
   String get personalNoteOnlyYou;
-
-  /// No description provided for @slashHint.
-  ///
-  /// In fr, this message translates to:
-  /// **'Tape / pour ajouter un titre, une liste ou un lien.'**
-  String get slashHint;
 
   /// No description provided for @reminderTitle.
   ///
@@ -2293,6 +2257,192 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{who} a modifié la note « {name} »'**
   String partnerEditedNote(String who, String name);
+
+  /// No description provided for @tabHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accueil'**
+  String get tabHome;
+
+  /// No description provided for @noteStartWriting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commence à écrire…'**
+  String get noteStartWriting;
+
+  /// No description provided for @noteOrSlash.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ou tape / pour d’autres blocs.'**
+  String get noteOrSlash;
+
+  /// No description provided for @noteChipList.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liste'**
+  String get noteChipList;
+
+  /// No description provided for @memoTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pense-bête.'**
+  String get memoTitle;
+
+  /// No description provided for @memoName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pense-bête'**
+  String get memoName;
+
+  /// No description provided for @memoCardSolo.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} à faire'**
+  String memoCardSolo(int count);
+
+  /// No description provided for @memoCardDuo.
+  ///
+  /// In fr, this message translates to:
+  /// **'{mine} pour toi, {theirs} pour {name}'**
+  String memoCardDuo(int mine, int theirs, String name);
+
+  /// No description provided for @memoAddTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter une tâche'**
+  String get memoAddTask;
+
+  /// No description provided for @memoNewTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle tâche.'**
+  String get memoNewTask;
+
+  /// No description provided for @memoEditTask.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier la tâche.'**
+  String get memoEditTask;
+
+  /// No description provided for @memoWhatToDo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qu’est-ce qu’il faut faire ?'**
+  String get memoWhatToDo;
+
+  /// No description provided for @memoForWhom.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour qui ?'**
+  String get memoForWhom;
+
+  /// No description provided for @memoMe.
+  ///
+  /// In fr, this message translates to:
+  /// **'Moi'**
+  String get memoMe;
+
+  /// No description provided for @memoBoth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nous deux'**
+  String get memoBoth;
+
+  /// No description provided for @memoRepeat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Répéter'**
+  String get memoRepeat;
+
+  /// No description provided for @memoNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun'**
+  String get memoNone;
+
+  /// No description provided for @memoPick.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir…'**
+  String get memoPick;
+
+  /// No description provided for @memoRepeatNever.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jamais'**
+  String get memoRepeatNever;
+
+  /// No description provided for @memoRepeatDaily.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque jour'**
+  String get memoRepeatDaily;
+
+  /// No description provided for @memoRepeatWeekly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque semaine'**
+  String get memoRepeatWeekly;
+
+  /// No description provided for @memoRepeatMonthly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque mois'**
+  String get memoRepeatMonthly;
+
+  /// No description provided for @memoRingsForMe.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le rappel ne sonnera que pour toi.'**
+  String get memoRingsForMe;
+
+  /// No description provided for @memoRingsFor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le rappel ne sonnera que pour {name}.'**
+  String memoRingsFor(String name);
+
+  /// No description provided for @memoRingsForBoth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous recevrez tous les deux le rappel.'**
+  String get memoRingsForBoth;
+
+  /// No description provided for @memoRingsSolo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu recevras le rappel.'**
+  String get memoRingsSolo;
+
+  /// No description provided for @memoDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'« {title} » supprimée'**
+  String memoDeleted(String title);
+
+  /// No description provided for @memoTag.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pense-bête, à {hour}'**
+  String memoTag(String hour);
+
+  /// No description provided for @memoDetails.
+  ///
+  /// In fr, this message translates to:
+  /// **'{title}, détails'**
+  String memoDetails(String title);
+
+  /// No description provided for @memoSave.
+  ///
+  /// In fr, this message translates to:
+  /// **'Valider'**
+  String get memoSave;
+
+  /// No description provided for @newItem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvel élément'**
+  String get newItem;
 }
 
 class _AppLocalizationsDelegate
